@@ -59,18 +59,20 @@ Cada fase deve estar verde nos testes antes da seguinte. Atualizado a cada item 
 - [x] Testes cobrindo cada nível da cascata de status
 
 ## Fase 6 — Segurança e OAuth2
-- [ ] `SecurityConfig` — filter chains separados para `/oauth2/**`, `/admin/api/**` e `/api/auth/**` (público, consumido pelo SPA Angular)
-- [ ] `AuthorizationServerConfig` — settings, PKCE obrigatório, TTLs
-- [ ] `RegisteredClientRepository` customizado sobre `system`
-- [ ] `JdbcOAuth2AuthorizationService`
-- [ ] Geração/carregamento de chave RSA + `JWKSource` + endpoint JWKS
-- [ ] `CustomAuthenticationProvider` (usuário) e provider de platform admin
-- [ ] `JwtTokenCustomizer` — claims da seção 7.2
-- [ ] Rate limiting e bloqueio por tentativas
-- [ ] Testes de emissão e validação de token
+- [x] `SecurityConfig` — filter chains separados para `/oauth2/**`, `/admin/api/**` e `/api/auth/**` (público, consumido pelo SPA Angular)
+- [x] `AuthorizationServerConfig` — settings, PKCE obrigatório, TTLs
+- [x] `RegisteredClientRepository` customizado sobre `system`
+- [x] `JdbcOAuth2AuthorizationService`
+- [x] Geração/carregamento de chave RSA + `JWKSource` + endpoint JWKS
+- [x] `CustomAuthenticationProvider` (usuário) e provider de platform admin
+- [x] `JwtTokenCustomizer` — claims da seção 7.2
+- [x] Rate limiting (`RateLimitFilter`, Bucket4j em memória — login, token, admin/api)
+- [ ] Bloqueio por N tentativas de login — adiado para a Fase 7 (ver Notas)
+- [x] Testes de emissão e validação de token (fluxo completo Authorization Code + PKCE via MockMvc)
 
 ## Fase 7 — API de autenticação e consentimento (backend, consumida pelo Angular)
 - [ ] `POST /api/auth/login` — autenticação baseada em sessão (não é endpoint OAuth2), dentro do tenant resolvido pelo `client_id` (ver 2.2 do plano)
+- [ ] Bloqueio por N tentativas de login (adiado da Fase 6 — ver Notas)
 - [ ] Endpoint público de branding por tenant (nome/logo resolvidos pelo `client_id`)
 - [ ] Fluxo de "esqueci minha senha" (`POST /api/auth/forgot-password`, `POST /api/auth/reset-password`)
 - [ ] `POST /api/auth/consent` — decisão de consentimento (se houver client de terceiro)
@@ -150,6 +152,46 @@ Cada fase deve estar verde nos testes antes da seguinte. Atualizado a cada item 
   removida do `pom.xml`; a Fase 7 virou "API de autenticação e consentimento" (só backend
   REST/JSON) e a Fase 9 passou a cobrir login + consentimento + console num único projeto
   Angular. Ver seção 2.2 do plano para o fluxo detalhado.
+- **Bloqueio por N tentativas de login adiado para a Fase 7.** A Fase 6 cobre a
+  infraestrutura de segurança (filter chains, rate limiting por IP), mas o contador de
+  tentativas falhas é por usuário e só faz sentido acoplado ao endpoint `POST
+  /api/auth/login` (ainda não existe — é o primeiro item da Fase 7). Implementar o
+  bloqueio agora exigiria um campo/estado no `User` sem nenhum consumidor até lá.
+- **Filter chain do `/oauth2/**` precisa ser declarado explicitamente em `SecurityConfig`,
+  não fica a cargo da autoconfiguração do Spring Boot.** A autoconfiguração
+  (`OAuth2AuthorizationServerWebSecurityConfiguration`) só ativa seu próprio
+  `SecurityFilterChain` via `@ConditionalOnMissingBean(SecurityFilterChain.class)` — como
+  o projeto já declara os filter chains de `/admin/api/**` e `/api/auth/**`, ela nunca
+  dispara e `/oauth2/authorize` cai como 404. O bean
+  `authorizationServerSecurityFilterChain` em `SecurityConfig` replica manualmente o que a
+  autoconfiguração faria (via `OAuth2AuthorizationServerConfigurer` + `.oidc(...)`),
+  com `@Order(0)` (mais precedente que os outros dois). Descoberto via bytecode da
+  autoconfiguração (`javap`), não pela documentação.
+- **MockMvc: `.param()` não popula `request.getQueryString()`.** Os endpoints do
+  Authorization Server (`OAuth2AuthorizationCodeRequestAuthenticationConverter`) leem
+  parâmetros de uma requisição GET filtrando por `request.getQueryString()`, não só por
+  `request.getParameterMap()` — com `.param()` (que só popula o parameter map), todo
+  parâmetro é descartado e a requisição falha com `invalid_request: response_type` mesmo
+  com os parâmetros visivelmente presentes no dump do `MockHttpServletRequest`. Testes GET
+  para `/oauth2/authorize` (e qualquer novo teste MockMvc contra esse endpoint) devem usar
+  `.queryParam(...)`, não `.param(...)`.
+- **`JdbcOAuth2AuthorizationService` não sabe (des)serializar `Authentication`
+  customizado.** O resource owner autenticado (`ClientAwareAuthenticationToken` com
+  principal `AuthenticatedUser`) é persistido como parte de `OAuth2Authorization.attributes`
+  ao emitir o `code`; sem um `JsonMapper` (Jackson 3) ciente dessas classes, a troca do
+  código por token falha ao reler a authorization (`PolymorphicTypeValidator` rejeita o
+  tipo). Resolvido com mixins em `config/security/jackson/` (fora do `domain`, para não
+  violar a regra 5.1) + um `JsonMapper` dedicado injetado em `JdbcOAuth2AuthorizationService`
+  via `setAuthorizationRowMapper`/`setAuthorizationParametersMapper` em
+  `AuthorizationServerConfig`. Qualquer novo campo/VO usado dentro de `AuthenticatedUser`
+  precisa de um mixin correspondente, senão o mesmo erro volta.
+- **Como o console administrativo Angular (não vinculado a nenhum tenant) vira um OAuth2
+  client ainda está em aberto.** `SystemRegisteredClientRepository` só resolve `System`
+  (sempre vinculado a exatamente um tenant, seção 4.4). O client do console precisa de um
+  registro que não dependa de tenant — provavelmente um client estático configurado via
+  `application.yml`/env vars, combinado ao `SystemRegisteredClientRepository` por um
+  `RegisteredClientRepository` delegante. Não decidido nem implementado; retomar na Fase 8
+  ou 9 quando o console precisar de fato se autenticar.
 - Item "Testes ArchUnit das regras da seção 5.1" (Fase 10) já tem um teste inicial em
   `ArchitectureTest` desde a Fase 0. Usa `allowEmptyShould(true)` para não quebrar a suíte
   enquanto os pacotes `application`/`adapter` ainda não têm código — cada regra passa a
