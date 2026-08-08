@@ -112,7 +112,8 @@ Cada fase deve estar verde nos testes antes da seguinte. Atualizado a cada item 
 ## Notas
 
 - Item "Testes ArchUnit das regras da seção 5.1" (Fase 10) já tem um teste inicial em
-  `ArchitectureTest` desde a Fase 0, que falha por design (pacotes domain/application/adapter
-  vazios). Ele vira verde organicamente à medida que o código das fases seguintes respeita as
-  regras — o item da Fase 10 fecha quando a cobertura de regras estiver completa (incluindo as
-  de `adapter` não vazar entidade JPA e DTO não entrar em `application`).
+  `ArchitectureTest` desde a Fase 0. Usa `allowEmptyShould(true)` para não quebrar a suíte
+  enquanto os pacotes `application`/`adapter` ainda não têm código — cada regra passa a
+  valer de fato (e falharia de verdade) assim que houver uma violação real. O item da
+  Fase 10 fecha quando a cobertura de regras estiver completa (incluindo as de `adapter`
+  não vazar entidade JPA e DTO não entrar em `application`).
