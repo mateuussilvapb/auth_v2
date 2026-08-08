@@ -80,14 +80,18 @@ Cada fase deve estar verde nos testes antes da seguinte. Atualizado a cada item 
 - [x] Testes com MockMvc/`@WebMvcTest`
 
 ## Fase 8 — API administrativa
+- [x] `GlobalExceptionHandler` (`@RestControllerAdvice`, escopado a `adapter.in.web.admin`)
 - [ ] Flag de "cliente de terceiro" em `System` (`ManageSystemUseCase`) — pré-requisito do consentimento adiado da Fase 7
 - [ ] `POST /api/auth/consent` + `JdbcOAuth2AuthorizationConsentService` (adiado da Fase 7 — ver Notas)
-- [ ] Controllers da seção 9
-- [ ] DTOs de request/response com Bean Validation
-- [ ] `GlobalExceptionHandler`
+- Controllers da seção 9 (`/admin/api/v1`, DTOs com Bean Validation, testes de integração — item a item):
+  - [x] Tenants (`POST` · `GET` · `GET /{id}` · `PUT /{id}` · `PATCH /{id}/status`)
+  - [ ] Sistemas
+  - [ ] Perfis
+  - [ ] Usuários
+  - [ ] Vínculos
+  - [ ] Platform admins
 - [ ] OpenAPI/Swagger
 - [ ] CORS para o SPA Angular
-- [ ] Testes de integração dos endpoints
 
 ## Fase 9 — Frontend Angular (login, consentimento e console administrativo)
 - [ ] Projeto Angular único: rotas públicas (`/login`, `/consent`, `/esqueci-senha`) consumindo a API da Fase 7, e rotas protegidas do console consumindo a API da Fase 8
