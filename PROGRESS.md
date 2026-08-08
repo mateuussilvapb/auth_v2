@@ -85,7 +85,7 @@ Cada fase deve estar verde nos testes antes da seguinte. Atualizado a cada item 
 - [ ] `POST /api/auth/consent` + `JdbcOAuth2AuthorizationConsentService` (adiado da Fase 7 — ver Notas)
 - Controllers da seção 9 (`/admin/api/v1`, DTOs com Bean Validation, testes de integração — item a item):
   - [x] Tenants (`POST` · `GET` · `GET /{id}` · `PUT /{id}` · `PATCH /{id}/status`)
-  - [ ] Sistemas
+  - [x] Sistemas (`POST` · `GET` · `PUT /{id}` · `PATCH /{id}/status` · redirect-uris · rotate-secret)
   - [ ] Perfis
   - [ ] Usuários
   - [ ] Vínculos
@@ -124,6 +124,21 @@ Cada fase deve estar verde nos testes antes da seguinte. Atualizado a cada item 
 
 ## Notas
 
+- **Nunca registre um `JsonMapper`/`ObjectMapper` customizado como `@Bean` sem `@Qualifier`
+  dedicado.** Descoberto ao escrever os testes do `SystemController` (Fase 8): o
+  `oauth2AuthorizationJsonMapper` da Fase 6 era um `@Bean JsonMapper` — como era o único
+  `JsonMapper` no contexto, a autoconfiguração do Spring Boot desistiu de criar o seu
+  próprio default e todo `HttpMessageConverter` do Spring MVC passou a usar aquele mapper,
+  cujo `PolymorphicTypeValidator` só permite os pacotes internos do Authorization Server.
+  Resultado: `POST` com qualquer `List<String>` no corpo (ex: `initialRedirectUris`)
+  quebrava com `HttpMessageNotReadableException` em QUALQUER controller da aplicação, não
+  só nos endpoints OAuth2 — silencioso porque nenhum teste de outro controller existia
+  ainda quando a Fase 6 foi commitada. Corrigido convertendo
+  `OAuth2AuthorizationJsonMapperConfig` (bean) em `OAuth2AuthorizationJsonMapperFactory`
+  (classe utilitária comum, `build()` estático, chamada diretamente em
+  `AuthorizationServerConfig` — nunca entra no contexto Spring). Regra geral: um
+  `JsonMapper`/`ObjectMapper` com allowlist restrito só deve ser usado onde é
+  explicitamente construído e passado, nunca exposto como bean genérico.
 - **`POST /api/auth/consent` adiado para a Fase 8.** O plano menciona o endpoint só de
   passagem ("quando existir client de terceiro", seção 2.2) e não define nenhum critério
   para um `System` ser "de terceiro" — hoje `SystemRegisteredClientRepository` grava

@@ -18,7 +18,13 @@ import com.mssousa.authserver.domain.model.user.UserId;
 import com.mssousa.authserver.domain.model.user.Username;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.test.web.servlet.request.RequestPostProcessor;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.Instant;
+
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 
 /**
  * Base para testes de integração de repositório: contexto Spring completo sobre um
@@ -70,5 +76,17 @@ public abstract class AbstractRepositoryIntegrationTest extends AbstractPostgres
                 .name(username)
                 .build();
         return userRepository.save(user);
+    }
+
+    /**
+     * Simula um token de platform admin para os testes da API administrativa
+     * (seção 9/Fase 8). {@code SecurityMockMvcRequestPostProcessors.jwt()} não aplica o
+     * {@code PlatformAdminJwtAuthenticationConverter} real — a authority precisa ser
+     * simulada explicitamente para refletir o que o converter produziria em produção.
+     */
+    protected RequestPostProcessor platformAdmin() {
+        return jwt()
+                .jwt(builder -> builder.claim("platform_admin", true).subject("1").expiresAt(Instant.now().plusSeconds(300)))
+                .authorities(new SimpleGrantedAuthority("ROLE_PLATFORM_ADMIN"));
     }
 }

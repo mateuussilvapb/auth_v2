@@ -6,9 +6,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.request.RequestPostProcessor;
 
 import java.time.Instant;
 
@@ -29,12 +27,6 @@ class TenantControllerIntegrationTest extends AbstractRepositoryIntegrationTest 
 
     @Autowired
     private MockMvc mockMvc;
-
-    private RequestPostProcessor platformAdmin() {
-        return jwt()
-                .jwt(builder -> builder.claim("platform_admin", true).subject("1").expiresAt(Instant.now().plusSeconds(300)))
-                .authorities(new SimpleGrantedAuthority("ROLE_PLATFORM_ADMIN"));
-    }
 
     @Test
     void deveCriarListarBuscarAtualizarEDesativarTenant() throws Exception {

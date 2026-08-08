@@ -1,5 +1,6 @@
 package com.mssousa.authserver.config.security;
 
+import com.mssousa.authserver.config.security.jackson.OAuth2AuthorizationJsonMapperFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -18,10 +19,12 @@ import tools.jackson.databind.json.JsonMapper;
  * infraestrutura do Authorization Server via autoconfiguração a partir destes beans.
  * <p>
  * O row mapper e o parameters mapper são trocados pela variante {@code JsonMapper}
- * (Jackson 3) configurada em {@code OAuth2AuthorizationJsonMapperConfig}, que conhece
+ * (Jackson 3) de {@link OAuth2AuthorizationJsonMapperFactory}, que conhece
  * {@code ClientAwareAuthenticationToken} e {@code AuthenticatedUser} — sem isso, reler uma
  * authorization persistida (troca de código por token) falha na desserialização do
- * principal do resource owner.
+ * principal do resource owner. Construído diretamente (não via {@code @Bean}) para não
+ * ser adotado pela autoconfiguração do Boot como o {@code JsonMapper} global do Spring
+ * MVC — ver javadoc da factory.
  * </p>
  */
 @Configuration
@@ -29,8 +32,9 @@ public class AuthorizationServerConfig {
 
     @Bean
     public OAuth2AuthorizationService oauth2AuthorizationService(JdbcTemplate jdbcTemplate,
-                                                                   RegisteredClientRepository registeredClientRepository,
-                                                                   JsonMapper oauth2AuthorizationJsonMapper) {
+                                                                   RegisteredClientRepository registeredClientRepository) {
+        JsonMapper oauth2AuthorizationJsonMapper = OAuth2AuthorizationJsonMapperFactory.build();
+
         JdbcOAuth2AuthorizationService service =
                 new JdbcOAuth2AuthorizationService(jdbcTemplate, registeredClientRepository);
         service.setAuthorizationRowMapper(
