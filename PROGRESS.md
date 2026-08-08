@@ -29,15 +29,19 @@ Cada fase deve estar verde nos testes antes da seguinte. Atualizado a cada item 
 - [x] Testes unitários de todos os serviços de domínio
 
 ## Fase 3 — Persistência
-- [ ] Migrations V1–V11 (seção 4)
-- [ ] `BaseJpaEntity`, `AuditableJpaEntity`
-- [ ] Entidades JPA de todas as tabelas
-- [ ] `*JpaRepository` (Spring Data)
-- [ ] `AuthMapper` — domínio ↔ entidade, para todos os agregados
-- [ ] `*RepositoryImpl` implementando as portas out
-- [ ] `TsidGenerator`, `TsidNodeResolver`
-- [ ] Testes de integração com Testcontainers
-- [ ] Testes de isolamento da seção 8.3 (incluindo violação via SQL direto)
+- [x] Migrations V1–V11 (seção 4)
+- [x] `BaseJpaEntity`, `AuditableJpaEntity`
+- [x] Entidades JPA de todas as tabelas
+- [x] `*JpaRepository` (Spring Data)
+- [x] `AuthMapper` — domínio ↔ entidade, para todos os agregados
+- [x] `*RepositoryImpl` implementando as portas out
+- [x] `TsidGenerator`, `TsidNodeResolver`
+- [x] Testes de integração com Testcontainers
+- [x] Testes de isolamento da seção 8.3 verificáveis em persistência (UNIQUE
+      tenant_id+email em tenants distintos; UserSystem cruzando tenants falha na FK
+      composta via SQL direto). Os demais itens de 8.3 (cascata de status completa,
+      claim do token, platform admin vs. usuário comum) dependem de autenticação e
+      ficam para a Fase 5.
 
 ## Fase 4 — Aplicação: administração
 - [ ] Use cases de tenant, sistema, perfil, usuário e vínculos
@@ -112,6 +116,15 @@ Cada fase deve estar verde nos testes antes da seguinte. Atualizado a cada item 
 
 ## Notas
 
+- **Testcontainers: container Postgres "singleton" iniciado manualmente.**
+  `AbstractPostgresIntegrationTest` inicia o container num bloco estático, sem as
+  anotações `@Testcontainers`/`@Container` — essa combinação em campo `static`
+  chama `stop()` no `afterAll` da primeira classe de teste que o referencia, mesmo
+  sendo compartilhado entre classes, derrubando o container para todas as classes de
+  teste seguintes (reproduzido: primeira classe passa, todas as outras falham com
+  "Connection refused" após ~30s de timeout cada). Sem essas anotações, o container só
+  é finalizado pelo Ryuk ao fim da JVM de teste. Se novos testes de integração
+  passarem a falhar em lote com erro de conexão, comece por aqui.
 - **Frontend 100% Angular** (decisão D6 do plano, ajustada em 2026-08-08 a pedido explícito
   do usuário): login e consentimento deixaram de ser Thymeleaf e passaram a ser rotas
   públicas do mesmo SPA Angular do console administrativo. A dependência `thymeleaf` foi

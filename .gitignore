@@ -32,6 +32,9 @@ build/
 ### VS Code ###
 .vscode/
 
+# Estado interno de sessão do Claude Code — não é parte do projeto
+.claude/scheduled_tasks.lock
+
 # Segredos e credenciais — nunca versionar (ver seção 12 do plano)
 *.pem
 *.key
