@@ -44,11 +44,11 @@ Cada fase deve estar verde nos testes antes da seguinte. Atualizado a cada item 
       ficam para a Fase 5.
 
 ## Fase 4 — Aplicação: administração
-- [ ] Use cases de tenant, sistema, perfil, usuário e vínculos
-- [ ] Validação de unicidade de perfil por sistema
-- [ ] Validação de consistência de tenant em todo vínculo
-- [ ] Envio de e-mail de boas-vindas e de reset (porta `EmailSenderPort`)
-- [ ] Testes unitários com Mockito
+- [x] Use cases de tenant, sistema, perfil, usuário e vínculos
+- [x] Validação de unicidade de perfil por sistema
+- [x] Validação de consistência de tenant em todo vínculo
+- [x] Envio de e-mail de boas-vindas e de reset (porta `EmailSenderPort`)
+- [x] Testes unitários com Mockito
 
 ## Fase 5 — Aplicação: autenticação
 - [ ] `AuthenticateUserUseCase` — resolve por username **ou** e-mail, dentro do tenant
@@ -116,6 +116,20 @@ Cada fase deve estar verde nos testes antes da seguinte. Atualizado a cada item 
 
 ## Notas
 
+- **Gestão de Platform Admin ainda não tem use case.** A Fase 4 lista explicitamente
+  "tenant, sistema, perfil, usuário e vínculos" — sem platform admin — então
+  `ManagePlatformAdminUseCase`/`PlatformAdminManagementService` não foram criados agora
+  (o `PlatformAdminPolicy`, da Fase 2, segue sem consumidor). A API administrativa
+  (Fase 8) precisa de `POST/GET/PATCH /platform-admins` (seção 9), então esse use case
+  precisa existir antes dela — criar quando alguma fase intermediária pedir, ou como
+  parte da própria Fase 8 se nenhuma outra reivindicar antes.
+- **Domain services exigem `@Bean` explícito.** `TenantConsistencyValidator`,
+  `AccessValidator`, `PlatformAdminPolicy` e `ProfileUniquenessPolicy` são POJOs puros
+  (regra 5.1.1) e não têm `@Component`. `config/DomainServicesConfig` os registra como
+  beans Spring — qualquer novo domain service usado por um serviço de aplicação precisa
+  ser adicionado lá, senão o contexto falha ao subir (`NoSuchBeanDefinitionException`),
+  erro que só aparece em teste de integração/contexto completo, não em teste unitário
+  com Mockito.
 - **Testcontainers: container Postgres "singleton" iniciado manualmente.**
   `AbstractPostgresIntegrationTest` inicia o container num bloco estático, sem as
   anotações `@Testcontainers`/`@Container` — essa combinação em campo `static`
