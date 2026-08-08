@@ -1,12 +1,16 @@
 # ==========================================
 # OVERRIDES DE DESENVOLVIMENTO (sobrescreve application.yml)
 # ==========================================
-# Apenas defaults não-sensíveis (host/porta locais). Usuário/senha continuam
-# vindo de variáveis de ambiente — ver docker-compose.yml e README.
+# Defaults deste arquivo valem apenas para o ambiente local (docker-compose.yml usa as
+# mesmas credenciais não-sensíveis). Este perfil nunca é usado em produção — lá, o
+# profile ativo é outro e as credenciais reais vêm sempre de variável de ambiente,
+# sem default (ver application.yml e seção 12 do plano).
 
 spring:
   datasource:
     url: ${DB_URL:jdbc:postgresql://localhost:5432/authserver}
+    username: ${DB_USERNAME:authserver}
+    password: ${DB_PASSWORD:authserver}
 
   jpa:
     show-sql: true
@@ -20,6 +24,12 @@ spring:
   mail:
     host: ${SMTP_HOST:localhost}
     port: ${SMTP_PORT:1025}
+    username: ${SMTP_USERNAME:}
+    password: ${SMTP_PASSWORD:}
+
+authserver:
+  email:
+    sender: ${EMAIL_SENDER:dev@localhost}
 
 server:
   error:
