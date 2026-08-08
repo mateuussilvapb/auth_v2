@@ -120,6 +120,28 @@ class ResetPasswordServiceTest {
     }
 
     @Test
+    void deveEnviarEmailAoResetarSenhaViaAdmin() {
+        when(userRepository.findByTenantIdAndId(TenantId.of(1L), UserId.of(1L)))
+                .thenReturn(Optional.of(existingUser()));
+        when(idGenerator.generate()).thenReturn(1L);
+        when(passwordResetTokenRepository.save(any(PasswordResetToken.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        service.requestResetForUser(TenantId.of(1L), UserId.of(1L));
+
+        verify(emailSender).sendPasswordResetEmail(eq("joao@acme.com"), eq("João da Silva"), any());
+    }
+
+    @Test
+    void deveLancarExcecaoQuandoUsuarioNaoEncontradoNoResetViaAdmin() {
+        when(userRepository.findByTenantIdAndId(TenantId.of(1L), UserId.of(999L))).thenReturn(Optional.empty());
+
+        assertThrows(com.mssousa.authserver.application.exception.ResourceNotFoundException.class,
+                () -> service.requestResetForUser(TenantId.of(1L), UserId.of(999L)));
+        verifyNoInteractions(emailSender);
+    }
+
+    @Test
     void deveConfirmarRedefinicaoComTokenValido() {
         PasswordResetToken.GeneratedToken generated = PasswordResetToken.create(
                 PasswordResetTokenId.of(1L), UserId.of(1L), Instant.now().plus(30, ChronoUnit.MINUTES));

@@ -1,5 +1,6 @@
 package com.mssousa.authserver.application.service.resetpassword;
 
+import com.mssousa.authserver.application.exception.ResourceNotFoundException;
 import com.mssousa.authserver.application.port.in.ResetPasswordUseCase;
 import com.mssousa.authserver.application.port.out.EmailSenderPort;
 import com.mssousa.authserver.application.port.out.IdGeneratorPort;
@@ -8,6 +9,7 @@ import com.mssousa.authserver.application.port.out.SystemRepository;
 import com.mssousa.authserver.application.port.out.SystemTenantRepository;
 import com.mssousa.authserver.application.port.out.UserRepository;
 import com.mssousa.authserver.domain.exception.DomainException;
+import com.mssousa.authserver.domain.model.user.UserId;
 import com.mssousa.authserver.domain.model.binding.systemTenant.SystemTenant;
 import com.mssousa.authserver.domain.model.system.ClientId;
 import com.mssousa.authserver.domain.model.tenant.TenantId;
@@ -64,6 +66,14 @@ public class ResetPasswordService implements ResetPasswordUseCase {
         resolveTenantId(clientId)
                 .flatMap(tenantId -> resolveUser(tenantId, usernameOrEmail))
                 .ifPresent(this::generateAndSendToken);
+    }
+
+    @Override
+    @Transactional
+    public void requestResetForUser(TenantId tenantId, UserId userId) {
+        User user = userRepository.findByTenantIdAndId(tenantId, userId)
+                .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado: " + userId));
+        generateAndSendToken(user);
     }
 
     private Optional<TenantId> resolveTenantId(String clientId) {

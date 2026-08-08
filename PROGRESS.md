@@ -87,7 +87,7 @@ Cada fase deve estar verde nos testes antes da seguinte. Atualizado a cada item 
   - [x] Tenants (`POST` · `GET` · `GET /{id}` · `PUT /{id}` · `PATCH /{id}/status`)
   - [x] Sistemas (`POST` · `GET` · `PUT /{id}` · `PATCH /{id}/status` · redirect-uris · rotate-secret)
   - [x] Perfis (aninhados sob `/systems/{systemId}/profiles/{id}` — ver Notas)
-  - [ ] Usuários
+  - [x] Usuários (aninhados sob `/tenants/{tenantId}/users/{id}`, inclui reset-password administrativo)
   - [ ] Vínculos
   - [ ] Platform admins
 - [ ] OpenAPI/Swagger
