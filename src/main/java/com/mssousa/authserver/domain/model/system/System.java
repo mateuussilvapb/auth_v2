@@ -25,7 +25,7 @@ public class System {
 
     private final SystemId id;
     private final ClientId clientId;
-    private String clientSecret;
+    private ClientSecret clientSecret;
     private String name;
     private final boolean publicClient;
     private final List<RedirectUri> redirectUris;
@@ -66,7 +66,7 @@ public class System {
         if (publicClient && clientSecret != null) {
             throw new DomainException(ERROR_SECRET_NOT_ALLOWED_FOR_PUBLIC);
         }
-        if (!publicClient && (clientSecret == null || clientSecret.isBlank())) {
+        if (!publicClient && clientSecret == null) {
             throw new DomainException(ERROR_SECRET_REQUIRED_FOR_CONFIDENTIAL);
         }
     }
@@ -79,7 +79,7 @@ public class System {
         return clientId;
     }
 
-    public String getClientSecret() {
+    public ClientSecret getClientSecret() {
         return clientSecret;
     }
 
@@ -133,11 +133,11 @@ public class System {
      *
      * @throws DomainException se o sistema for um client público
      */
-    public void rotateSecret(String newSecret) {
+    public void rotateSecret(ClientSecret newSecret) {
         if (publicClient) {
             throw new DomainException(ERROR_SECRET_NOT_ALLOWED_FOR_PUBLIC);
         }
-        if (newSecret == null || newSecret.isBlank()) {
+        if (newSecret == null) {
             throw new DomainException(ERROR_SECRET_REQUIRED_FOR_CONFIDENTIAL);
         }
         this.clientSecret = newSecret;
@@ -179,7 +179,7 @@ public class System {
         if (publicClient || providedSecret == null || clientSecret == null) {
             return false;
         }
-        return this.clientSecret.equals(providedSecret);
+        return this.clientSecret.matches(providedSecret);
     }
 
     public static Builder builder() {
@@ -189,7 +189,7 @@ public class System {
     public static class Builder {
         private SystemId id;
         private ClientId clientId;
-        private String clientSecret;
+        private ClientSecret clientSecret;
         private String name;
         private boolean publicClient = true;
         private final List<RedirectUri> redirectUris = new ArrayList<>();
@@ -205,7 +205,7 @@ public class System {
             return this;
         }
 
-        public Builder clientSecret(String clientSecret) {
+        public Builder clientSecret(ClientSecret clientSecret) {
             this.clientSecret = clientSecret;
             return this;
         }

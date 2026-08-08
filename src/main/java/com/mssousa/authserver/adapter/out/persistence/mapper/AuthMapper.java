@@ -26,6 +26,7 @@ import com.mssousa.authserver.domain.model.profile.ProfileStatus;
 import com.mssousa.authserver.domain.model.profile.SystemProfile;
 import com.mssousa.authserver.domain.model.profile.SystemProfileId;
 import com.mssousa.authserver.domain.model.system.ClientId;
+import com.mssousa.authserver.domain.model.system.ClientSecret;
 import com.mssousa.authserver.domain.model.system.RedirectUri;
 import com.mssousa.authserver.domain.model.system.System;
 import com.mssousa.authserver.domain.model.system.SystemId;
@@ -122,7 +123,7 @@ public class AuthMapper {
         System.Builder builder = System.builder()
                 .id(SystemId.of(entity.getId()))
                 .clientId(ClientId.of(entity.getClientId()))
-                .clientSecret(entity.getClientSecret())
+                .clientSecret(entity.getClientSecret() == null ? null : ClientSecret.fromHash(entity.getClientSecret()))
                 .name(entity.getName())
                 .publicClient(entity.isPublicClient())
                 .status(SystemStatus.valueOf(entity.getStatus()));
@@ -136,7 +137,7 @@ public class AuthMapper {
         SystemEntity entity = new SystemEntity();
         entity.setId(system.getId().value());
         entity.setClientId(system.getClientId().value());
-        entity.setClientSecret(system.getClientSecret());
+        entity.setClientSecret(system.getClientSecret() == null ? null : system.getClientSecret().hashedValue());
         entity.setName(system.getName());
         entity.setPublicClient(system.isPublicClient());
         entity.setStatus(system.getStatus().name());

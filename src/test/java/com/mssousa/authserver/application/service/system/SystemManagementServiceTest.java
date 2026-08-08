@@ -9,6 +9,7 @@ import com.mssousa.authserver.domain.exception.DomainException;
 import com.mssousa.authserver.domain.model.binding.systemTenant.SystemTenant;
 import com.mssousa.authserver.domain.model.binding.systemTenant.SystemTenantId;
 import com.mssousa.authserver.domain.model.system.ClientId;
+import com.mssousa.authserver.domain.model.system.ClientSecret;
 import com.mssousa.authserver.domain.model.system.RedirectUri;
 import com.mssousa.authserver.domain.model.system.System;
 import com.mssousa.authserver.domain.model.system.SystemId;
@@ -104,13 +105,13 @@ class SystemManagementServiceTest {
     void deveRotacionarSecretDeSistemaConfidencial() {
         System confidential = System.builder()
                 .id(SystemId.of(2L)).clientId(ClientId.of("BACKOFFICE")).name("Backoffice")
-                .publicClient(false).clientSecret("secret-antigo")
+                .publicClient(false).clientSecret(ClientSecret.fromPlainText("secret-antigo"))
                 .redirectUri(RedirectUri.of("https://backoffice.acme.com/callback")).build();
         when(systemRepository.findById(SystemId.of(2L))).thenReturn(Optional.of(confidential));
         when(systemRepository.save(any(System.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         System updated = service.rotateSecret(SystemId.of(2L), "secret-novo");
-        assertEquals("secret-novo", updated.getClientSecret());
+        assertTrue(updated.verifyClientSecret("secret-novo"));
     }
 
     @Test

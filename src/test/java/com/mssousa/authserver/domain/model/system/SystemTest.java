@@ -22,7 +22,7 @@ class SystemTest {
                 .clientId(ClientId.of("BACKOFFICE_ACME"))
                 .name("Backoffice Acme")
                 .publicClient(false)
-                .clientSecret("super-secret")
+                .clientSecret(ClientSecret.fromPlainText("super-secret"))
                 .redirectUri(RedirectUri.of("https://backoffice.acme.com/callback"));
     }
 
@@ -43,7 +43,7 @@ class SystemTest {
         System system = confidentialClientBuilder().build();
 
         assertFalse(system.isPublicClient());
-        assertEquals("super-secret", system.getClientSecret());
+        assertTrue(system.verifyClientSecret("super-secret"));
     }
 
     @Test
@@ -111,7 +111,7 @@ class SystemTest {
                         .clientId(ClientId.of("CRM_ACME"))
                         .name("CRM")
                         .publicClient(true)
-                        .clientSecret("nao-deveria-existir")
+                        .clientSecret(ClientSecret.fromPlainText("nao-deveria-existir"))
                         .redirectUri(RedirectUri.of("https://crm.acme.com/callback"))
                         .build());
         assertEquals(System.ERROR_SECRET_NOT_ALLOWED_FOR_PUBLIC, exception.getMessage());
@@ -166,8 +166,7 @@ class SystemTest {
     @Test
     void deveRotacionarSecretDeClientConfidencial() {
         System system = confidentialClientBuilder().build();
-        system.rotateSecret("novo-secret");
-        assertEquals("novo-secret", system.getClientSecret());
+        system.rotateSecret(ClientSecret.fromPlainText("novo-secret"));
         assertTrue(system.verifyClientSecret("novo-secret"));
         assertFalse(system.verifyClientSecret("super-secret"));
     }
@@ -175,7 +174,8 @@ class SystemTest {
     @Test
     void deveLancarExcecaoAoRotacionarSecretDeClientPublico() {
         System system = publicClientBuilder().build();
-        DomainException exception = assertThrows(DomainException.class, () -> system.rotateSecret("qualquer"));
+        DomainException exception = assertThrows(DomainException.class,
+                () -> system.rotateSecret(ClientSecret.fromPlainText("qualquer1234")));
         assertEquals(System.ERROR_SECRET_NOT_ALLOWED_FOR_PUBLIC, exception.getMessage());
     }
 

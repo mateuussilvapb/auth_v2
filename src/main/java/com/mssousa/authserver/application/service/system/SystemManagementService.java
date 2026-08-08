@@ -10,6 +10,7 @@ import com.mssousa.authserver.domain.exception.DomainException;
 import com.mssousa.authserver.domain.model.binding.systemTenant.SystemTenant;
 import com.mssousa.authserver.domain.model.binding.systemTenant.SystemTenantId;
 import com.mssousa.authserver.domain.model.system.ClientId;
+import com.mssousa.authserver.domain.model.system.ClientSecret;
 import com.mssousa.authserver.domain.model.system.RedirectUri;
 import com.mssousa.authserver.domain.model.system.System;
 import com.mssousa.authserver.domain.model.system.SystemId;
@@ -49,7 +50,7 @@ public class SystemManagementService implements ManageSystemUseCase {
                 .clientId(systemClientId)
                 .name(name)
                 .publicClient(publicClient)
-                .clientSecret(clientSecret);
+                .clientSecret(clientSecret == null ? null : ClientSecret.fromPlainText(clientSecret));
 
         initialRedirectUris.forEach(uri -> builder.redirectUri(RedirectUri.of(uri)));
 
@@ -109,7 +110,7 @@ public class SystemManagementService implements ManageSystemUseCase {
     @Transactional
     public System rotateSecret(SystemId id, String newSecret) {
         System system = findByIdOrThrow(id);
-        system.rotateSecret(newSecret);
+        system.rotateSecret(ClientSecret.fromPlainText(newSecret));
         return systemRepository.save(system);
     }
 
