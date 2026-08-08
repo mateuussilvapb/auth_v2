@@ -86,7 +86,7 @@ Cada fase deve estar verde nos testes antes da seguinte. Atualizado a cada item 
 - Controllers da seção 9 (`/admin/api/v1`, DTOs com Bean Validation, testes de integração — item a item):
   - [x] Tenants (`POST` · `GET` · `GET /{id}` · `PUT /{id}` · `PATCH /{id}/status`)
   - [x] Sistemas (`POST` · `GET` · `PUT /{id}` · `PATCH /{id}/status` · redirect-uris · rotate-secret)
-  - [ ] Perfis
+  - [x] Perfis (aninhados sob `/systems/{systemId}/profiles/{id}` — ver Notas)
   - [ ] Usuários
   - [ ] Vínculos
   - [ ] Platform admins
@@ -124,6 +124,12 @@ Cada fase deve estar verde nos testes antes da seguinte. Atualizado a cada item 
 
 ## Notas
 
+- **Rotas de perfil aninhadas sob `/systems/{systemId}/profiles/{id}`, não
+  `/profiles/{id}` como a tabela da seção 9 sugere.** `ManageProfileUseCase` exige
+  `systemId` **e** `id` em toda operação além de criar/listar (`SystemProfile` só existe
+  dentro de um sistema, `UNIQUE (systemId, code)`) — usar a rota flat exigiria uma busca
+  extra só para descobrir a qual sistema um `id` de perfil pertence. Mesmo raciocínio já
+  aplicado ao `DELETE` de redirect URI do `SystemController`.
 - **Nunca registre um `JsonMapper`/`ObjectMapper` customizado como `@Bean` sem `@Qualifier`
   dedicado.** Descoberto ao escrever os testes do `SystemController` (Fase 8): o
   `oauth2AuthorizationJsonMapper` da Fase 6 era um `@Bean JsonMapper` — como era o único
