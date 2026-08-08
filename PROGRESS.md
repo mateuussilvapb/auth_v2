@@ -75,11 +75,13 @@ Cada fase deve estar verde nos testes antes da seguinte. Atualizado a cada item 
 - [x] Bloqueio por N tentativas de login (adiado da Fase 6 — ver Notas)
 - [x] Endpoint público de branding por tenant (nome/logo resolvidos pelo `client_id`)
 - [x] Fluxo de "esqueci minha senha" (`POST /api/auth/forgot-password`, `POST /api/auth/reset-password`)
-- [ ] `POST /api/auth/consent` — decisão de consentimento (se houver client de terceiro)
-- [ ] Mensagens de erro genéricas na API (sem vazar existência de usuário)
-- [ ] Testes com MockMvc/`@WebMvcTest`
+- [ ] `POST /api/auth/consent` — decisão de consentimento (adiado para a Fase 8 — ver Notas)
+- [x] Mensagens de erro genéricas na API (sem vazar existência de usuário)
+- [x] Testes com MockMvc/`@WebMvcTest`
 
 ## Fase 8 — API administrativa
+- [ ] Flag de "cliente de terceiro" em `System` (`ManageSystemUseCase`) — pré-requisito do consentimento adiado da Fase 7
+- [ ] `POST /api/auth/consent` + `JdbcOAuth2AuthorizationConsentService` (adiado da Fase 7 — ver Notas)
 - [ ] Controllers da seção 9
 - [ ] DTOs de request/response com Bean Validation
 - [ ] `GlobalExceptionHandler`
@@ -118,6 +120,18 @@ Cada fase deve estar verde nos testes antes da seguinte. Atualizado a cada item 
 
 ## Notas
 
+- **`POST /api/auth/consent` adiado para a Fase 8.** O plano menciona o endpoint só de
+  passagem ("quando existir client de terceiro", seção 2.2) e não define nenhum critério
+  para um `System` ser "de terceiro" — hoje `SystemRegisteredClientRepository` grava
+  `requireAuthorizationConsent(false)` para todo client, sem exceção, então o fluxo de
+  consentimento do Spring Authorization Server nunca dispara (não haveria como testar o
+  endpoint de ponta a ponta). Decisão confirmada com o usuário: implementar esse item
+  junto da Fase 8, quando `ManageSystemUseCase` ganhar o flag de "cliente de terceiro" que
+  o consentimento depende — só faz sentido construir o endpoint depois que existir uma
+  forma real de acioná-lo. A tabela `oauth2_authorization_consent` já existe desde a
+  migration V11 (Fase 3), só falta o `JdbcOAuth2AuthorizationConsentService` (hoje o
+  Authorization Server usa o `InMemoryOAuth2AuthorizationConsentService` default do Boot,
+  irrelevante enquanto consentimento nunca é exigido).
 - **`UserRepository.findById(UserId)` é uma exceção deliberada à regra do TenantId
   obrigatório** (seção 6.5): é busca por chave primária, não por critério de pesquisa,
   então não há risco de vazamento entre tenants. Único consumidor por enquanto:
