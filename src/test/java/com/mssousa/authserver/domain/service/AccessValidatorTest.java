@@ -134,6 +134,18 @@ class AccessValidatorTest {
     }
 
     @Test
+    void deveLancarExcecaoQuandoUsuarioBloqueadoPorTentativas() {
+        User user = activeUser();
+        for (int i = 0; i < User.MAX_FAILED_LOGIN_ATTEMPTS; i++) {
+            user.registerFailedLoginAttempt();
+        }
+
+        DomainException exception = assertThrows(DomainException.class, () -> validator.validateLoginAccess(
+                activeTenant(), activeSystem(), activeSystemTenant(), user, activeUserSystem()));
+        assertEquals(AccessValidator.ERROR_USER_LOCKED, exception.getMessage());
+    }
+
+    @Test
     void deveLancarExcecaoQuandoVinculoUsuarioSistemaInativo() {
         UserSystem userSystem = activeUserSystem();
         userSystem.block();

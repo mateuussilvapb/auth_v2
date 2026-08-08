@@ -3,6 +3,9 @@ package com.mssousa.authserver.domain.model.user;
 import com.mssousa.authserver.domain.exception.DomainException;
 import com.mssousa.authserver.domain.model.tenant.TenantId;
 
+import java.time.Duration;
+import java.time.Instant;
+
 /**
  * Entidade de domínio representando um Usuário final.
  * <p>
@@ -17,6 +20,10 @@ public class User {
     public static final String ERROR_TENANT_ID_REQUIRED = "TenantId não pode ser nulo";
     public static final String ERROR_NAME_REQUIRED = "Nome do usuário não pode ser nulo ou vazio";
 
+    /** Seção 7.4 do plano: bloqueio de conta após N tentativas falhas. */
+    public static final int MAX_FAILED_LOGIN_ATTEMPTS = 5;
+    public static final Duration LOCKOUT_DURATION = Duration.ofMinutes(15);
+
     private final UserId id;
     private final TenantId tenantId;
     private final Username username;
@@ -24,6 +31,8 @@ public class User {
     private Password password;
     private String name;
     private UserStatus status;
+    private int failedLoginAttempts;
+    private Instant lockedUntil;
 
     private User(Builder builder) {
         this.id = builder.id;
@@ -33,6 +42,8 @@ public class User {
         this.password = builder.password;
         this.name = builder.name;
         this.status = builder.status;
+        this.failedLoginAttempts = builder.failedLoginAttempts;
+        this.lockedUntil = builder.lockedUntil;
 
         validate();
     }
@@ -84,6 +95,14 @@ public class User {
 
     public UserStatus getStatus() {
         return status;
+    }
+
+    public int getFailedLoginAttempts() {
+        return failedLoginAttempts;
+    }
+
+    public Instant getLockedUntil() {
+        return lockedUntil;
     }
 
     /**
@@ -147,7 +166,34 @@ public class User {
      * </p>
      */
     public boolean canLogin() {
-        return status == UserStatus.ACTIVE;
+        return status == UserStatus.ACTIVE && !isLocked();
+    }
+
+    /**
+     * Verifica se o usuário está temporariamente bloqueado por excesso de tentativas de
+     * login falhas (seção 7.4 do plano) — independente do {@code status}.
+     */
+    public boolean isLocked() {
+        return lockedUntil != null && lockedUntil.isAfter(Instant.now());
+    }
+
+    /**
+     * Registra uma tentativa de login falha. Ao atingir {@link #MAX_FAILED_LOGIN_ATTEMPTS},
+     * bloqueia o usuário por {@link #LOCKOUT_DURATION} a partir de agora.
+     */
+    public void registerFailedLoginAttempt() {
+        failedLoginAttempts++;
+        if (failedLoginAttempts >= MAX_FAILED_LOGIN_ATTEMPTS) {
+            lockedUntil = Instant.now().plus(LOCKOUT_DURATION);
+        }
+    }
+
+    /**
+     * Login bem-sucedido zera o contador de tentativas e qualquer bloqueio em vigor.
+     */
+    public void registerSuccessfulLogin() {
+        failedLoginAttempts = 0;
+        lockedUntil = null;
     }
 
     /**
@@ -183,6 +229,8 @@ public class User {
         private Password password;
         private String name;
         private UserStatus status = UserStatus.ACTIVE;
+        private int failedLoginAttempts = 0;
+        private Instant lockedUntil;
 
         public Builder id(UserId id) {
             this.id = id;
@@ -216,6 +264,16 @@ public class User {
 
         public Builder status(UserStatus status) {
             this.status = status != null ? status : UserStatus.ACTIVE;
+            return this;
+        }
+
+        public Builder failedLoginAttempts(int failedLoginAttempts) {
+            this.failedLoginAttempts = failedLoginAttempts;
+            return this;
+        }
+
+        public Builder lockedUntil(Instant lockedUntil) {
+            this.lockedUntil = lockedUntil;
             return this;
         }
 

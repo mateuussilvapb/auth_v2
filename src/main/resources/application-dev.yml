@@ -32,6 +32,14 @@ authserver:
     sender: ${EMAIL_SENDER:dev@localhost}
   frontend:
     reset-password-url: ${RESET_PASSWORD_URL:http://localhost:4200/reset-password}
+  # Limites de produção (10/30/60 por minuto, ver application.yml) atrapalhariam tanto o
+  # desenvolvimento local quanto a suíte de testes de integração, que roda sob este
+  # profile e compartilha o mesmo bean singleton de RateLimitFilter entre todas as classes
+  # de teste na mesma execução do Maven.
+  rate-limit:
+    login: 100000
+    token: 100000
+    admin-api: 100000
 
 server:
   error:

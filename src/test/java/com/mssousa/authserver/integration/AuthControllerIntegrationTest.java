@@ -92,6 +92,40 @@ class AuthControllerIntegrationTest extends AbstractRepositoryIntegrationTest {
     }
 
     @Test
+    void deveBloquearUsuarioAposExcederLimiteDeTentativasFalhas() throws Exception {
+        Tenant tenant = createAndSaveTenant("umbrella");
+        System system = createAndSaveSystem("CRM_UMBRELLA_LOGIN");
+        systemTenantRepository.save(SystemTenant.builder()
+                .id(SystemTenantId.of(idGenerator.generate()))
+                .tenantId(tenant.getId()).systemId(system.getId()).build());
+        User user = createAndSaveUser(tenant.getId(), "ana_lima", "ana@umbrella.com");
+        userSystemRepository.save(UserSystem.builder()
+                .id(UserSystemId.of(idGenerator.generate()))
+                .userId(user.getId()).systemId(system.getId()).tenantId(tenant.getId()).build());
+
+        String wrongPasswordBody = """
+                {"clientId":"%s","usernameOrEmail":"ana_lima","password":"senhaErrada"}
+                """.formatted(system.getClientId().value());
+
+        for (int i = 0; i < User.MAX_FAILED_LOGIN_ATTEMPTS; i++) {
+            mockMvc.perform(post("/api/auth/login")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(wrongPasswordBody))
+                    .andExpect(status().isUnauthorized());
+        }
+
+        String correctPasswordBody = """
+                {"clientId":"%s","usernameOrEmail":"ana_lima","password":"senhaSegura123"}
+                """.formatted(system.getClientId().value());
+
+        mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(correctPasswordBody))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.message").value(GENERIC_ERROR));
+    }
+
+    @Test
     void deveRejeitarRequisicaoComCamposEmBranco() throws Exception {
         mockMvc.perform(post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)

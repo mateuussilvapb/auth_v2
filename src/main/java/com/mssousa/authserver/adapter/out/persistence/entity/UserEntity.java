@@ -9,6 +9,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Table(name = "\"user\"")
 @Getter
@@ -34,4 +36,10 @@ public class UserEntity extends UpdatableJpaEntity {
 
     @Column(nullable = false, length = 20)
     private String status;
+
+    @Column(name = "failed_login_attempts", nullable = false)
+    private int failedLoginAttempts;
+
+    @Column(name = "locked_until")
+    private LocalDateTime lockedUntil;
 }

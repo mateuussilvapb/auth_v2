@@ -26,6 +26,7 @@ public class AccessValidator {
     public static final String ERROR_TENANT_INACTIVE = "Tenant está inativo";
     public static final String ERROR_SYSTEM_INACTIVE = "Sistema está inativo";
     public static final String ERROR_USER_INACTIVE = "Usuário está inativo ou bloqueado";
+    public static final String ERROR_USER_LOCKED = "Usuário temporariamente bloqueado por excesso de tentativas de login";
     public static final String ERROR_PROFILE_INACTIVE = "Perfil está inativo";
 
     /**
@@ -44,6 +45,9 @@ public class AccessValidator {
         systemTenant.validateAccess();
         if (!user.isActive()) {
             throw new DomainException(ERROR_USER_INACTIVE);
+        }
+        if (user.isLocked()) {
+            throw new DomainException(ERROR_USER_LOCKED);
         }
         userSystem.validateAccess();
     }

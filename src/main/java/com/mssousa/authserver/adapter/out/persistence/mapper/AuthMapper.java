@@ -192,6 +192,8 @@ public class AuthMapper {
                 .password(Password.fromHash(entity.getPasswordHash()))
                 .name(entity.getName())
                 .status(UserStatus.valueOf(entity.getStatus()))
+                .failedLoginAttempts(entity.getFailedLoginAttempts())
+                .lockedUntil(entity.getLockedUntil() == null ? null : entity.getLockedUntil().toInstant(ZoneOffset.UTC))
                 .build();
     }
 
@@ -205,6 +207,8 @@ public class AuthMapper {
         entity.setPasswordHash(user.getPassword().hashedValue());
         entity.setName(user.getName());
         entity.setStatus(user.getStatus().name());
+        entity.setFailedLoginAttempts(user.getFailedLoginAttempts());
+        entity.setLockedUntil(user.getLockedUntil() == null ? null : user.getLockedUntil().atZone(ZoneOffset.UTC).toLocalDateTime());
         return entity;
     }
 

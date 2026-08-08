@@ -4,6 +4,8 @@ import com.mssousa.authserver.domain.exception.DomainException;
 import com.mssousa.authserver.domain.model.tenant.TenantId;
 import org.junit.jupiter.api.Test;
 
+import java.time.Instant;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 class UserTest {
@@ -209,5 +211,51 @@ class UserTest {
         User user = validBuilder().build();
         assertTrue(user.belongsToTenant(TenantId.of(1L)));
         assertFalse(user.belongsToTenant(TenantId.of(2L)));
+    }
+
+    @Test
+    void naoDeveBloquearAntesDeAtingirOLimiteDeTentativas() {
+        User user = validBuilder().build();
+        for (int i = 0; i < User.MAX_FAILED_LOGIN_ATTEMPTS - 1; i++) {
+            user.registerFailedLoginAttempt();
+        }
+        assertFalse(user.isLocked());
+        assertTrue(user.canLogin());
+        assertEquals(User.MAX_FAILED_LOGIN_ATTEMPTS - 1, user.getFailedLoginAttempts());
+    }
+
+    @Test
+    void deveBloquearAoAtingirOLimiteDeTentativasFalhas() {
+        User user = validBuilder().build();
+        for (int i = 0; i < User.MAX_FAILED_LOGIN_ATTEMPTS; i++) {
+            user.registerFailedLoginAttempt();
+        }
+        assertTrue(user.isLocked());
+        assertFalse(user.canLogin());
+        assertNotNull(user.getLockedUntil());
+        assertTrue(user.getLockedUntil().isAfter(Instant.now()));
+    }
+
+    @Test
+    void loginBemSucedidoZeraContadorEBloqueio() {
+        User user = validBuilder().build();
+        for (int i = 0; i < User.MAX_FAILED_LOGIN_ATTEMPTS; i++) {
+            user.registerFailedLoginAttempt();
+        }
+        assertTrue(user.isLocked());
+
+        user.registerSuccessfulLogin();
+
+        assertFalse(user.isLocked());
+        assertEquals(0, user.getFailedLoginAttempts());
+        assertNull(user.getLockedUntil());
+        assertTrue(user.canLogin());
+    }
+
+    @Test
+    void usuarioComBloqueioExpiradoNaoEstaMaisBloqueado() {
+        User user = validBuilder().lockedUntil(Instant.now().minusSeconds(1)).build();
+        assertFalse(user.isLocked());
+        assertTrue(user.canLogin());
     }
 }

@@ -72,7 +72,7 @@ Cada fase deve estar verde nos testes antes da seguinte. Atualizado a cada item 
 
 ## Fase 7 — API de autenticação e consentimento (backend, consumida pelo Angular)
 - [x] `POST /api/auth/login` — autenticação baseada em sessão (não é endpoint OAuth2), dentro do tenant resolvido pelo `client_id` (ver 2.2 do plano)
-- [ ] Bloqueio por N tentativas de login (adiado da Fase 6 — ver Notas)
+- [x] Bloqueio por N tentativas de login (adiado da Fase 6 — ver Notas)
 - [ ] Endpoint público de branding por tenant (nome/logo resolvidos pelo `client_id`)
 - [ ] Fluxo de "esqueci minha senha" (`POST /api/auth/forgot-password`, `POST /api/auth/reset-password`)
 - [ ] `POST /api/auth/consent` — decisão de consentimento (se houver client de terceiro)
@@ -185,6 +185,22 @@ Cada fase deve estar verde nos testes antes da seguinte. Atualizado a cada item 
   via `setAuthorizationRowMapper`/`setAuthorizationParametersMapper` em
   `AuthorizationServerConfig`. Qualquer novo campo/VO usado dentro de `AuthenticatedUser`
   precisa de um mixin correspondente, senão o mesmo erro volta.
+- **Bloqueio por tentativas fica no `User` (domínio), não num serviço à parte.**
+  `failedLoginAttempts`/`lockedUntil` são estado do próprio agregado — `registerFailedLoginAttempt()`
+  incrementa e bloqueia por `User.LOCKOUT_DURATION` ao atingir `User.MAX_FAILED_LOGIN_ATTEMPTS`;
+  `registerSuccessfulLogin()` zera os dois. `AccessValidator.validateLoginAccess` passou a
+  checar `user.isLocked()` (mesma mensagem genérica de sempre). `AuthenticationService.authenticate`
+  deixou de ser `@Transactional(readOnly = true)` porque agora persiste o `User` mutado em
+  ambos os caminhos (falha e sucesso). Migration `V12__add_login_lockout_to_user.sql`.
+- **`RateLimitFilter` tem limites configuráveis via `authserver.rate-limit.*` — necessário
+  para os testes de integração não se autoderrubarem.** O bucket é um bean singleton
+  compartilhado por todo o contexto Spring; como os testes de integração reutilizam o
+  mesmo contexto entre classes, chamadas a `/api/auth/login` em testes diferentes somam
+  no mesmo bucket por IP. `application-dev.yml` (perfil sob o qual a suíte roda) sobe os
+  limites para praticamente ilimitado; produção usa os defaults de `RateLimitFilter`
+  (10/30/60, seção 7.4). Qualquer novo teste de integração que bata repetidamente em
+  `/api/auth/login`, `/oauth2/token` ou `/admin/api/**` deve continuar contando com esse
+  override — não reduzir os limites do perfil `dev`.
 - **Como o console administrativo Angular (não vinculado a nenhum tenant) vira um OAuth2
   client ainda está em aberto.** `SystemRegisteredClientRepository` só resolve `System`
   (sempre vinculado a exatamente um tenant, seção 4.4). O client do console precisa de um

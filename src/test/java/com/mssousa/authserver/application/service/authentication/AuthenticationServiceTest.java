@@ -27,6 +27,7 @@ import com.mssousa.authserver.domain.service.AccessValidator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -226,5 +227,54 @@ class AuthenticationServiceTest {
 
         assertThrows(AuthenticationFailedException.class,
                 () -> service.authenticate("CRM_ACME", "joao_silva", "senhaErrada"));
+    }
+
+    @Test
+    void deveRegistrarTentativaFalhaESalvarUsuarioQuandoSenhaIncorreta() {
+        User user = activeUser();
+        stubHappyPathUpTo(user);
+        when(userRepository.findByTenantIdAndUsername(TenantId.of(1L), Username.of("joao_silva")))
+                .thenReturn(Optional.of(user));
+
+        assertThrows(AuthenticationFailedException.class,
+                () -> service.authenticate("CRM_ACME", "joao_silva", "senhaErrada"));
+
+        ArgumentCaptor<User> captor = ArgumentCaptor.forClass(User.class);
+        verify(userRepository).save(captor.capture());
+        assertEquals(1, captor.getValue().getFailedLoginAttempts());
+    }
+
+    @Test
+    void deveBloquearUsuarioAposAtingirLimiteDeTentativasFalhas() {
+        User user = activeUser();
+        for (int i = 0; i < User.MAX_FAILED_LOGIN_ATTEMPTS - 1; i++) {
+            user.registerFailedLoginAttempt();
+        }
+        stubHappyPathUpTo(user);
+        when(userRepository.findByTenantIdAndUsername(TenantId.of(1L), Username.of("joao_silva")))
+                .thenReturn(Optional.of(user));
+
+        assertThrows(AuthenticationFailedException.class,
+                () -> service.authenticate("CRM_ACME", "joao_silva", "senhaErrada"));
+
+        ArgumentCaptor<User> captor = ArgumentCaptor.forClass(User.class);
+        verify(userRepository).save(captor.capture());
+        assertTrue(captor.getValue().isLocked());
+    }
+
+    @Test
+    void deveZerarContadorDeTentativasAoAutenticarComSucesso() {
+        User user = activeUser();
+        user.registerFailedLoginAttempt();
+        user.registerFailedLoginAttempt();
+        stubHappyPathUpTo(user);
+        when(userRepository.findByTenantIdAndUsername(TenantId.of(1L), Username.of("joao_silva")))
+                .thenReturn(Optional.of(user));
+
+        service.authenticate("CRM_ACME", "joao_silva", "senhaSegura123");
+
+        ArgumentCaptor<User> captor = ArgumentCaptor.forClass(User.class);
+        verify(userRepository).save(captor.capture());
+        assertEquals(0, captor.getValue().getFailedLoginAttempts());
     }
 }

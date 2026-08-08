@@ -44,7 +44,7 @@ public class AuthenticationService implements AuthenticateUserUseCase {
     private final AccessValidator accessValidator;
 
     @Override
-    @Transactional(readOnly = true)
+    @Transactional
     public AuthenticatedUser authenticate(String clientId, String usernameOrEmail, String plainPassword) {
         System system = resolveSystem(clientId);
         SystemTenant systemTenant = resolveSystemTenant(system);
@@ -55,8 +55,13 @@ public class AuthenticationService implements AuthenticateUserUseCase {
         validateCascade(tenant, system, systemTenant, user, userSystem);
 
         if (!user.verifyPassword(plainPassword)) {
+            user.registerFailedLoginAttempt();
+            userRepository.save(user);
             throw new AuthenticationFailedException();
         }
+
+        user.registerSuccessfulLogin();
+        userRepository.save(user);
 
         return new AuthenticatedUser(user.getId(), tenant.getId(), system.getId(),
                 user.getUsername(), user.getEmail(), user.getName());
