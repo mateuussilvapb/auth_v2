@@ -45,6 +45,11 @@ spring:
           starttls:
             enable: true
 
+  security:
+    oauth2:
+      authorizationserver:
+        issuer: ${AUTH_ISSUER:https://auth.seudominio.com}
+
 server:
   port: 8080
 
