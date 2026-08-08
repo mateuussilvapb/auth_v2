@@ -51,12 +51,12 @@ Cada fase deve estar verde nos testes antes da seguinte. Atualizado a cada item 
 - [x] Testes unitários com Mockito
 
 ## Fase 5 — Aplicação: autenticação
-- [ ] `AuthenticateUserUseCase` — resolve por username **ou** e-mail, dentro do tenant
-- [ ] `AuthorizeUserUseCase` — retorna os códigos de perfil ativos
-- [ ] `AuthenticatePlatformAdminUseCase`
-- [ ] `ResetPasswordUseCase`
-- [ ] Falha sempre genérica; sem vazar existência de usuário
-- [ ] Testes cobrindo cada nível da cascata de status
+- [x] `AuthenticateUserUseCase` — resolve por username **ou** e-mail, dentro do tenant
+- [x] `AuthorizeUserUseCase` — retorna os códigos de perfil ativos
+- [x] `AuthenticatePlatformAdminUseCase`
+- [x] `ResetPasswordUseCase`
+- [x] Falha sempre genérica; sem vazar existência de usuário
+- [x] Testes cobrindo cada nível da cascata de status
 
 ## Fase 6 — Segurança e OAuth2
 - [ ] `SecurityConfig` — filter chains separados para `/oauth2/**`, `/admin/api/**` e `/api/auth/**` (público, consumido pelo SPA Angular)
@@ -116,6 +116,11 @@ Cada fase deve estar verde nos testes antes da seguinte. Atualizado a cada item 
 
 ## Notas
 
+- **`UserRepository.findById(UserId)` é uma exceção deliberada à regra do TenantId
+  obrigatório** (seção 6.5): é busca por chave primária, não por critério de pesquisa,
+  então não há risco de vazamento entre tenants. Único consumidor por enquanto:
+  `ResetPasswordService.confirmReset`, que só tem o `userId` guardado no token de reset
+  (a tabela `password_reset_token` não tem coluna de tenant).
 - **Gestão de Platform Admin ainda não tem use case.** A Fase 4 lista explicitamente
   "tenant, sistema, perfil, usuário e vínculos" — sem platform admin — então
   `ManagePlatformAdminUseCase`/`PlatformAdminManagementService` não foram criados agora

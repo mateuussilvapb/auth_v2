@@ -19,6 +19,14 @@ public interface UserRepository {
 
     User save(User user);
 
+    /**
+     * Busca por chave primária, sem escopo de tenant. Exceção deliberada à regra acima:
+     * não é uma busca (não há como "vazar" outro tenant nela — o ID já identifica a
+     * linha exata), usada apenas onde o tenant genuinamente não está disponível, como no
+     * fluxo de confirmação de redefinição de senha (o token carrega só o {@code userId}).
+     */
+    Optional<User> findById(UserId id);
+
     Optional<User> findByTenantIdAndId(TenantId tenantId, UserId id);
 
     Optional<User> findByTenantIdAndUsername(TenantId tenantId, Username username);

@@ -58,6 +58,9 @@ authserver:
   issuer: ${AUTH_ISSUER:https://auth.seudominio.com}
   email:
     sender: ${EMAIL_SENDER}
+  frontend:
+    # Rota pública do SPA Angular que recebe o token de redefinição de senha (seção 2.2)
+    reset-password-url: ${RESET_PASSWORD_URL:${authserver.issuer}/reset-password}
 
 logging:
   level:

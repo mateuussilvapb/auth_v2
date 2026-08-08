@@ -30,6 +30,8 @@ spring:
 authserver:
   email:
     sender: ${EMAIL_SENDER:dev@localhost}
+  frontend:
+    reset-password-url: ${RESET_PASSWORD_URL:http://localhost:4200/reset-password}
 
 server:
   error:
