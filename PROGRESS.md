@@ -13,12 +13,12 @@ Cada fase deve estar verde nos testes antes da seguinte. Atualizado a cada item 
 - [x] `README.md` com objetivo, modelo de dados e como subir
 
 ## Fase 1 — Domínio: núcleo
-- [ ] `shared/`: `DomainId`, `IdGenerator`
-- [ ] `exception/DomainException`
-- [ ] VOs: `TenantCode`, `Username`, `Email`, `Password`, `ClientId`, `ProfileCode`, `RedirectUri`
-- [ ] Enums de status (todos)
-- [ ] Entidades: `Tenant`, `PlatformAdmin`, `System`, `SystemProfile`, `User`
-- [ ] Testes unitários de cada VO e entidade (feliz + todas as violações de invariante)
+- [x] `shared/`: `DomainId`, `IdGenerator`
+- [x] `exception/DomainException`
+- [x] VOs: `TenantCode`, `Username`, `Email`, `Password`, `ClientId`, `ProfileCode`, `RedirectUri`
+- [x] Enums de status (todos)
+- [x] Entidades: `Tenant`, `PlatformAdmin`, `System`, `SystemProfile`, `User`
+- [x] Testes unitários de cada VO e entidade (feliz + todas as violações de invariante)
 
 ## Fase 2 — Domínio: bindings e serviços
 - [ ] `SystemTenant`, `UserSystem`, `UserSystemProfile` (+ IDs)
