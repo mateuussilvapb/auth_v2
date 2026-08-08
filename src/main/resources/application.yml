@@ -1,0 +1,65 @@
+# ==========================================
+# CONFIGURAÇÃO BASE (COMUM A TODOS OS PROFILES)
+# ==========================================
+# Nenhuma credencial fica neste arquivo. Tudo vem de variáveis de ambiente,
+# com application-local.yml (gitignored) para overrides de desenvolvimento local.
+
+spring:
+  application:
+    name: authserver
+
+  profiles:
+    active: dev
+
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+      connection-timeout: 30000
+
+  jpa:
+    open-in-view: false
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        format_sql: true
+
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+
+  mail:
+    host: ${SMTP_HOST}
+    port: ${SMTP_PORT}
+    username: ${SMTP_USERNAME}
+    password: ${SMTP_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+server:
+  port: 8080
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+
+authserver:
+  issuer: ${AUTH_ISSUER:https://auth.seudominio.com}
+  email:
+    sender: ${EMAIL_SENDER}
+
+logging:
+  level:
+    root: INFO
+    com.mssousa.authserver: INFO

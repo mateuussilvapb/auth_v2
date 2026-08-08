@@ -41,15 +41,30 @@ arquitetura hexagonal (Ports & Adapters).
 
 ```bash
 docker compose up -d
-./mvnw spring-boot:run
 ```
 
-O `docker-compose.yml` sobe Postgres e MailHog (captura de e-mails de dev). Credenciais
-de banco/e-mail ficam em variáveis de ambiente — nunca em `application*.yml` versionado.
+O `docker-compose.yml` sobe Postgres (`authserver`/`authserver`, uso local apenas) e
+MailHog (captura de e-mails de dev, UI em http://localhost:8025).
+
+Antes de rodar a aplicação, defina as variáveis de ambiente exigidas (sem defaults
+versionados, de propósito — ver seção 12 do plano):
+
+```bash
+export DB_USERNAME=authserver
+export DB_PASSWORD=authserver
+export SMTP_USERNAME=
+export SMTP_PASSWORD=
+export EMAIL_SENDER=noreply@seudominio.com
+
+mvn spring-boot:run
+```
+
+Alternativa: crie `src/main/resources/application-local.yml` (já no `.gitignore`) com
+esses valores e ative com `-Dspring-boot.run.profiles=dev,local`.
 
 ## Testes
 
 ```bash
-./mvnw test      # unitários
-./mvnw verify     # unitários + integração (Testcontainers) + ArchUnit
+mvn test      # unitários
+mvn verify    # unitários + integração (Testcontainers) + ArchUnit
 ```
