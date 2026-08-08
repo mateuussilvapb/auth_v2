@@ -21,12 +21,12 @@ Cada fase deve estar verde nos testes antes da seguinte. Atualizado a cada item 
 - [x] Testes unitários de cada VO e entidade (feliz + todas as violações de invariante)
 
 ## Fase 2 — Domínio: bindings e serviços
-- [ ] `SystemTenant`, `UserSystem`, `UserSystemProfile` (+ IDs)
-- [ ] `TenantConsistencyValidator`
-- [ ] `AccessValidator` — cascata completa de status (3.4)
-- [ ] `PlatformAdminPolicy`, `ProfileUniquenessPolicy`
-- [ ] `PasswordResetToken`, `ResetTokenValue`
-- [ ] Testes unitários de todos os serviços de domínio
+- [x] `SystemTenant`, `UserSystem`, `UserSystemProfile` (+ IDs)
+- [x] `TenantConsistencyValidator`
+- [x] `AccessValidator` — cascata completa de status (3.4)
+- [x] `PlatformAdminPolicy`, `ProfileUniquenessPolicy`
+- [x] `PasswordResetToken`, `ResetTokenValue`
+- [x] Testes unitários de todos os serviços de domínio
 
 ## Fase 3 — Persistência
 - [ ] Migrations V1–V11 (seção 4)
