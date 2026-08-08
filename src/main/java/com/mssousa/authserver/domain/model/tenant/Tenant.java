@@ -20,12 +20,14 @@ public class Tenant {
     private final TenantCode code;
     private String name;
     private TenantStatus status;
+    private String logoUrl;
 
     private Tenant(Builder builder) {
         this.id = builder.id;
         this.code = builder.code;
         this.name = builder.name;
         this.status = builder.status;
+        this.logoUrl = builder.logoUrl;
 
         validate();
     }
@@ -62,6 +64,15 @@ public class Tenant {
     }
 
     /**
+     * URL do logo exibido na tela de login/consentimento do SPA Angular (seção 7 do
+     * plano: "branding por tenant resolvido pelo client_id"). Opcional — {@code null}
+     * quando o tenant não tem logo configurado.
+     */
+    public String getLogoUrl() {
+        return logoUrl;
+    }
+
+    /**
      * Ativa o tenant, permitindo login em todos os seus sistemas.
      * Operação idempotente.
      */
@@ -94,6 +105,13 @@ public class Tenant {
         this.name = newName;
     }
 
+    /**
+     * Atualiza o logo. {@code null} remove o logo (volta ao branding padrão do Angular).
+     */
+    public void updateLogoUrl(String logoUrl) {
+        this.logoUrl = logoUrl;
+    }
+
     public static Builder builder() {
         return new Builder();
     }
@@ -103,6 +121,7 @@ public class Tenant {
         private TenantCode code;
         private String name;
         private TenantStatus status = TenantStatus.ACTIVE;
+        private String logoUrl;
 
         public Builder id(TenantId id) {
             this.id = id;
@@ -121,6 +140,11 @@ public class Tenant {
 
         public Builder status(TenantStatus status) {
             this.status = status != null ? status : TenantStatus.ACTIVE;
+            return this;
+        }
+
+        public Builder logoUrl(String logoUrl) {
+            this.logoUrl = logoUrl;
             return this;
         }
 

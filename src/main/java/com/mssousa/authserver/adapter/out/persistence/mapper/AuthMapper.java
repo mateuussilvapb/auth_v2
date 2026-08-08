@@ -77,6 +77,7 @@ public class AuthMapper {
                 .code(TenantCode.of(entity.getCode()))
                 .name(entity.getName())
                 .status(TenantStatus.valueOf(entity.getStatus()))
+                .logoUrl(entity.getLogoUrl())
                 .build();
     }
 
@@ -87,6 +88,7 @@ public class AuthMapper {
         entity.setCode(tenant.getCode().value());
         entity.setName(tenant.getName());
         entity.setStatus(tenant.getStatus().name());
+        entity.setLogoUrl(tenant.getLogoUrl());
         return entity;
     }
 

@@ -105,4 +105,30 @@ class TenantTest {
 
         assertEquals(originalCode, tenant.getCode());
     }
+
+    @Test
+    void logoUrlEhNuloPorPadrao() {
+        Tenant tenant = validBuilder().build();
+        assertNull(tenant.getLogoUrl());
+    }
+
+    @Test
+    void deveCriarTenantComLogoUrl() {
+        Tenant tenant = validBuilder().logoUrl("https://acme.com/logo.png").build();
+        assertEquals("https://acme.com/logo.png", tenant.getLogoUrl());
+    }
+
+    @Test
+    void deveAtualizarLogoUrl() {
+        Tenant tenant = validBuilder().build();
+        tenant.updateLogoUrl("https://acme.com/novo-logo.png");
+        assertEquals("https://acme.com/novo-logo.png", tenant.getLogoUrl());
+    }
+
+    @Test
+    void deveRemoverLogoUrlAoAtualizarParaNulo() {
+        Tenant tenant = validBuilder().logoUrl("https://acme.com/logo.png").build();
+        tenant.updateLogoUrl(null);
+        assertNull(tenant.getLogoUrl());
+    }
 }

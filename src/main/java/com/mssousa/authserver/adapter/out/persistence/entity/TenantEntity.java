@@ -22,4 +22,7 @@ public class TenantEntity extends UpdatableJpaEntity {
 
     @Column(nullable = false, length = 20)
     private String status;
+
+    @Column(name = "logo_url", length = 500)
+    private String logoUrl;
 }

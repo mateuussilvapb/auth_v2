@@ -8,6 +8,8 @@ import com.mssousa.authserver.domain.model.binding.userSystem.UserSystem;
 import com.mssousa.authserver.domain.model.binding.userSystem.UserSystemId;
 import com.mssousa.authserver.domain.model.system.System;
 import com.mssousa.authserver.domain.model.tenant.Tenant;
+import com.mssousa.authserver.domain.model.tenant.TenantCode;
+import com.mssousa.authserver.domain.model.tenant.TenantId;
 import com.mssousa.authserver.domain.model.user.User;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,6 +17,7 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -133,5 +136,31 @@ class AuthControllerIntegrationTest extends AbstractRepositoryIntegrationTest {
                                 {"clientId":"","usernameOrEmail":"","password":""}
                                 """))
                 .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void deveRetornarBrandingDoTenantParaClientIdValido() throws Exception {
+        Tenant tenant = Tenant.builder()
+                .id(TenantId.of(idGenerator.generate()))
+                .code(TenantCode.of("wayne"))
+                .name("Wayne Enterprises")
+                .logoUrl("https://wayne.example.com/logo.png")
+                .build();
+        tenantRepository.save(tenant);
+        System system = createAndSaveSystem("CRM_WAYNE_BRANDING");
+        systemTenantRepository.save(SystemTenant.builder()
+                .id(SystemTenantId.of(idGenerator.generate()))
+                .tenantId(tenant.getId()).systemId(system.getId()).build());
+
+        mockMvc.perform(get("/api/auth/branding").param("clientId", system.getClientId().value()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.tenantName").value("Wayne Enterprises"))
+                .andExpect(jsonPath("$.logoUrl").value("https://wayne.example.com/logo.png"));
+    }
+
+    @Test
+    void deveRetornar404ParaBrandingComClientIdDesconhecido() throws Exception {
+        mockMvc.perform(get("/api/auth/branding").param("clientId", "CLIENT_INEXISTENTE"))
+                .andExpect(status().isNotFound());
     }
 }
