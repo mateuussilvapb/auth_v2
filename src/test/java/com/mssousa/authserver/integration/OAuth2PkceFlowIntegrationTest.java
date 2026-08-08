@@ -17,6 +17,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockHttpSession;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -39,11 +40,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 /**
  * Testa o fluxo Authorization Code + PKCE de ponta a ponta (seção 7.1) contra os
- * endpoints reais /oauth2/authorize e /oauth2/token, confirmando emissão e validação de
- * token (assinatura + claims da seção 7.2). Como a tela de login (Fase 7) ainda não
- * existe, a autenticação do usuário é injetada diretamente no SecurityContext da
- * requisição — exatamente o mesmo Authentication que o AuthenticationProvider da Fase 6
- * produziria a partir de um login real.
+ * endpoints reais {@code POST /api/auth/login}, {@code /oauth2/authorize} e
+ * {@code /oauth2/token}, confirmando emissão e validação de token (assinatura + claims da
+ * seção 7.2) a partir de um login real (Fase 7), sessão real e tudo.
  */
 @AutoConfigureMockMvc
 class OAuth2PkceFlowIntegrationTest extends AbstractRepositoryIntegrationTest {
@@ -69,14 +68,19 @@ class OAuth2PkceFlowIntegrationTest extends AbstractRepositoryIntegrationTest {
                 .id(UserSystemId.of(idGenerator.generate()))
                 .userId(user.getId()).systemId(system.getId()).tenantId(tenant.getId()).build());
 
-        AuthenticatedUser authenticatedUser = new AuthenticatedUser(
-                user.getId(), tenant.getId(), system.getId(), user.getUsername(), user.getEmail(), user.getName());
-        Authentication principal = ClientAwareAuthenticationToken.authenticated(
-                system.getClientId().value(), authenticatedUser, List.of(new SimpleGrantedAuthority("ROLE_USER")));
-
         String redirectUri = system.getRedirectUris().get(0).value();
         String codeVerifier = generateCodeVerifier();
         String codeChallenge = generateCodeChallenge(codeVerifier);
+
+        MvcResult loginResult = mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"clientId":"%s","usernameOrEmail":"joao_silva","password":"senhaSegura123"}
+                                """.formatted(system.getClientId().value())))
+                .andExpect(status().isOk())
+                .andReturn();
+        MockHttpSession session = (MockHttpSession) loginResult.getRequest().getSession(false);
+        assertNotNull(session, "login deveria ter criado uma sessão");
 
         MvcResult authorizeResult = mockMvc.perform(get("/oauth2/authorize")
                         .queryParam("response_type", "code")
@@ -85,7 +89,7 @@ class OAuth2PkceFlowIntegrationTest extends AbstractRepositoryIntegrationTest {
                         .queryParam("code_challenge", codeChallenge)
                         .queryParam("code_challenge_method", "S256")
                         .queryParam("state", "xyz")
-                        .with(authentication(principal)))
+                        .session(session))
                 .andExpect(status().is3xxRedirection())
                 .andReturn();
 

@@ -71,7 +71,7 @@ Cada fase deve estar verde nos testes antes da seguinte. Atualizado a cada item 
 - [x] Testes de emissão e validação de token (fluxo completo Authorization Code + PKCE via MockMvc)
 
 ## Fase 7 — API de autenticação e consentimento (backend, consumida pelo Angular)
-- [ ] `POST /api/auth/login` — autenticação baseada em sessão (não é endpoint OAuth2), dentro do tenant resolvido pelo `client_id` (ver 2.2 do plano)
+- [x] `POST /api/auth/login` — autenticação baseada em sessão (não é endpoint OAuth2), dentro do tenant resolvido pelo `client_id` (ver 2.2 do plano)
 - [ ] Bloqueio por N tentativas de login (adiado da Fase 6 — ver Notas)
 - [ ] Endpoint público de branding por tenant (nome/logo resolvidos pelo `client_id`)
 - [ ] Fluxo de "esqueci minha senha" (`POST /api/auth/forgot-password`, `POST /api/auth/reset-password`)

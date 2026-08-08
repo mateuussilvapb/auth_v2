@@ -13,6 +13,8 @@ import org.springframework.security.config.annotation.web.configurers.oauth2.ser
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
+import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
+import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.security.web.util.matcher.MediaTypeRequestMatcher;
 import org.springframework.http.MediaType;
 
@@ -87,10 +89,24 @@ public class SecurityConfig {
 
     @Bean
     @Order(2)
-    public SecurityFilterChain apiAuthSecurityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain apiAuthSecurityFilterChain(
+            HttpSecurity http, SecurityContextRepository securityContextRepository) throws Exception {
         http.securityMatcher("/api/auth/**")
                 .authorizeHttpRequests(auth -> auth.anyRequest().permitAll())
+                .securityContext(context -> context.securityContextRepository(securityContextRepository))
                 .csrf(csrf -> csrf.disable());
         return http.build();
+    }
+
+    /**
+     * Explícito (em vez de depender do default do Spring Security) porque
+     * {@link com.mssousa.authserver.adapter.in.web.auth.AuthController} precisa da mesma
+     * instância para persistir a sessão após {@code POST /api/auth/login} — a leitura
+     * dessa sessão por {@code GET /oauth2/authorize} depende de os dois usarem o mesmo
+     * mecanismo (cookie de sessão HTTP, seção 2.2 do plano).
+     */
+    @Bean
+    public SecurityContextRepository securityContextRepository() {
+        return new HttpSessionSecurityContextRepository();
     }
 }
