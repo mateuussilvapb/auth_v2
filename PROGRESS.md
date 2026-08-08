@@ -88,7 +88,7 @@ Cada fase deve estar verde nos testes antes da seguinte. Atualizado a cada item 
   - [x] Sistemas (`POST` · `GET` · `PUT /{id}` · `PATCH /{id}/status` · redirect-uris · rotate-secret)
   - [x] Perfis (aninhados sob `/systems/{systemId}/profiles/{id}` — ver Notas)
   - [x] Usuários (aninhados sob `/tenants/{tenantId}/users/{id}`, inclui reset-password administrativo)
-  - [ ] Vínculos
+  - [x] Vínculos (aninhados sob `/tenants/{tenantId}/...` — ver Notas)
   - [ ] Platform admins
 - [ ] OpenAPI/Swagger
 - [ ] CORS para o SPA Angular
