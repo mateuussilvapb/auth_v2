@@ -40,7 +40,7 @@ Todas as decisões abaixo foram tomadas e **não devem ser revisitadas** durante
 | D3 | Cardinalidade sistema↔tenant | 1 sistema : 1 tenant, via binding `system_tenant` com `UNIQUE (system_id)` | O `client_id` resolve tenant + sistema deterministicamente |
 | D4 | Fluxo de autenticação | Authorization Code + PKCE (S256), com tela de login hospedada | SSO real entre sistemas do tenant; a senha nunca passa pelos satélites |
 | D5 | Arquitetura | Hexagonal (Ports & Adapters) estrita | Requisito explícito; o projeto atual já está a meio caminho |
-| D6 | Console de administração | SPA Angular, cliente OAuth2 público via PKCE | Frontend definido como Angular |
+| D6 | Frontend | Um único projeto Angular (SPA) cobrindo login, consentimento **e** console administrativo; cliente OAuth2 público via PKCE | Todo o frontend do sistema é Angular — nenhuma tela é renderizada server-side (sem Thymeleaf); backend expõe apenas API REST/JSON |
 | D7 | Deploy | EC2 única + Docker Compose + Postgres em volume EBS + `pg_dump` diário para S3 | Custo baixo mantendo durabilidade dos dados |
 | D8 | Assinatura do token | RS256 com JWKS público | Satélites validam sem segredo compartilhado; HS256 exigiria distribuir a chave |
 | D9 | Usuário deus | Tabela `platform_admin` separada de `user` | Mantém `user.tenant_id NOT NULL` — ver 2.1 |
@@ -53,7 +53,18 @@ Um `tenant_id` nulo é a origem clássica de vazamento entre tenants: todo filtr
 
 Custo dessa decisão: dois caminhos de autenticação (um para `user`, um para `platform_admin`). É um custo aceitável e localizado na camada de segurança.
 
-### 2.2 Diferença deliberada em relação ao projeto atual
+### 2.2 Como o login funciona sem Thymeleaf
+
+Diferente do `auth_api` (que renderiza a tela de login server-side com Thymeleaf), aqui **todo** frontend é Angular — incluindo login e consentimento. Isso muda o fluxo descrito na seção 7.1:
+
+1. O browser chega em `GET /oauth2/authorize`. Sem sessão válida, o `AuthenticationEntryPoint` do Spring Security redireciona para a rota pública `/login` do build Angular (servido pelo próprio nginx/auth server como estático), preservando a URL original para retomar depois.
+2. A tela de login Angular **não** usa o fluxo OAuth2 para autenticar — ela é uma página pública que envia usuário/senha para um endpoint de autenticação baseado em sessão (`POST /api/auth/login`, cookie `HttpOnly` de sessão do Spring Security), resolvendo o tenant a partir do `client_id` presente na URL original (nunca de input do usuário — ver seção 7.1).
+3. Com sessão estabelecida, o browser é redirecionado de volta para `GET /oauth2/authorize`, que agora sucede e segue o fluxo Authorization Code + PKCE normalmente.
+4. A tela de consentimento (quando existir client de terceiro) segue o mesmo padrão: rota Angular pública que consome um endpoint de decisão (`POST /api/auth/consent`).
+
+Ou seja: o backend nunca gera HTML. Ele expõe endpoints REST/JSON de autenticação e consentimento (Fase 7) que a SPA Angular consome (Fase 9) — consulte também `adapter/in/web` na seção 5.
+
+### 2.3 Diferença deliberada em relação ao projeto atual
 
 No `auth_api`, as interfaces de repositório vivem em `domain/repository`. Na arquitetura hexagonal canônica, elas são **portas de saída** e pertencem a `application/port/out`.
 
@@ -364,8 +375,10 @@ com.mssousa.authserver
 │
 ├── adapter/
 │   ├── in/
-│   │   ├── web/             controllers REST do admin (/admin/api/**), DTOs, mappers
-│   │   └── ui/              controllers Thymeleaf (login, consent)
+│   │   └── web/             controllers REST — admin (/admin/api/**) e auth público
+│   │                        (/api/auth/login, /api/auth/consent, /api/auth/forgot-password,
+│   │                        branding por tenant), DTOs, mappers. Sem controllers de view:
+│   │                        nenhuma tela é renderizada pelo backend (ver decisão D6/2.2)
 │   └── out/
 │       ├── persistence/
 │       │   ├── entity/      *JpaEntity (+ BaseJpaEntity, AuditableJpaEntity)
@@ -506,15 +519,20 @@ public class UserRepositoryImpl implements UserRepository {
        ?response_type=code&client_id=CRM_ACME
        &redirect_uri=...&code_challenge=...&code_challenge_method=S256&state=...
 3. Auth server resolve tenant a partir do client_id (via system_tenant)
-4. Auth server exibe a tela de login (Thymeleaf), com o branding do tenant
-5. Usuário envia login + senha
-6. AuthenticationService autentica DENTRO do escopo do tenant resolvido
+4. Sem sessão válida, o AuthenticationEntryPoint redireciona para a rota pública
+   /login do SPA Angular (preservando a URL original), que resolve o branding do
+   tenant a partir do client_id
+5. Usuário envia login + senha → POST /api/auth/login (endpoint público, baseado em
+   sessão — não é um endpoint OAuth2)
+6. AuthenticationService autentica DENTRO do escopo do tenant resolvido; sucesso
+   estabelece sessão (cookie HttpOnly) e o Angular redireciona de volta para
+   GET /oauth2/authorize, que agora sucede
 7. Redirect para redirect_uri com ?code=...&state=...
 8. Satélite → POST /oauth2/token (code + code_verifier)
 9. JwtTokenCustomizer injeta os claims → retorna access_token + refresh_token
 ```
 
-**Ponto central:** o tenant vem sempre do `client_id`, nunca de input do usuário. O usuário não escolhe, não digita e não consegue influenciar seu tenant.
+**Ponto central:** o tenant vem sempre do `client_id`, nunca de input do usuário. O usuário não escolhe, não digita e não consegue influenciar seu tenant. Ver seção 2.2 para o detalhamento de por que o login é uma SPA Angular pública e não uma tela renderizada pelo backend.
 
 ### 7.2 Claims do access token
 
@@ -546,6 +564,9 @@ public class UserRepositoryImpl implements UserRepository {
 - Chaves RSA 2048 bits, expostas em `/oauth2/jwks`. Rotação com dois `kid` ativos durante a transição.
 - Access token: 15 min. Refresh token: 8 h, **com rotação** a cada uso.
 - Client secret armazenado com BCrypt; clients públicos (SPA Angular) sem secret.
+- Nenhum `ViewResolver`/Thymeleaf no `SecurityConfig` — apenas `AuthenticationEntryPoint`
+  redirecionando para a rota `/login` do build Angular, e endpoints REST/JSON de
+  autenticação e consentimento (ver 2.2 e `adapter/in/web` na seção 5).
 
 ### 7.4 Checklist de segurança
 
@@ -615,7 +636,7 @@ Ordem bottom-up, espelhando a evolução do projeto de referência. Cada fase de
 ### Fase 0 — Fundação
 - [ ] Projeto Spring Boot 4.x, Java 25, Maven (copiar `pom.xml` de referência)
 - [ ] Remover as dependências `jjwt-*` — resíduo inútil no projeto atual, o Spring Authorization Server já assina o token
-- [ ] Dependências: web, data-jpa, security, oauth2-authorization-server, validation, flyway, postgresql, mail, actuator, lombok, thymeleaf, hypersistence-tsid, bucket4j, springdoc-openapi
+- [ ] Dependências: web, data-jpa, security, oauth2-authorization-server, validation, flyway, postgresql, mail, actuator, lombok, hypersistence-tsid, bucket4j, springdoc-openapi (sem thymeleaf — frontend é 100% Angular, ver decisão D6)
 - [ ] Testes: testcontainers, archunit, spring-security-test
 - [ ] `.gitignore` cobrindo `*.pem`, `*.key`, `.env`, `application-local.yml`
 - [ ] `docker-compose.yml` de desenvolvimento (Postgres + MailHog)
@@ -664,7 +685,7 @@ Ordem bottom-up, espelhando a evolução do projeto de referência. Cada fase de
 - [ ] Testes cobrindo cada nível da cascata de status
 
 ### Fase 6 — Segurança e OAuth2
-- [ ] `SecurityConfig` — filter chains separados para `/oauth2/**`, `/admin/api/**` e `/login`
+- [ ] `SecurityConfig` — filter chains separados para `/oauth2/**`, `/admin/api/**` e `/api/auth/**` (público, consumido pelo SPA Angular)
 - [ ] `AuthorizationServerConfig` — settings, PKCE obrigatório, TTLs
 - [ ] `RegisteredClientRepository` customizado sobre `system`
 - [ ] `JdbcOAuth2AuthorizationService`
@@ -674,29 +695,30 @@ Ordem bottom-up, espelhando a evolução do projeto de referência. Cada fase de
 - [ ] Rate limiting e bloqueio por tentativas
 - [ ] Testes de emissão e validação de token
 
-### Fase 7 — Tela de login
-- [ ] Login em Thymeleaf, responsivo
-- [ ] Branding por tenant (nome/logo resolvidos pelo `client_id`)
-- [ ] Fluxo de "esqueci minha senha"
-- [ ] Tela de consentimento (se houver client de terceiro)
-- [ ] Mensagens de erro genéricas na UI
-- [ ] Testes com MockMvc
+### Fase 7 — API de autenticação e consentimento (backend, consumida pelo Angular)
+- [ ] `POST /api/auth/login` — autenticação baseada em sessão (não é endpoint OAuth2), dentro do tenant resolvido pelo `client_id` (ver 2.2)
+- [ ] Endpoint público de branding por tenant (nome/logo resolvidos pelo `client_id`)
+- [ ] Fluxo de "esqueci minha senha" (`POST /api/auth/forgot-password`, `POST /api/auth/reset-password`)
+- [ ] `POST /api/auth/consent` — decisão de consentimento (se houver client de terceiro)
+- [ ] Mensagens de erro genéricas na API (sem vazar existência de usuário)
+- [ ] Testes com MockMvc/`@WebMvcTest`
 
 ### Fase 8 — API administrativa
 - [ ] Controllers da seção 9
 - [ ] DTOs de request/response com Bean Validation
 - [ ] `GlobalExceptionHandler`
 - [ ] OpenAPI/Swagger
-- [ ] CORS para o console Angular
+- [ ] CORS para o SPA Angular
 - [ ] Testes de integração dos endpoints
 
-### Fase 9 — Console Angular
-- [ ] Projeto Angular + cliente OAuth2 PKCE (`angular-oauth2-oidc`)
-- [ ] Login via redirect para o auth server
+### Fase 9 — Frontend Angular (login, consentimento e console administrativo)
+- [ ] Projeto Angular único: rotas públicas (`/login`, `/consent`, `/esqueci-senha`) consumindo a API da Fase 7, e rotas protegidas do console consumindo a API da Fase 8
+- [ ] Cliente OAuth2 PKCE (`angular-oauth2-oidc`) para o console administrativo
+- [ ] Tela de login com branding por tenant e mensagens de erro genéricas
 - [ ] CRUD de tenants, sistemas, perfis, usuários
 - [ ] Tela de vínculos (usuário → sistemas → perfis)
-- [ ] Guard de rota exigindo platform admin
-- [ ] Build de produção servido por nginx
+- [ ] Guard de rota exigindo platform admin nas rotas do console
+- [ ] Build de produção servido por nginx (mesmo domínio do auth server)
 
 ### Fase 10 — Qualidade
 - [ ] Testes ArchUnit das regras da seção 5.1
@@ -723,8 +745,8 @@ Ordem bottom-up, espelhando a evolução do projeto de referência. Cada fase de
 ```
 Route53 → EC2 t4g.small (Elastic IP)
             │
-            ├── nginx  (TLS, reverse proxy, estáticos do Angular)
-            ├── auth-server  (Spring Boot + Thymeleaf)
+            ├── nginx  (TLS, reverse proxy, estáticos do Angular — login, consent e console)
+            ├── auth-server  (Spring Boot, API REST/OAuth2 — sem view server-side)
             └── postgres     → volume EBS gp3 20GB  ← DADOS PERSISTEM AQUI
                                     │
                               pg_dump diário → S3 (versioning + lifecycle)

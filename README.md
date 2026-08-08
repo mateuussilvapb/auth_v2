@@ -35,7 +35,9 @@ domínio (`TenantConsistencyValidator`).
 ## Stack
 
 Java 25, Spring Boot 4.x, Maven, PostgreSQL, Flyway, Spring Authorization Server,
-arquitetura hexagonal (Ports & Adapters).
+arquitetura hexagonal (Ports & Adapters). Todo o frontend (login, consentimento e console
+administrativo) é um único projeto Angular com cliente OAuth2 PKCE — o backend não faz
+nenhuma renderização server-side (sem Thymeleaf).
 
 ## Como subir o ambiente de desenvolvimento
 

@@ -6,7 +6,7 @@ Cada fase deve estar verde nos testes antes da seguinte. Atualizado a cada item 
 ## Fase 0 — Fundação
 - [x] Projeto Spring Boot 4.x, Java 25, Maven (copiar `pom.xml` de referência)
 - [x] Remover as dependências `jjwt-*` — resíduo inútil no projeto atual, o Spring Authorization Server já assina o token
-- [x] Dependências: web, data-jpa, security, oauth2-authorization-server, validation, flyway, postgresql, mail, actuator, lombok, thymeleaf, hypersistence-tsid, bucket4j, springdoc-openapi
+- [x] Dependências: web, data-jpa, security, oauth2-authorization-server, validation, flyway, postgresql, mail, actuator, lombok, hypersistence-tsid, bucket4j, springdoc-openapi (sem thymeleaf — frontend é 100% Angular, ver decisão D6)
 - [x] Testes: testcontainers, archunit, spring-security-test
 - [x] `.gitignore` cobrindo `*.pem`, `*.key`, `.env`, `application-local.yml`
 - [x] `docker-compose.yml` de desenvolvimento (Postgres + MailHog)
@@ -55,7 +55,7 @@ Cada fase deve estar verde nos testes antes da seguinte. Atualizado a cada item 
 - [ ] Testes cobrindo cada nível da cascata de status
 
 ## Fase 6 — Segurança e OAuth2
-- [ ] `SecurityConfig` — filter chains separados para `/oauth2/**`, `/admin/api/**` e `/login`
+- [ ] `SecurityConfig` — filter chains separados para `/oauth2/**`, `/admin/api/**` e `/api/auth/**` (público, consumido pelo SPA Angular)
 - [ ] `AuthorizationServerConfig` — settings, PKCE obrigatório, TTLs
 - [ ] `RegisteredClientRepository` customizado sobre `system`
 - [ ] `JdbcOAuth2AuthorizationService`
@@ -65,29 +65,30 @@ Cada fase deve estar verde nos testes antes da seguinte. Atualizado a cada item 
 - [ ] Rate limiting e bloqueio por tentativas
 - [ ] Testes de emissão e validação de token
 
-## Fase 7 — Tela de login
-- [ ] Login em Thymeleaf, responsivo
-- [ ] Branding por tenant (nome/logo resolvidos pelo `client_id`)
-- [ ] Fluxo de "esqueci minha senha"
-- [ ] Tela de consentimento (se houver client de terceiro)
-- [ ] Mensagens de erro genéricas na UI
-- [ ] Testes com MockMvc
+## Fase 7 — API de autenticação e consentimento (backend, consumida pelo Angular)
+- [ ] `POST /api/auth/login` — autenticação baseada em sessão (não é endpoint OAuth2), dentro do tenant resolvido pelo `client_id` (ver 2.2 do plano)
+- [ ] Endpoint público de branding por tenant (nome/logo resolvidos pelo `client_id`)
+- [ ] Fluxo de "esqueci minha senha" (`POST /api/auth/forgot-password`, `POST /api/auth/reset-password`)
+- [ ] `POST /api/auth/consent` — decisão de consentimento (se houver client de terceiro)
+- [ ] Mensagens de erro genéricas na API (sem vazar existência de usuário)
+- [ ] Testes com MockMvc/`@WebMvcTest`
 
 ## Fase 8 — API administrativa
 - [ ] Controllers da seção 9
 - [ ] DTOs de request/response com Bean Validation
 - [ ] `GlobalExceptionHandler`
 - [ ] OpenAPI/Swagger
-- [ ] CORS para o console Angular
+- [ ] CORS para o SPA Angular
 - [ ] Testes de integração dos endpoints
 
-## Fase 9 — Console Angular
-- [ ] Projeto Angular + cliente OAuth2 PKCE (`angular-oauth2-oidc`)
-- [ ] Login via redirect para o auth server
+## Fase 9 — Frontend Angular (login, consentimento e console administrativo)
+- [ ] Projeto Angular único: rotas públicas (`/login`, `/consent`, `/esqueci-senha`) consumindo a API da Fase 7, e rotas protegidas do console consumindo a API da Fase 8
+- [ ] Cliente OAuth2 PKCE (`angular-oauth2-oidc`) para o console administrativo
+- [ ] Tela de login com branding por tenant e mensagens de erro genéricas
 - [ ] CRUD de tenants, sistemas, perfis, usuários
 - [ ] Tela de vínculos (usuário → sistemas → perfis)
-- [ ] Guard de rota exigindo platform admin
-- [ ] Build de produção servido por nginx
+- [ ] Guard de rota exigindo platform admin nas rotas do console
+- [ ] Build de produção servido por nginx (mesmo domínio do auth server)
 
 ## Fase 10 — Qualidade
 - [ ] Testes ArchUnit das regras da seção 5.1
@@ -111,6 +112,12 @@ Cada fase deve estar verde nos testes antes da seguinte. Atualizado a cada item 
 
 ## Notas
 
+- **Frontend 100% Angular** (decisão D6 do plano, ajustada em 2026-08-08 a pedido explícito
+  do usuário): login e consentimento deixaram de ser Thymeleaf e passaram a ser rotas
+  públicas do mesmo SPA Angular do console administrativo. A dependência `thymeleaf` foi
+  removida do `pom.xml`; a Fase 7 virou "API de autenticação e consentimento" (só backend
+  REST/JSON) e a Fase 9 passou a cobrir login + consentimento + console num único projeto
+  Angular. Ver seção 2.2 do plano para o fluxo detalhado.
 - Item "Testes ArchUnit das regras da seção 5.1" (Fase 10) já tem um teste inicial em
   `ArchitectureTest` desde a Fase 0. Usa `allowEmptyShould(true)` para não quebrar a suíte
   enquanto os pacotes `application`/`adapter` ainda não têm código — cada regra passa a
