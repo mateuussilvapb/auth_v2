@@ -4,8 +4,12 @@ import com.mssousa.authserver.application.port.in.ResetPasswordUseCase;
 import com.mssousa.authserver.application.port.out.EmailSenderPort;
 import com.mssousa.authserver.application.port.out.IdGeneratorPort;
 import com.mssousa.authserver.application.port.out.PasswordResetTokenRepository;
+import com.mssousa.authserver.application.port.out.SystemRepository;
+import com.mssousa.authserver.application.port.out.SystemTenantRepository;
 import com.mssousa.authserver.application.port.out.UserRepository;
 import com.mssousa.authserver.domain.exception.DomainException;
+import com.mssousa.authserver.domain.model.binding.systemTenant.SystemTenant;
+import com.mssousa.authserver.domain.model.system.ClientId;
 import com.mssousa.authserver.domain.model.tenant.TenantId;
 import com.mssousa.authserver.domain.model.token.passwordResetToken.PasswordResetToken;
 import com.mssousa.authserver.domain.model.token.passwordResetToken.PasswordResetTokenId;
@@ -30,17 +34,23 @@ public class ResetPasswordService implements ResetPasswordUseCase {
 
     private static final int TOKEN_TTL_MINUTES = 30;
 
+    private final SystemRepository systemRepository;
+    private final SystemTenantRepository systemTenantRepository;
     private final UserRepository userRepository;
     private final PasswordResetTokenRepository passwordResetTokenRepository;
     private final IdGeneratorPort idGenerator;
     private final EmailSenderPort emailSender;
     private final String resetPasswordUrl;
 
-    public ResetPasswordService(UserRepository userRepository,
+    public ResetPasswordService(SystemRepository systemRepository,
+                                 SystemTenantRepository systemTenantRepository,
+                                 UserRepository userRepository,
                                  PasswordResetTokenRepository passwordResetTokenRepository,
                                  IdGeneratorPort idGenerator,
                                  EmailSenderPort emailSender,
                                  @Value("${authserver.frontend.reset-password-url}") String resetPasswordUrl) {
+        this.systemRepository = systemRepository;
+        this.systemTenantRepository = systemTenantRepository;
         this.userRepository = userRepository;
         this.passwordResetTokenRepository = passwordResetTokenRepository;
         this.idGenerator = idGenerator;
@@ -50,8 +60,17 @@ public class ResetPasswordService implements ResetPasswordUseCase {
 
     @Override
     @Transactional
-    public void requestReset(TenantId tenantId, String usernameOrEmail) {
-        resolveUser(tenantId, usernameOrEmail).ifPresent(this::generateAndSendToken);
+    public void requestReset(String clientId, String usernameOrEmail) {
+        resolveTenantId(clientId)
+                .flatMap(tenantId -> resolveUser(tenantId, usernameOrEmail))
+                .ifPresent(this::generateAndSendToken);
+    }
+
+    private Optional<TenantId> resolveTenantId(String clientId) {
+        return tryOf(() -> ClientId.of(clientId))
+                .flatMap(systemRepository::findByClientId)
+                .flatMap(system -> systemTenantRepository.findBySystemId(system.getId()))
+                .map(SystemTenant::getTenantId);
     }
 
     private void generateAndSendToken(User user) {

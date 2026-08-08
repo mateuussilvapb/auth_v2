@@ -5,6 +5,8 @@ import com.mssousa.authserver.application.exception.AuthenticationFailedExceptio
 import com.mssousa.authserver.application.exception.ResourceNotFoundException;
 import com.mssousa.authserver.application.model.AuthenticatedUser;
 import com.mssousa.authserver.application.port.in.GetTenantBrandingUseCase;
+import com.mssousa.authserver.application.port.in.ResetPasswordUseCase;
+import com.mssousa.authserver.domain.exception.DomainException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -38,13 +40,16 @@ public class AuthController {
     private final AuthenticationManager authenticationManager;
     private final SecurityContextRepository securityContextRepository;
     private final GetTenantBrandingUseCase getTenantBrandingUseCase;
+    private final ResetPasswordUseCase resetPasswordUseCase;
 
     public AuthController(AuthenticationManager authenticationManager,
                            SecurityContextRepository securityContextRepository,
-                           GetTenantBrandingUseCase getTenantBrandingUseCase) {
+                           GetTenantBrandingUseCase getTenantBrandingUseCase,
+                           ResetPasswordUseCase resetPasswordUseCase) {
         this.authenticationManager = authenticationManager;
         this.securityContextRepository = securityContextRepository;
         this.getTenantBrandingUseCase = getTenantBrandingUseCase;
+        this.resetPasswordUseCase = resetPasswordUseCase;
     }
 
     @GetMapping("/branding")
@@ -68,6 +73,16 @@ public class AuthController {
         return LoginResponse.from((AuthenticatedUser) authenticated.getPrincipal());
     }
 
+    @PostMapping("/forgot-password")
+    public void forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
+        resetPasswordUseCase.requestReset(request.clientId(), request.usernameOrEmail());
+    }
+
+    @PostMapping("/reset-password")
+    public void resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+        resetPasswordUseCase.confirmReset(request.token(), request.newPassword());
+    }
+
     @ExceptionHandler(AuthenticationException.class)
     public ResponseEntity<ErrorResponse> handleAuthenticationFailure() {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -77,5 +92,10 @@ public class AuthController {
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleResourceNotFound(ResourceNotFoundException exception) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorResponse(exception.getMessage()));
+    }
+
+    @ExceptionHandler(DomainException.class)
+    public ResponseEntity<ErrorResponse> handleDomainException(DomainException exception) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorResponse(exception.getMessage()));
     }
 }

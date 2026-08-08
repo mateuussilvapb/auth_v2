@@ -3,8 +3,16 @@ package com.mssousa.authserver.application.service.resetpassword;
 import com.mssousa.authserver.application.port.out.EmailSenderPort;
 import com.mssousa.authserver.application.port.out.IdGeneratorPort;
 import com.mssousa.authserver.application.port.out.PasswordResetTokenRepository;
+import com.mssousa.authserver.application.port.out.SystemRepository;
+import com.mssousa.authserver.application.port.out.SystemTenantRepository;
 import com.mssousa.authserver.application.port.out.UserRepository;
 import com.mssousa.authserver.domain.exception.DomainException;
+import com.mssousa.authserver.domain.model.binding.systemTenant.SystemTenant;
+import com.mssousa.authserver.domain.model.binding.systemTenant.SystemTenantId;
+import com.mssousa.authserver.domain.model.system.ClientId;
+import com.mssousa.authserver.domain.model.system.RedirectUri;
+import com.mssousa.authserver.domain.model.system.System;
+import com.mssousa.authserver.domain.model.system.SystemId;
 import com.mssousa.authserver.domain.model.tenant.TenantId;
 import com.mssousa.authserver.domain.model.token.passwordResetToken.PasswordResetToken;
 import com.mssousa.authserver.domain.model.token.passwordResetToken.PasswordResetTokenId;
@@ -34,6 +42,10 @@ import static org.mockito.Mockito.*;
 class ResetPasswordServiceTest {
 
     @Mock
+    private SystemRepository systemRepository;
+    @Mock
+    private SystemTenantRepository systemTenantRepository;
+    @Mock
     private UserRepository userRepository;
     @Mock
     private PasswordResetTokenRepository passwordResetTokenRepository;
@@ -46,7 +58,8 @@ class ResetPasswordServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new ResetPasswordService(userRepository, passwordResetTokenRepository, idGenerator, emailSender,
+        service = new ResetPasswordService(systemRepository, systemTenantRepository, userRepository,
+                passwordResetTokenRepository, idGenerator, emailSender,
                 "https://auth.seudominio.com/reset-password");
     }
 
@@ -57,15 +70,30 @@ class ResetPasswordServiceTest {
                 .password(Password.fromPlainText("senhaSegura123")).name("João da Silva").build();
     }
 
+    private System activeSystem() {
+        return System.builder().id(SystemId.of(1L)).clientId(ClientId.of("CRM_ACME")).name("CRM")
+                .redirectUri(RedirectUri.of("https://crm.acme.com/callback")).build();
+    }
+
+    private SystemTenant activeSystemTenant() {
+        return SystemTenant.builder().id(SystemTenantId.of(1L)).tenantId(TenantId.of(1L)).systemId(SystemId.of(1L)).build();
+    }
+
+    private void stubClientResolution() {
+        when(systemRepository.findByClientId(ClientId.of("CRM_ACME"))).thenReturn(Optional.of(activeSystem()));
+        when(systemTenantRepository.findBySystemId(SystemId.of(1L))).thenReturn(Optional.of(activeSystemTenant()));
+    }
+
     @Test
     void deveGerarTokenEEnviarEmailQuandoUsuarioExiste() {
+        stubClientResolution();
         when(userRepository.findByTenantIdAndUsername(TenantId.of(1L), Username.of("joao_silva")))
                 .thenReturn(Optional.of(existingUser()));
         when(idGenerator.generate()).thenReturn(1L);
         when(passwordResetTokenRepository.save(any(PasswordResetToken.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
-        service.requestReset(TenantId.of(1L), "joao_silva");
+        service.requestReset("CRM_ACME", "joao_silva");
 
         ArgumentCaptor<String> linkCaptor = ArgumentCaptor.forClass(String.class);
         verify(emailSender).sendPasswordResetEmail(eq("joao@acme.com"), eq("João da Silva"), linkCaptor.capture());
@@ -74,9 +102,19 @@ class ResetPasswordServiceTest {
 
     @Test
     void naoDeveLancarExcecaoNemEnviarEmailQuandoUsuarioNaoExiste() {
+        stubClientResolution();
         when(userRepository.findByTenantIdAndEmail(any(), any())).thenReturn(Optional.empty());
 
-        assertDoesNotThrow(() -> service.requestReset(TenantId.of(1L), "inexistente@acme.com"));
+        assertDoesNotThrow(() -> service.requestReset("CRM_ACME", "inexistente@acme.com"));
+        verifyNoInteractions(emailSender);
+        verify(passwordResetTokenRepository, never()).save(any());
+    }
+
+    @Test
+    void naoDeveLancarExcecaoNemEnviarEmailQuandoClientIdDesconhecido() {
+        when(systemRepository.findByClientId(ClientId.of("DESCONHECIDO"))).thenReturn(Optional.empty());
+
+        assertDoesNotThrow(() -> service.requestReset("DESCONHECIDO", "joao_silva"));
         verifyNoInteractions(emailSender);
         verify(passwordResetTokenRepository, never()).save(any());
     }

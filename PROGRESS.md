@@ -74,7 +74,7 @@ Cada fase deve estar verde nos testes antes da seguinte. Atualizado a cada item 
 - [x] `POST /api/auth/login` — autenticação baseada em sessão (não é endpoint OAuth2), dentro do tenant resolvido pelo `client_id` (ver 2.2 do plano)
 - [x] Bloqueio por N tentativas de login (adiado da Fase 6 — ver Notas)
 - [x] Endpoint público de branding por tenant (nome/logo resolvidos pelo `client_id`)
-- [ ] Fluxo de "esqueci minha senha" (`POST /api/auth/forgot-password`, `POST /api/auth/reset-password`)
+- [x] Fluxo de "esqueci minha senha" (`POST /api/auth/forgot-password`, `POST /api/auth/reset-password`)
 - [ ] `POST /api/auth/consent` — decisão de consentimento (se houver client de terceiro)
 - [ ] Mensagens de erro genéricas na API (sem vazar existência de usuário)
 - [ ] Testes com MockMvc/`@WebMvcTest`
