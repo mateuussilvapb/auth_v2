@@ -35,7 +35,7 @@ public class SystemManagementService implements ManageSystemUseCase {
     @Override
     @Transactional
     public System createSystem(TenantId tenantId, String clientId, String name, boolean publicClient,
-                                String clientSecret, List<String> initialRedirectUris) {
+                                String clientSecret, List<String> initialRedirectUris, boolean thirdParty) {
         if (tenantRepository.findById(tenantId).isEmpty()) {
             throw new ResourceNotFoundException("Tenant não encontrado: " + tenantId);
         }
@@ -50,7 +50,8 @@ public class SystemManagementService implements ManageSystemUseCase {
                 .clientId(systemClientId)
                 .name(name)
                 .publicClient(publicClient)
-                .clientSecret(clientSecret == null ? null : ClientSecret.fromPlainText(clientSecret));
+                .clientSecret(clientSecret == null ? null : ClientSecret.fromPlainText(clientSecret))
+                .thirdParty(thirdParty);
 
         initialRedirectUris.forEach(uri -> builder.redirectUri(RedirectUri.of(uri)));
 

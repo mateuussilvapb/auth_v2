@@ -46,7 +46,7 @@ public class SystemController {
     @ResponseStatus(HttpStatus.CREATED)
     public SystemResponse create(@PathVariable Long tenantId, @Valid @RequestBody CreateSystemRequest request) {
         System system = manageSystemUseCase.createSystem(TenantId.of(tenantId), request.clientId(), request.name(),
-                request.publicClient(), request.clientSecret(), request.initialRedirectUris());
+                request.publicClient(), request.clientSecret(), request.initialRedirectUris(), request.thirdParty());
         return SystemResponse.from(system);
     }
 

@@ -10,5 +10,6 @@ public record CreateSystemRequest(
         @NotBlank String name,
         boolean publicClient,
         String clientSecret,
-        @NotEmpty List<@NotBlank String> initialRedirectUris) {
+        @NotEmpty List<@NotBlank String> initialRedirectUris,
+        boolean thirdParty) {
 }

@@ -128,7 +128,8 @@ public class AuthMapper {
                 .clientSecret(entity.getClientSecret() == null ? null : ClientSecret.fromHash(entity.getClientSecret()))
                 .name(entity.getName())
                 .publicClient(entity.isPublicClient())
-                .status(SystemStatus.valueOf(entity.getStatus()));
+                .status(SystemStatus.valueOf(entity.getStatus()))
+                .thirdParty(entity.isThirdParty());
 
         entity.getRedirectUris().forEach(uriEntity -> builder.redirectUri(RedirectUri.of(uriEntity.getUri())));
         return builder.build();
@@ -143,6 +144,7 @@ public class AuthMapper {
         entity.setName(system.getName());
         entity.setPublicClient(system.isPublicClient());
         entity.setStatus(system.getStatus().name());
+        entity.setThirdParty(system.isThirdParty());
 
         List<SystemRedirectUriEntity> redirectUris = system.getRedirectUris().stream()
                 .map(redirectUri -> toEntity(redirectUri, entity))

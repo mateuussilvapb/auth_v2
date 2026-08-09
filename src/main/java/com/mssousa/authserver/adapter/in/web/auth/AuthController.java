@@ -13,10 +13,16 @@ import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.InsufficientAuthenticationException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationConsent;
+import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationConsentService;
+import org.springframework.security.oauth2.server.authorization.client.RegisteredClient;
+import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -41,15 +47,21 @@ public class AuthController {
     private final SecurityContextRepository securityContextRepository;
     private final GetTenantBrandingUseCase getTenantBrandingUseCase;
     private final ResetPasswordUseCase resetPasswordUseCase;
+    private final RegisteredClientRepository registeredClientRepository;
+    private final OAuth2AuthorizationConsentService oauth2AuthorizationConsentService;
 
     public AuthController(AuthenticationManager authenticationManager,
                            SecurityContextRepository securityContextRepository,
                            GetTenantBrandingUseCase getTenantBrandingUseCase,
-                           ResetPasswordUseCase resetPasswordUseCase) {
+                           ResetPasswordUseCase resetPasswordUseCase,
+                           RegisteredClientRepository registeredClientRepository,
+                           OAuth2AuthorizationConsentService oauth2AuthorizationConsentService) {
         this.authenticationManager = authenticationManager;
         this.securityContextRepository = securityContextRepository;
         this.getTenantBrandingUseCase = getTenantBrandingUseCase;
         this.resetPasswordUseCase = resetPasswordUseCase;
+        this.registeredClientRepository = registeredClientRepository;
+        this.oauth2AuthorizationConsentService = oauth2AuthorizationConsentService;
     }
 
     @GetMapping("/branding")
@@ -81,6 +93,32 @@ public class AuthController {
     @PostMapping("/reset-password")
     public void resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
         resetPasswordUseCase.confirmReset(request.token(), request.newPassword());
+    }
+
+    /**
+     * Grava a decisão de consentimento do usuário (seção 2.2/9 do plano — clients de
+     * terceiro, {@code System.thirdParty=true}). Não repete a requisição a
+     * {@code GET /oauth2/authorize} — quem faz isso é o Angular, navegando o browser de
+     * volta para lá após esta chamada suceder; nesse retorno, o Authorization Server
+     * encontra o consentimento já registrado e emite o {@code code} normalmente.
+     */
+    @PostMapping("/consent")
+    public void consent(@Valid @RequestBody ConsentRequest request) {
+        RegisteredClient registeredClient = registeredClientRepository.findByClientId(request.clientId());
+        if (registeredClient == null) {
+            throw new ResourceNotFoundException("Client desconhecido: " + request.clientId());
+        }
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            throw new InsufficientAuthenticationException("Sessão não autenticada");
+        }
+
+        OAuth2AuthorizationConsent.Builder consent =
+                OAuth2AuthorizationConsent.withId(registeredClient.getId(), authentication.getName());
+        request.scopes().forEach(scope -> consent.authority(new SimpleGrantedAuthority("SCOPE_" + scope)));
+
+        oauth2AuthorizationConsentService.save(consent.build());
     }
 
     @ExceptionHandler(AuthenticationException.class)

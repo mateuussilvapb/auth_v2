@@ -184,4 +184,16 @@ class SystemTest {
         System system = publicClientBuilder().build();
         assertFalse(system.verifyClientSecret("qualquer-coisa"));
     }
+
+    @Test
+    void naoEhClientDeTerceiroPorPadrao() {
+        System system = publicClientBuilder().build();
+        assertFalse(system.isThirdParty());
+    }
+
+    @Test
+    void deveCriarClientDeTerceiro() {
+        System system = publicClientBuilder().thirdParty(true).build();
+        assertTrue(system.isThirdParty());
+    }
 }

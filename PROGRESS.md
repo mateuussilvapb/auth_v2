@@ -81,8 +81,8 @@ Cada fase deve estar verde nos testes antes da seguinte. Atualizado a cada item 
 
 ## Fase 8 — API administrativa
 - [x] `GlobalExceptionHandler` (`@RestControllerAdvice`, escopado a `adapter.in.web.admin`)
-- [ ] Flag de "cliente de terceiro" em `System` (`ManageSystemUseCase`) — pré-requisito do consentimento adiado da Fase 7
-- [ ] `POST /api/auth/consent` + `JdbcOAuth2AuthorizationConsentService` (adiado da Fase 7 — ver Notas)
+- [x] Flag de "cliente de terceiro" em `System` (`ManageSystemUseCase`) — pré-requisito do consentimento adiado da Fase 7
+- [x] `POST /api/auth/consent` + `JdbcOAuth2AuthorizationConsentService` (adiado da Fase 7 — ver Notas)
 - Controllers da seção 9 (`/admin/api/v1`, DTOs com Bean Validation, testes de integração — item a item):
   - [x] Tenants (`POST` · `GET` · `GET /{id}` · `PUT /{id}` · `PATCH /{id}/status`)
   - [x] Sistemas (`POST` · `GET` · `PUT /{id}` · `PATCH /{id}/status` · redirect-uris · rotate-secret)
@@ -162,18 +162,34 @@ Cada fase deve estar verde nos testes antes da seguinte. Atualizado a cada item 
   `AuthorizationServerConfig` — nunca entra no contexto Spring). Regra geral: um
   `JsonMapper`/`ObjectMapper` com allowlist restrito só deve ser usado onde é
   explicitamente construído e passado, nunca exposto como bean genérico.
-- **`POST /api/auth/consent` adiado para a Fase 8.** O plano menciona o endpoint só de
-  passagem ("quando existir client de terceiro", seção 2.2) e não define nenhum critério
-  para um `System` ser "de terceiro" — hoje `SystemRegisteredClientRepository` grava
-  `requireAuthorizationConsent(false)` para todo client, sem exceção, então o fluxo de
-  consentimento do Spring Authorization Server nunca dispara (não haveria como testar o
-  endpoint de ponta a ponta). Decisão confirmada com o usuário: implementar esse item
-  junto da Fase 8, quando `ManageSystemUseCase` ganhar o flag de "cliente de terceiro" que
-  o consentimento depende — só faz sentido construir o endpoint depois que existir uma
-  forma real de acioná-lo. A tabela `oauth2_authorization_consent` já existe desde a
-  migration V11 (Fase 3), só falta o `JdbcOAuth2AuthorizationConsentService` (hoje o
-  Authorization Server usa o `InMemoryOAuth2AuthorizationConsentService` default do Boot,
-  irrelevante enquanto consentimento nunca é exigido).
+- **Consentimento OAuth2 implementado na própria Fase 8** (`System.thirdParty`,
+  `JdbcOAuth2AuthorizationConsentService`, `POST /api/auth/consent`), fechando o item
+  adiado da Fase 7. Decisões de design:
+  - `System.thirdParty` (migration V14) controla `requireAuthorizationConsent` em
+    `SystemRegisteredClientRepository` — sistemas próprios (`false`, default) nunca pedem
+    consentimento; parceiros externos (`true`) sempre pedem. Exposto só na criação
+    (`POST /admin/api/v1/tenants/{tenantId}/systems`), sem endpoint dedicado para alterar
+    depois — o plano não pede isso e não há caso de uso óbvio para "promover" um sistema
+    existente a terceiro.
+  - Todo `RegisteredClient` ganhou o scope fixo `"profile"` — o projeto não usa scopes
+    OAuth2 para controlar acesso (isso é papel do claim `profiles` do token, seção 7.2),
+    então esse scope só existe para o fluxo de consentimento ter algo concreto para
+    exibir/gravar. Sem ele, `GET /oauth2/authorize?scope=...` falharia com
+    `invalid_scope` antes mesmo de chegar no consentimento.
+  - `SecurityConfig.authorizationServerSecurityFilterChain` aponta
+    `authorizationEndpoint.consentPage("/consent")` — mesmo padrão do `/login` (seção 2.2):
+    Spring redireciona para essa rota Angular com `client_id`/`scope`/`state` na URL
+    quando consentimento é necessário e ainda não foi dado.
+  - `POST /api/auth/consent` (`AuthController`) NÃO reenvia a requisição a
+    `/oauth2/authorize` internamente (diferente do POST nativo do Spring Authorization
+    Server) — só grava o `OAuth2AuthorizationConsent` via
+    `OAuth2AuthorizationConsentService.save(...)` e retorna 200. É o Angular que refaz
+    `GET /oauth2/authorize` em seguida (mesma navegação de dois passos do login), que
+    agora sucede porque o consentimento já existe para aquele
+    `(registeredClientId, principalName)`.
+  - `JdbcOAuth2AuthorizationConsentService` não precisou do `JsonMapper` customizado que
+    `OAuth2Authorization` exige (nota acima) — authorities de um consentimento são só uma
+    lista de strings de scope, não um `Authentication` completo.
 - **`UserRepository.findById(UserId)` é uma exceção deliberada à regra do TenantId
   obrigatório** (seção 6.5): é busca por chave primária, não por critério de pesquisa,
   então não há risco de vazamento entre tenants. Único consumidor por enquanto:

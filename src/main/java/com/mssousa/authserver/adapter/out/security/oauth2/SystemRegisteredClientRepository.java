@@ -66,7 +66,12 @@ public class SystemRegisteredClientRepository implements RegisteredClientReposit
                 .clientId(system.getClientId().value())
                 .clientName(system.getName())
                 .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
-                .authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN);
+                .authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
+                // Perfis (não scopes) carregam a semântica de autorização do projeto
+                // (seção 1.2/7.2) — "profile" aqui só existe para o fluxo de consentimento
+                // ter algo concreto para exibir/registrar (seção 2.2), não para controlar
+                // acesso a recursos.
+                .scope("profile");
 
         system.getRedirectUris().forEach(uri -> builder.redirectUri(uri.value()));
 
@@ -80,7 +85,7 @@ public class SystemRegisteredClientRepository implements RegisteredClientReposit
         return builder
                 .clientSettings(ClientSettings.builder()
                         .requireProofKey(true)
-                        .requireAuthorizationConsent(false)
+                        .requireAuthorizationConsent(system.isThirdParty())
                         .build())
                 .tokenSettings(TokenSettings.builder()
                         .accessTokenTimeToLive(ACCESS_TOKEN_TTL)

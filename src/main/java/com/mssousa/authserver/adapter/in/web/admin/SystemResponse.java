@@ -10,7 +10,7 @@ import java.util.List;
  * Nunca inclui o client secret — nem em hash, nem em texto plano (seção 6.6/7.4).
  */
 public record SystemResponse(Long id, String clientId, String name, String status,
-                              boolean publicClient, List<String> redirectUris) {
+                              boolean publicClient, List<String> redirectUris, boolean thirdParty) {
 
     public static SystemResponse from(System system) {
         return new SystemResponse(
@@ -19,6 +19,7 @@ public record SystemResponse(Long id, String clientId, String name, String statu
                 system.getName(),
                 system.getStatus().name(),
                 system.isPublicClient(),
-                system.getRedirectUris().stream().map(uri -> uri.value()).toList());
+                system.getRedirectUris().stream().map(uri -> uri.value()).toList(),
+                system.isThirdParty());
     }
 }

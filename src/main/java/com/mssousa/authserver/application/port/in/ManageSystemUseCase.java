@@ -19,7 +19,7 @@ import java.util.List;
 public interface ManageSystemUseCase {
 
     System createSystem(TenantId tenantId, String clientId, String name, boolean publicClient,
-                         String clientSecret, List<String> initialRedirectUris);
+                         String clientSecret, List<String> initialRedirectUris, boolean thirdParty);
 
     System updateSystem(SystemId id, String newName);
 

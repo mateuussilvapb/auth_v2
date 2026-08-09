@@ -33,7 +33,7 @@ class SystemControllerIntegrationTest extends AbstractRepositoryIntegrationTest 
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"clientId":"CRM_INITECH","name":"CRM Initech","publicClient":true,
-                                 "initialRedirectUris":["https://crm.initech.com/callback"]}
+                                 "initialRedirectUris":["https://crm.initech.com/callback"],"thirdParty":false}
                                 """))
                 .andExpect(status().isCreated())
                 .andReturn().getResponse().getContentAsString();
@@ -110,7 +110,7 @@ class SystemControllerIntegrationTest extends AbstractRepositoryIntegrationTest 
                         .content("""
                                 {"clientId":"CRM_STARK","name":"CRM Stark","publicClient":false,
                                  "clientSecret":"segredoInicial123",
-                                 "initialRedirectUris":["https://crm.stark.com/callback"]}
+                                 "initialRedirectUris":["https://crm.stark.com/callback"],"thirdParty":false}
                                 """))
                 .andExpect(status().isCreated())
                 .andReturn().getResponse().getContentAsString();
@@ -135,7 +135,7 @@ class SystemControllerIntegrationTest extends AbstractRepositoryIntegrationTest 
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"clientId":"CRM_INITECH","name":"Outro sistema","publicClient":true,
-                                 "initialRedirectUris":["https://outro.example.com/callback"]}
+                                 "initialRedirectUris":["https://outro.example.com/callback"],"thirdParty":false}
                                 """))
                 .andExpect(status().isBadRequest());
     }
@@ -147,7 +147,7 @@ class SystemControllerIntegrationTest extends AbstractRepositoryIntegrationTest 
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"clientId":"CRM_FANTASMA","name":"CRM Fantasma","publicClient":true,
-                                 "initialRedirectUris":["https://fantasma.example.com/callback"]}
+                                 "initialRedirectUris":["https://fantasma.example.com/callback"],"thirdParty":false}
                                 """))
                 .andExpect(status().isNotFound());
     }
@@ -160,7 +160,7 @@ class SystemControllerIntegrationTest extends AbstractRepositoryIntegrationTest 
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"clientId":"CRM_ACME","name":"CRM Acme","publicClient":true,
-                                 "initialRedirectUris":[]}
+                                 "initialRedirectUris":[],"thirdParty":false}
                                 """))
                 .andExpect(status().isBadRequest());
     }

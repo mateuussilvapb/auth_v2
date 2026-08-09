@@ -51,6 +51,14 @@ class SystemRegisteredClientRepositoryTest {
                 .build();
     }
 
+    private System thirdPartySystem() {
+        return System.builder()
+                .id(SystemId.of(3L)).clientId(ClientId.of("PARCEIRO_EXTERNO")).name("Parceiro Externo")
+                .publicClient(true).thirdParty(true)
+                .redirectUri(RedirectUri.of("https://parceiro.example.com/callback"))
+                .build();
+    }
+
     @Test
     void deveConverterSistemaPublicoParaRegisteredClientSemSecret() {
         when(systemRepository.findByClientId(ClientId.of("CRM_ACME"))).thenReturn(Optional.of(publicSystem()));
@@ -90,6 +98,16 @@ class SystemRegisteredClientRepositoryTest {
         assertEquals(Duration.ofMinutes(15), client.getTokenSettings().getAccessTokenTimeToLive());
         assertEquals(Duration.ofHours(8), client.getTokenSettings().getRefreshTokenTimeToLive());
         assertFalse(client.getTokenSettings().isReuseRefreshTokens());
+    }
+
+    @Test
+    void deveExigirConsentimentoParaClientDeTerceiro() {
+        when(systemRepository.findByClientId(ClientId.of("PARCEIRO_EXTERNO"))).thenReturn(Optional.of(thirdPartySystem()));
+
+        RegisteredClient client = repository.findByClientId("PARCEIRO_EXTERNO");
+
+        assertTrue(client.getClientSettings().isRequireAuthorizationConsent());
+        assertTrue(client.getScopes().contains("profile"));
     }
 
     @Test

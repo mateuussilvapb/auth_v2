@@ -1,0 +1,2 @@
+ALTER TABLE system
+    ADD COLUMN third_party BOOLEAN NOT NULL DEFAULT false;

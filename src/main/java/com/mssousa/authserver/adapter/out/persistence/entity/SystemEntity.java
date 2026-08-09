@@ -34,6 +34,9 @@ public class SystemEntity extends UpdatableJpaEntity {
     @Column(nullable = false, length = 20)
     private String status;
 
+    @Column(name = "third_party", nullable = false)
+    private boolean thirdParty;
+
     @OneToMany(mappedBy = "system", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<SystemRedirectUriEntity> redirectUris = new ArrayList<>();
 }

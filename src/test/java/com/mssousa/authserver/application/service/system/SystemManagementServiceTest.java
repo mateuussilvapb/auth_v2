@@ -64,11 +64,27 @@ class SystemManagementServiceTest {
         when(systemTenantRepository.save(any(SystemTenant.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         System created = service.createSystem(TenantId.of(1L), "CRM_ACME", "CRM Acme", true, null,
-                List.of("https://crm.acme.com/callback"));
+                List.of("https://crm.acme.com/callback"), false);
 
         assertEquals(ClientId.of("CRM_ACME"), created.getClientId());
+        assertFalse(created.isThirdParty());
         verify(systemTenantRepository).save(argThat(binding ->
                 binding.getTenantId().equals(TenantId.of(1L)) && binding.getSystemId().equals(created.getId())));
+    }
+
+    @Test
+    void deveCriarSistemaDeTerceiro() {
+        Tenant tenant = Tenant.builder().id(TenantId.of(1L)).code(TenantCode.of("acme")).name("Acme").build();
+        when(tenantRepository.findById(TenantId.of(1L))).thenReturn(Optional.of(tenant));
+        when(systemRepository.existsByClientId(ClientId.of("PARCEIRO"))).thenReturn(false);
+        when(idGenerator.generate()).thenReturn(10L, 20L);
+        when(systemRepository.save(any(System.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(systemTenantRepository.save(any(SystemTenant.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        System created = service.createSystem(TenantId.of(1L), "PARCEIRO", "Parceiro Externo", true, null,
+                List.of("https://parceiro.example.com/callback"), true);
+
+        assertTrue(created.isThirdParty());
     }
 
     @Test
@@ -76,7 +92,7 @@ class SystemManagementServiceTest {
         when(tenantRepository.findById(TenantId.of(99L))).thenReturn(Optional.empty());
 
         assertThrows(ResourceNotFoundException.class, () -> service.createSystem(
-                TenantId.of(99L), "CRM_ACME", "CRM", true, null, List.of("https://crm.acme.com/callback")));
+                TenantId.of(99L), "CRM_ACME", "CRM", true, null, List.of("https://crm.acme.com/callback"), false));
         verify(systemRepository, never()).save(any());
     }
 
@@ -87,7 +103,7 @@ class SystemManagementServiceTest {
         when(systemRepository.existsByClientId(ClientId.of("CRM_ACME"))).thenReturn(true);
 
         assertThrows(DomainException.class, () -> service.createSystem(
-                TenantId.of(1L), "CRM_ACME", "CRM", true, null, List.of("https://crm.acme.com/callback")));
+                TenantId.of(1L), "CRM_ACME", "CRM", true, null, List.of("https://crm.acme.com/callback"), false));
         verify(systemTenantRepository, never()).save(any());
     }
 

@@ -30,6 +30,7 @@ public class System {
     private final boolean publicClient;
     private final List<RedirectUri> redirectUris;
     private SystemStatus status;
+    private final boolean thirdParty;
 
     private System(Builder builder) {
         this.id = builder.id;
@@ -39,6 +40,7 @@ public class System {
         this.publicClient = builder.publicClient;
         this.redirectUris = new ArrayList<>(builder.redirectUris);
         this.status = builder.status;
+        this.thirdParty = builder.thirdParty;
 
         validate();
     }
@@ -97,6 +99,17 @@ public class System {
 
     public SystemStatus getStatus() {
         return status;
+    }
+
+    /**
+     * Clients de terceiro exigem consentimento explícito do usuário no fluxo OAuth2
+     * (seção 2.2/9 do plano) — {@code SystemRegisteredClientRepository} usa este flag para
+     * decidir {@code requireAuthorizationConsent}. Sistemas próprios (o console
+     * administrativo, CRMs internos etc) não exigem consentimento: o usuário já confia
+     * neles implicitamente por serem operados pela mesma organização.
+     */
+    public boolean isThirdParty() {
+        return thirdParty;
     }
 
     /**
@@ -194,6 +207,7 @@ public class System {
         private boolean publicClient = true;
         private final List<RedirectUri> redirectUris = new ArrayList<>();
         private SystemStatus status = SystemStatus.ACTIVE;
+        private boolean thirdParty = false;
 
         public Builder id(SystemId id) {
             this.id = id;
@@ -235,6 +249,11 @@ public class System {
 
         public Builder status(SystemStatus status) {
             this.status = status != null ? status : SystemStatus.ACTIVE;
+            return this;
+        }
+
+        public Builder thirdParty(boolean thirdParty) {
+            this.thirdParty = thirdParty;
             return this;
         }
 

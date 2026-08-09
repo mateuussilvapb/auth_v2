@@ -4,7 +4,9 @@ import com.mssousa.authserver.config.security.jackson.OAuth2AuthorizationJsonMap
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.security.oauth2.server.authorization.JdbcOAuth2AuthorizationConsentService;
 import org.springframework.security.oauth2.server.authorization.JdbcOAuth2AuthorizationService;
+import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationConsentService;
 import org.springframework.security.oauth2.server.authorization.OAuth2AuthorizationService;
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import tools.jackson.databind.json.JsonMapper;
@@ -44,5 +46,18 @@ public class AuthorizationServerConfig {
                 new JdbcOAuth2AuthorizationService.JsonMapperOAuth2AuthorizationParametersMapper(
                         oauth2AuthorizationJsonMapper));
         return service;
+    }
+
+    /**
+     * Consentimento de clients de terceiro (seção 2.2/9 do plano — {@code System.thirdParty}).
+     * Sem {@code JsonMapper} customizado: diferente de {@code OAuth2Authorization}, as
+     * authorities de um consentimento são uma lista simples de strings de scope, não um
+     * {@code Authentication} completo — nenhum tipo fora dos pacotes padrão do Spring
+     * Security para (des)serializar.
+     */
+    @Bean
+    public OAuth2AuthorizationConsentService oauth2AuthorizationConsentService(
+            JdbcTemplate jdbcTemplate, RegisteredClientRepository registeredClientRepository) {
+        return new JdbcOAuth2AuthorizationConsentService(jdbcTemplate, registeredClientRepository);
     }
 }

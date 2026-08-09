@@ -57,6 +57,12 @@ public class SecurityConfig {
     @Order(0)
     public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
         OAuth2AuthorizationServerConfigurer authorizationServerConfigurer = new OAuth2AuthorizationServerConfigurer();
+        // Rota pública do SPA Angular (seção 2.2/9 do plano) — mesmo padrão do /login: o
+        // Angular lê client_id/scope/state da URL, chama POST /api/auth/consent com a
+        // decisão do usuário, e refaz GET /oauth2/authorize (que já sucede, pois o
+        // consentimento foi gravado).
+        authorizationServerConfigurer.authorizationEndpoint(endpoint -> endpoint.consentPage("/consent"));
+
         http.securityMatcher(authorizationServerConfigurer.getEndpointsMatcher())
                 .with(authorizationServerConfigurer, Customizer.withDefaults())
                 .authorizeHttpRequests(auth -> auth.anyRequest().authenticated());
