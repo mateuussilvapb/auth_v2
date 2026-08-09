@@ -1,18 +1,18 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, signal } from '@angular/core';
+import { RouterLink } from '@angular/router';
 
 import { ConsoleAuthService } from '../../core/services/console-auth.service';
 import { decodeJwtPayload } from '../../core/util/jwt';
 
 /**
- * Landing page do console administrativo, protegida por {@code consoleAuthGuard}. Só
- * confirma que o token PKCE foi emitido corretamente (claim {@code platform_admin}) — as
- * telas de CRUD de tenants/sistemas/perfis/usuários (Fase 9, itens seguintes do checklist)
- * ainda não existem.
+ * Landing page do console administrativo, protegida por {@code consoleAuthGuard}. Ponto de
+ * entrada para o CRUD administrativo (Fase 9) — hoje só linka para /console/tenants;
+ * sistemas/perfis/usuários/vínculos são os próximos itens do checklist.
  */
 @Component({
   selector: 'app-console-dashboard',
-  imports: [CommonModule],
+  imports: [CommonModule, RouterLink],
   templateUrl: './console-dashboard.component.html',
 })
 export class ConsoleDashboardComponent implements OnInit {

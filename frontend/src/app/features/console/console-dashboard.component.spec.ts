@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 
 import { ConsoleDashboardComponent } from './console-dashboard.component';
 import { ConsoleAuthService } from '../../core/services/console-auth.service';
@@ -18,6 +19,7 @@ describe('ConsoleDashboardComponent', () => {
     await TestBed.configureTestingModule({
       imports: [ConsoleDashboardComponent],
       providers: [
+        provideRouter([]),
         { provide: ConsoleAuthService, useValue: { getAccessToken: () => token, logout: () => {} } },
       ],
     }).compileComponents();
