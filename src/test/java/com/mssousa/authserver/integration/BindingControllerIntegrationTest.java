@@ -14,6 +14,7 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -91,6 +92,90 @@ class BindingControllerIntegrationTest extends AbstractRepositoryIntegrationTest
                                 """))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("INACTIVE"));
+    }
+
+    @Test
+    void deveListarVinculosUsuarioSistemaEUsuarioPerfil() throws Exception {
+        Tenant tenant = createAndSaveTenant("hooli");
+        System system = createAndSaveSystem("CRM_HOOLI_BIND");
+        systemTenantRepository.save(SystemTenant.builder()
+                .id(SystemTenantId.of(idGenerator.generate()))
+                .tenantId(tenant.getId()).systemId(system.getId()).build());
+        User user = createAndSaveUser(tenant.getId(), "richard_hendricks", "richard@hooli.com");
+
+        long tenantId = tenant.getId().value();
+        long systemId = system.getId().value();
+        long userId = user.getId().value();
+
+        mockMvc.perform(get("/admin/api/v1/tenants/" + tenantId + "/users/" + userId + "/systems")
+                        .with(platformAdmin()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content.length()").value(0));
+
+        String bindResponseBody = mockMvc.perform(post("/admin/api/v1/tenants/" + tenantId + "/users/" + userId + "/systems")
+                        .with(platformAdmin())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"systemId\":" + systemId + "}"))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+        long userSystemId = new ObjectMapper().readTree(bindResponseBody).get("id").asLong();
+
+        mockMvc.perform(get("/admin/api/v1/tenants/" + tenantId + "/users/" + userId + "/systems")
+                        .with(platformAdmin()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content.length()").value(1))
+                .andExpect(jsonPath("$.content[0].id").value(userSystemId));
+
+        mockMvc.perform(get("/admin/api/v1/tenants/" + tenantId + "/user-systems/" + userSystemId + "/profiles")
+                        .with(platformAdmin()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(0));
+
+        String profileResponseBody = mockMvc.perform(post("/admin/api/v1/systems/" + systemId + "/profiles")
+                        .with(platformAdmin())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"code":"ADMIN"}
+                                """))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+        long profileId = new ObjectMapper().readTree(profileResponseBody).get("id").asLong();
+
+        mockMvc.perform(post("/admin/api/v1/tenants/" + tenantId + "/user-systems/" + userSystemId + "/profiles")
+                        .with(platformAdmin())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"profileId\":" + profileId + "}"))
+                .andExpect(status().isCreated());
+
+        mockMvc.perform(get("/admin/api/v1/tenants/" + tenantId + "/user-systems/" + userSystemId + "/profiles")
+                        .with(platformAdmin()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].systemProfileId").value(profileId));
+    }
+
+    @Test
+    void deveRejeitarListagemDePerfisDeVinculoDeOutroTenant() throws Exception {
+        Tenant tenantA = createAndSaveTenant("pied-piper");
+        Tenant tenantB = createAndSaveTenant("aviato");
+        System systemA = createAndSaveSystem("CRM_PIED_PIPER_BIND");
+        systemTenantRepository.save(SystemTenant.builder()
+                .id(SystemTenantId.of(idGenerator.generate()))
+                .tenantId(tenantA.getId()).systemId(systemA.getId()).build());
+        User userA = createAndSaveUser(tenantA.getId(), "gilfoyle", "gilfoyle@piedpiper.com");
+
+        String bindResponseBody = mockMvc.perform(post("/admin/api/v1/tenants/" + tenantA.getId().value()
+                        + "/users/" + userA.getId().value() + "/systems")
+                        .with(platformAdmin())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"systemId\":" + systemA.getId().value() + "}"))
+                .andExpect(status().isCreated())
+                .andReturn().getResponse().getContentAsString();
+        long userSystemId = new ObjectMapper().readTree(bindResponseBody).get("id").asLong();
+
+        mockMvc.perform(get("/admin/api/v1/tenants/" + tenantB.getId().value() + "/user-systems/" + userSystemId + "/profiles")
+                        .with(platformAdmin()))
+                .andExpect(status().isNotFound());
     }
 
     @Test

@@ -30,7 +30,12 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -158,5 +163,39 @@ class BindingManagementServiceTest {
     void deveLancarExcecaoAoOperarVinculoInexistente() {
         when(userSystemRepository.findByTenantIdAndId(TenantId.of(1L), UserSystemId.of(99L))).thenReturn(Optional.empty());
         assertThrows(ResourceNotFoundException.class, () -> service.activateUserSystem(TenantId.of(1L), UserSystemId.of(99L)));
+    }
+
+    @Test
+    void deveListarVinculosUsuarioSistemaDoTenant() {
+        UserSystem userSystem = UserSystem.builder()
+                .id(UserSystemId.of(1L)).userId(UserId.of(1L)).systemId(SystemId.of(1L)).tenantId(TenantId.of(1L)).build();
+        Pageable pageable = PageRequest.of(0, 20);
+        when(userSystemRepository.findByTenantIdAndUserId(TenantId.of(1L), UserId.of(1L), pageable))
+                .thenReturn(new PageImpl<>(List.of(userSystem)));
+
+        Page<UserSystem> result = service.listUserSystems(TenantId.of(1L), UserId.of(1L), pageable);
+
+        assertEquals(1, result.getTotalElements());
+        assertEquals(UserSystemId.of(1L), result.getContent().get(0).getId());
+    }
+
+    @Test
+    void deveListarPerfisDeUmVinculoUsuarioSistemaExistente() {
+        UserSystem userSystem = UserSystem.builder()
+                .id(UserSystemId.of(1L)).userId(UserId.of(1L)).systemId(SystemId.of(1L)).tenantId(TenantId.of(1L)).build();
+        UserSystemProfile profileBinding = UserSystemProfile.builder()
+                .id(UserSystemProfileId.of(1L)).userSystemId(UserSystemId.of(1L)).systemProfileId(SystemProfileId.of(1L)).build();
+        when(userSystemRepository.findByTenantIdAndId(TenantId.of(1L), UserSystemId.of(1L))).thenReturn(Optional.of(userSystem));
+        when(userSystemProfileRepository.findByUserSystemId(UserSystemId.of(1L))).thenReturn(List.of(profileBinding));
+
+        List<UserSystemProfile> result = service.listUserSystemProfiles(TenantId.of(1L), UserSystemId.of(1L));
+
+        assertEquals(1, result.size());
+    }
+
+    @Test
+    void deveLancarExcecaoAoListarPerfisDeVinculoDeOutroTenant() {
+        when(userSystemRepository.findByTenantIdAndId(TenantId.of(1L), UserSystemId.of(1L))).thenReturn(Optional.empty());
+        assertThrows(ResourceNotFoundException.class, () -> service.listUserSystemProfiles(TenantId.of(1L), UserSystemId.of(1L)));
     }
 }

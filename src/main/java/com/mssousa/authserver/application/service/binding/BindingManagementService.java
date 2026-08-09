@@ -22,8 +22,12 @@ import com.mssousa.authserver.domain.model.user.User;
 import com.mssousa.authserver.domain.model.user.UserId;
 import com.mssousa.authserver.domain.service.TenantConsistencyValidator;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -128,6 +132,19 @@ public class BindingManagementService implements ManageBindingUseCase {
         UserSystemProfile binding = findUserSystemProfileOrThrow(tenantId, userSystemId, id);
         binding.block();
         return userSystemProfileRepository.save(binding);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<UserSystem> listUserSystems(TenantId tenantId, UserId userId, Pageable pageable) {
+        return userSystemRepository.findByTenantIdAndUserId(tenantId, userId, pageable);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<UserSystemProfile> listUserSystemProfiles(TenantId tenantId, UserSystemId userSystemId) {
+        findUserSystemOrThrow(tenantId, userSystemId);
+        return userSystemProfileRepository.findByUserSystemId(userSystemId);
     }
 
     private UserSystem findUserSystemOrThrow(TenantId tenantId, UserSystemId id) {
