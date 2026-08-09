@@ -13,14 +13,16 @@ import { SystemFormComponent } from './features/console/systems/system-form.comp
 import { ProfileListComponent } from './features/console/profiles/profile-list.component';
 import { UserListComponent } from './features/console/users/user-list.component';
 import { UserFormComponent } from './features/console/users/user-form.component';
+import { UserBindingsComponent } from './features/console/bindings/user-bindings.component';
 import { consoleAuthGuard } from './core/guards/console-auth.guard';
 
 /**
  * Rotas públicas (seção 2.2/9 do plano): /login, /consent, /esqueci-senha,
  * /reset-password. Rotas protegidas do console administrativo sob /console (seção 2.2/D6)
  * — client OAuth2 PKCE estático (RegisteredClientRepositoryConfig no backend), platform
- * admin autenticado via consoleAuthGuard. Só a tela de vínculos ainda não existe —
- * próximo (e último) item do checklist de CRUD da Fase 9.
+ * admin autenticado via consoleAuthGuard. Cobre todo o checklist de Fase 9 (CRUD +
+ * vínculos) — CRUD administrativo restante (billing, auditoria etc.) não faz parte do
+ * plano original.
  */
 export const routes: Routes = [
   { path: 'login', component: LoginComponent },
@@ -38,5 +40,10 @@ export const routes: Routes = [
   { path: 'console/tenants/:tenantId/users', component: UserListComponent, canActivate: [consoleAuthGuard] },
   { path: 'console/tenants/:tenantId/users/novo', component: UserFormComponent, canActivate: [consoleAuthGuard] },
   { path: 'console/tenants/:tenantId/users/:id/editar', component: UserFormComponent, canActivate: [consoleAuthGuard] },
+  {
+    path: 'console/tenants/:tenantId/users/:userId/bindings',
+    component: UserBindingsComponent,
+    canActivate: [consoleAuthGuard],
+  },
   { path: '', redirectTo: 'login', pathMatch: 'full' },
 ];

@@ -120,4 +120,28 @@ describe('AdminApiService', () => {
     expect(req.request.method).toBe('POST');
     req.flush(null);
   });
+
+  it('deve vincular usuário a sistema aninhado sob o tenant', () => {
+    service.bindUserToSystem(1, 2, { systemId: 3 }).subscribe();
+
+    const req = httpMock.expectOne((r) => r.url.endsWith('/admin/api/v1/tenants/1/users/2/systems'));
+    expect(req.request.method).toBe('POST');
+    req.flush({ id: 10, userId: 2, systemId: 3, tenantId: 1, status: 'ACTIVE' });
+  });
+
+  it('deve chamar PATCH .../user-systems/:id/status', () => {
+    service.updateUserSystemStatus(1, 10, { status: 'BLOCKED' }).subscribe();
+
+    const req = httpMock.expectOne((r) => r.url.endsWith('/admin/api/v1/tenants/1/user-systems/10/status'));
+    expect(req.request.method).toBe('PATCH');
+    req.flush({ id: 10, userId: 2, systemId: 3, tenantId: 1, status: 'BLOCKED' });
+  });
+
+  it('deve vincular perfil a um vínculo usuário-sistema existente', () => {
+    service.bindProfileToUserSystem(1, 10, { profileId: 5 }).subscribe();
+
+    const req = httpMock.expectOne((r) => r.url.endsWith('/admin/api/v1/tenants/1/user-systems/10/profiles'));
+    expect(req.request.method).toBe('POST');
+    req.flush({ id: 20, userSystemId: 10, systemProfileId: 5, status: 'ACTIVE' });
+  });
 });

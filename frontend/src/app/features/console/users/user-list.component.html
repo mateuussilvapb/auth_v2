@@ -37,6 +37,7 @@
             </td>
             <td>
               <a [routerLink]="['/console/tenants', tenantId, 'users', user.id, 'editar']">Editar</a>
+              <a [routerLink]="['/console/tenants', tenantId, 'users', user.id, 'bindings']">Vínculos</a>
               <button type="button" (click)="resetPassword(user)">Redefinir senha</button>
             </td>
           </tr>

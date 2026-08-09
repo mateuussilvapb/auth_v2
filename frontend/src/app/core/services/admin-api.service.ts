@@ -5,6 +5,8 @@ import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { ConsoleAuthService } from './console-auth.service';
 import {
+  BindProfileRequest,
+  BindSystemRequest,
   CreateSystemProfileRequest,
   CreateSystemRequest,
   CreateTenantRequest,
@@ -20,6 +22,8 @@ import {
   UpdateTenantRequest,
   UpdateUserRequest,
   UserResponse,
+  UserSystemProfileResponse,
+  UserSystemResponse,
 } from '../models/admin-api.models';
 
 /**
@@ -159,5 +163,60 @@ export class AdminApiService {
     return this.http.post<void>(`${this.baseUrl}/tenants/${tenantId}/users/${id}/reset-password`, null, {
       headers: this.authHeaders(),
     });
+  }
+
+  listUserSystems(tenantId: number, userId: number, page: number, size: number): Observable<Page<UserSystemResponse>> {
+    return this.http.get<Page<UserSystemResponse>>(`${this.baseUrl}/tenants/${tenantId}/users/${userId}/systems`, {
+      headers: this.authHeaders(),
+      params: { page, size },
+    });
+  }
+
+  bindUserToSystem(tenantId: number, userId: number, request: BindSystemRequest): Observable<UserSystemResponse> {
+    return this.http.post<UserSystemResponse>(`${this.baseUrl}/tenants/${tenantId}/users/${userId}/systems`, request, {
+      headers: this.authHeaders(),
+    });
+  }
+
+  updateUserSystemStatus(
+    tenantId: number,
+    id: number,
+    request: UpdateStatusRequest,
+  ): Observable<UserSystemResponse> {
+    return this.http.patch<UserSystemResponse>(`${this.baseUrl}/tenants/${tenantId}/user-systems/${id}/status`, request, {
+      headers: this.authHeaders(),
+    });
+  }
+
+  listUserSystemProfiles(tenantId: number, userSystemId: number): Observable<UserSystemProfileResponse[]> {
+    return this.http.get<UserSystemProfileResponse[]>(
+      `${this.baseUrl}/tenants/${tenantId}/user-systems/${userSystemId}/profiles`,
+      { headers: this.authHeaders() },
+    );
+  }
+
+  bindProfileToUserSystem(
+    tenantId: number,
+    userSystemId: number,
+    request: BindProfileRequest,
+  ): Observable<UserSystemProfileResponse> {
+    return this.http.post<UserSystemProfileResponse>(
+      `${this.baseUrl}/tenants/${tenantId}/user-systems/${userSystemId}/profiles`,
+      request,
+      { headers: this.authHeaders() },
+    );
+  }
+
+  updateUserSystemProfileStatus(
+    tenantId: number,
+    userSystemId: number,
+    id: number,
+    request: UpdateStatusRequest,
+  ): Observable<UserSystemProfileResponse> {
+    return this.http.patch<UserSystemProfileResponse>(
+      `${this.baseUrl}/tenants/${tenantId}/user-systems/${userSystemId}/profiles/${id}/status`,
+      request,
+      { headers: this.authHeaders() },
+    );
   }
 }

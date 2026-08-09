@@ -100,7 +100,9 @@ Cada fase deve estar verde nos testes antes da seguinte. Atualizado a cada item 
 - [x] CRUD de tenants, sistemas, perfis, usuários — `AdminApiService`,
       `/console/tenants`, `/console/tenants/:tenantId/systems`,
       `/console/systems/:systemId/profiles`, `/console/tenants/:tenantId/users`
-- [ ] Tela de vínculos (usuário → sistemas → perfis)
+- [x] Tela de vínculos (usuário → sistemas → perfis) —
+      `/console/tenants/:tenantId/users/:userId/bindings`, ver Notas (endpoints GET novos
+      no backend)
 - [x] Guard de rota exigindo platform admin nas rotas do console (`consoleAuthGuard` — token só é emitido para platform admin nesse client, ver Notas)
 - [ ] Build de produção servido por nginx (mesmo domínio do auth server)
 

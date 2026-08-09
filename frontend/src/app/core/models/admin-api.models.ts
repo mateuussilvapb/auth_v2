@@ -93,3 +93,26 @@ export interface UpdateUserRequest {
   name: string;
   email: string;
 }
+
+export interface UserSystemResponse {
+  id: number;
+  userId: number;
+  systemId: number;
+  tenantId: number;
+  status: string;
+}
+
+export interface BindSystemRequest {
+  systemId: number;
+}
+
+export interface UserSystemProfileResponse {
+  id: number;
+  userSystemId: number;
+  systemProfileId: number;
+  status: string;
+}
+
+export interface BindProfileRequest {
+  profileId: number;
+}
