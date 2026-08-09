@@ -13,7 +13,7 @@ import { ApiErrorResponse } from '../../../core/models/auth-api.models';
   templateUrl: './system-form.component.html',
 })
 export class SystemFormComponent {
-  tenantId: number;
+  tenantId: string;
   clientId = '';
   name = '';
   publicClient = true;
@@ -29,7 +29,7 @@ export class SystemFormComponent {
     private readonly router: Router,
     private readonly adminApi: AdminApiService,
   ) {
-    this.tenantId = Number(this.route.snapshot.paramMap.get('tenantId'));
+    this.tenantId = this.route.snapshot.paramMap.get('tenantId') ?? '';
   }
 
   addRedirectUriField(): void {

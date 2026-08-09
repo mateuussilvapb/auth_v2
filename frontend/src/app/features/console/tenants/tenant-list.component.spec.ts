@@ -11,7 +11,7 @@ describe('TenantListComponent', () => {
   let adminApiStub: { listTenants: jasmine.Spy; updateTenantStatus: jasmine.Spy };
 
   const page: Page<TenantResponse> = {
-    content: [{ id: 1, code: 'acme', name: 'Acme', status: 'ACTIVE', logoUrl: null }],
+    content: [{ id: '1', code: 'acme', name: 'Acme', status: 'ACTIVE', logoUrl: null }],
     totalElements: 1,
     totalPages: 1,
     number: 0,
@@ -48,6 +48,6 @@ describe('TenantListComponent', () => {
 
   it('deve chamar updateTenantStatus com o status invertido', () => {
     fixture.componentInstance.toggleStatus(page.content[0]);
-    expect(adminApiStub.updateTenantStatus).toHaveBeenCalledWith(1, { status: 'INACTIVE' });
+    expect(adminApiStub.updateTenantStatus).toHaveBeenCalledWith('1', { status: 'INACTIVE' });
   });
 });

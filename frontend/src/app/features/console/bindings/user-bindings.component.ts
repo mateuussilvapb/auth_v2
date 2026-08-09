@@ -24,19 +24,19 @@ import {
   templateUrl: './user-bindings.component.html',
 })
 export class UserBindingsComponent implements OnInit {
-  tenantId = 0;
-  userId = 0;
+  tenantId = '';
+  userId = '';
 
   availableSystems = signal<SystemResponse[]>([]);
   bindings = signal<UserSystemResponse[]>([]);
-  profileBindingsByUserSystem: Record<number, UserSystemProfileResponse[]> = {};
-  profilesBySystem: Record<number, SystemProfileResponse[]> = {};
+  profileBindingsByUserSystem: Record<string, UserSystemProfileResponse[]> = {};
+  profilesBySystem: Record<string, SystemProfileResponse[]> = {};
 
   loading = signal(true);
   errorMessage = signal<string | null>(null);
 
-  newSystemId: number | null = null;
-  newProfileId: Record<number, number | null> = {};
+  newSystemId: string | null = null;
+  newProfileId: Record<string, string | null> = {};
 
   readonly systemStatuses = ['ACTIVE', 'INACTIVE', 'BLOCKED'];
   readonly profileStatuses = ['ACTIVE', 'INACTIVE', 'BLOCKED'];
@@ -47,17 +47,17 @@ export class UserBindingsComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.tenantId = Number(this.route.snapshot.paramMap.get('tenantId'));
-    this.userId = Number(this.route.snapshot.paramMap.get('userId'));
+    this.tenantId = this.route.snapshot.paramMap.get('tenantId') ?? '';
+    this.userId = this.route.snapshot.paramMap.get('userId') ?? '';
     this.load();
   }
 
-  systemName(systemId: number): string {
+  systemName(systemId: string): string {
     const system = this.availableSystems().find((s) => s.id === systemId);
     return system ? `${system.name} (${system.clientId})` : `Sistema ${systemId}`;
   }
 
-  profileCode(systemId: number, profileId: number): string {
+  profileCode(systemId: string, profileId: string): string {
     const profile = (this.profilesBySystem[systemId] ?? []).find((p) => p.id === profileId);
     return profile ? profile.code : `Perfil ${profileId}`;
   }
@@ -88,7 +88,7 @@ export class UserBindingsComponent implements OnInit {
       return;
     }
 
-    const profileBindingCalls = bindings.reduce<Record<number, ReturnType<AdminApiService['listUserSystemProfiles']>>>(
+    const profileBindingCalls = bindings.reduce<Record<string, ReturnType<AdminApiService['listUserSystemProfiles']>>>(
       (acc, binding) => {
         acc[binding.id] = this.adminApi.listUserSystemProfiles(this.tenantId, binding.id);
         return acc;
@@ -96,15 +96,15 @@ export class UserBindingsComponent implements OnInit {
       {},
     );
     const systemIds = [...new Set(bindings.map((b) => b.systemId))];
-    const profileCalls = systemIds.reduce<Record<number, ReturnType<AdminApiService['listProfiles']>>>((acc, systemId) => {
+    const profileCalls = systemIds.reduce<Record<string, ReturnType<AdminApiService['listProfiles']>>>((acc, systemId) => {
       acc[systemId] = this.adminApi.listProfiles(systemId);
       return acc;
     }, {});
 
     forkJoin({ profileBindings: forkJoin(profileBindingCalls), profiles: forkJoin(profileCalls) }).subscribe({
       next: ({ profileBindings, profiles }) => {
-        this.profileBindingsByUserSystem = profileBindings as Record<number, UserSystemProfileResponse[]>;
-        this.profilesBySystem = profiles as Record<number, SystemProfileResponse[]>;
+        this.profileBindingsByUserSystem = profileBindings as Record<string, UserSystemProfileResponse[]>;
+        this.profilesBySystem = profiles as Record<string, SystemProfileResponse[]>;
         this.loading.set(false);
       },
       error: () => {

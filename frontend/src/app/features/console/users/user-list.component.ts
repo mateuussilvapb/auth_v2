@@ -17,7 +17,7 @@ import { UserResponse } from '../../../core/models/admin-api.models';
   templateUrl: './user-list.component.html',
 })
 export class UserListComponent implements OnInit {
-  tenantId = 0;
+  tenantId = '';
   users = signal<UserResponse[]>([]);
   loading = signal(true);
   errorMessage = signal<string | null>(null);
@@ -33,7 +33,7 @@ export class UserListComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.tenantId = Number(this.route.snapshot.paramMap.get('tenantId'));
+    this.tenantId = this.route.snapshot.paramMap.get('tenantId') ?? '';
     this.load();
   }
 

@@ -17,7 +17,7 @@ import { ApiErrorResponse } from '../../../core/models/auth-api.models';
   templateUrl: './tenant-form.component.html',
 })
 export class TenantFormComponent implements OnInit {
-  tenantId: number | null = null;
+  tenantId: string | null = null;
   code = '';
   name = '';
 
@@ -41,7 +41,7 @@ export class TenantFormComponent implements OnInit {
       return;
     }
 
-    this.tenantId = Number(idParam);
+    this.tenantId = idParam;
     this.loading.set(true);
     this.adminApi.getTenant(this.tenantId).subscribe({
       next: (tenant) => {

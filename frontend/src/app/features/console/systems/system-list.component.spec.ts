@@ -13,7 +13,7 @@ describe('SystemListComponent', () => {
   const page: Page<SystemResponse> = {
     content: [
       {
-        id: 1,
+        id: '1',
         clientId: 'CRM_ACME',
         name: 'CRM',
         status: 'ACTIVE',
@@ -49,7 +49,7 @@ describe('SystemListComponent', () => {
   });
 
   it('deve carregar sistemas do tenant da rota', () => {
-    expect(adminApiStub.listSystemsByTenant).toHaveBeenCalledWith(1, 0, 50);
+    expect(adminApiStub.listSystemsByTenant).toHaveBeenCalledWith('1', 0, 50);
     expect(fixture.componentInstance.systems()).toEqual(page.content);
   });
 
@@ -60,14 +60,14 @@ describe('SystemListComponent', () => {
   });
 
   it('deve chamar addRedirectUri com a URI digitada e limpar o campo', () => {
-    fixture.componentInstance.newRedirectUri[1] = 'https://crm.acme.com/dev-callback';
+    fixture.componentInstance.newRedirectUri['1'] = 'https://crm.acme.com/dev-callback';
     fixture.componentInstance.addRedirectUri(page.content[0]);
 
-    expect(adminApiStub.addRedirectUri).toHaveBeenCalledWith(1, { uri: 'https://crm.acme.com/dev-callback' });
+    expect(adminApiStub.addRedirectUri).toHaveBeenCalledWith('1', { uri: 'https://crm.acme.com/dev-callback' });
   });
 
   it('não deve chamar addRedirectUri quando o campo está vazio', () => {
-    fixture.componentInstance.newRedirectUri[1] = '';
+    fixture.componentInstance.newRedirectUri['1'] = '';
     fixture.componentInstance.addRedirectUri(page.content[0]);
 
     expect(adminApiStub.addRedirectUri).not.toHaveBeenCalled();

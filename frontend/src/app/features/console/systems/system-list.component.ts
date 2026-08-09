@@ -17,11 +17,11 @@ import { SystemResponse } from '../../../core/models/admin-api.models';
   templateUrl: './system-list.component.html',
 })
 export class SystemListComponent implements OnInit {
-  tenantId = 0;
+  tenantId = '';
   systems = signal<SystemResponse[]>([]);
   loading = signal(true);
   errorMessage = signal<string | null>(null);
-  newRedirectUri: Record<number, string> = {};
+  newRedirectUri: Record<string, string> = {};
 
   constructor(
     private readonly route: ActivatedRoute,
@@ -29,7 +29,7 @@ export class SystemListComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.tenantId = Number(this.route.snapshot.paramMap.get('tenantId'));
+    this.tenantId = this.route.snapshot.paramMap.get('tenantId') ?? '';
     this.load();
   }
 

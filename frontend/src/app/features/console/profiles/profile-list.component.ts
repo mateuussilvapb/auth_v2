@@ -18,7 +18,7 @@ import { SystemProfileResponse } from '../../../core/models/admin-api.models';
   templateUrl: './profile-list.component.html',
 })
 export class ProfileListComponent implements OnInit {
-  systemId = 0;
+  systemId = '';
   profiles = signal<SystemProfileResponse[]>([]);
   loading = signal(true);
   errorMessage = signal<string | null>(null);
@@ -33,7 +33,7 @@ export class ProfileListComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.systemId = Number(this.route.snapshot.paramMap.get('systemId'));
+    this.systemId = this.route.snapshot.paramMap.get('systemId') ?? '';
     this.load();
   }
 

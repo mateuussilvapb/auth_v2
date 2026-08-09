@@ -37,7 +37,7 @@ describe('SystemFormComponent', () => {
   });
 
   it('deve enviar clientSecret null quando publicClient=true', () => {
-    adminApiStub.createSystem.and.returnValue(of({ id: 1 } as SystemResponse));
+    adminApiStub.createSystem.and.returnValue(of({ id: '1' } as SystemResponse));
     const router = TestBed.inject(Router);
     const navigateSpy = spyOn(router, 'navigate').and.resolveTo(true);
 
@@ -47,7 +47,7 @@ describe('SystemFormComponent', () => {
     fixture.componentInstance.redirectUris = ['https://crm.acme.com/callback'];
     fixture.componentInstance.submit();
 
-    expect(adminApiStub.createSystem).toHaveBeenCalledWith(1, {
+    expect(adminApiStub.createSystem).toHaveBeenCalledWith('1', {
       clientId: 'CRM_ACME',
       name: 'CRM',
       publicClient: true,
@@ -55,11 +55,11 @@ describe('SystemFormComponent', () => {
       initialRedirectUris: ['https://crm.acme.com/callback'],
       thirdParty: false,
     });
-    expect(navigateSpy).toHaveBeenCalledWith(['/console/tenants', 1, 'systems']);
+    expect(navigateSpy).toHaveBeenCalledWith(['/console/tenants', '1', 'systems']);
   });
 
   it('deve enviar o clientSecret informado quando publicClient=false', () => {
-    adminApiStub.createSystem.and.returnValue(of({ id: 1 } as SystemResponse));
+    adminApiStub.createSystem.and.returnValue(of({ id: '1' } as SystemResponse));
 
     fixture.componentInstance.clientId = 'BACKOFFICE_ACME';
     fixture.componentInstance.name = 'Backoffice';
@@ -69,7 +69,7 @@ describe('SystemFormComponent', () => {
     fixture.componentInstance.submit();
 
     expect(adminApiStub.createSystem).toHaveBeenCalledWith(
-      1,
+      '1',
       jasmine.objectContaining({ publicClient: false, clientSecret: 'super-secreto' }),
     );
   });

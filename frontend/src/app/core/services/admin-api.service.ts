@@ -30,6 +30,12 @@ import {
  * Cliente para /admin/api/v1/** (seção 9 do plano) — console administrativo, protegido por
  * token de platform admin (ConsoleAuthService/consoleAuthGuard). Diferente de
  * AuthApiService: bearer token, não cookie de sessão.
+ * <p>
+ * Todo parâmetro de ID é {@code string}, não {@code number} — ver o comentário no topo de
+ * {@code admin-api.models.ts} sobre perda de precisão de TSID em {@code Number} do
+ * JavaScript. {@code page}/{@code size} continuam {@code number}: são parâmetros de
+ * paginação, não IDs.
+ * </p>
  */
 @Injectable({ providedIn: 'root' })
 export class AdminApiService {
@@ -51,7 +57,7 @@ export class AdminApiService {
     });
   }
 
-  getTenant(id: number): Observable<TenantResponse> {
+  getTenant(id: string): Observable<TenantResponse> {
     return this.http.get<TenantResponse>(`${this.baseUrl}/tenants/${id}`, { headers: this.authHeaders() });
   }
 
@@ -59,60 +65,60 @@ export class AdminApiService {
     return this.http.post<TenantResponse>(`${this.baseUrl}/tenants`, request, { headers: this.authHeaders() });
   }
 
-  updateTenant(id: number, request: UpdateTenantRequest): Observable<TenantResponse> {
+  updateTenant(id: string, request: UpdateTenantRequest): Observable<TenantResponse> {
     return this.http.put<TenantResponse>(`${this.baseUrl}/tenants/${id}`, request, { headers: this.authHeaders() });
   }
 
-  updateTenantStatus(id: number, request: UpdateStatusRequest): Observable<TenantResponse> {
+  updateTenantStatus(id: string, request: UpdateStatusRequest): Observable<TenantResponse> {
     return this.http.patch<TenantResponse>(`${this.baseUrl}/tenants/${id}/status`, request, {
       headers: this.authHeaders(),
     });
   }
 
-  listSystemsByTenant(tenantId: number, page: number, size: number): Observable<Page<SystemResponse>> {
+  listSystemsByTenant(tenantId: string, page: number, size: number): Observable<Page<SystemResponse>> {
     return this.http.get<Page<SystemResponse>>(`${this.baseUrl}/tenants/${tenantId}/systems`, {
       headers: this.authHeaders(),
       params: { page, size },
     });
   }
 
-  createSystem(tenantId: number, request: CreateSystemRequest): Observable<SystemResponse> {
+  createSystem(tenantId: string, request: CreateSystemRequest): Observable<SystemResponse> {
     return this.http.post<SystemResponse>(`${this.baseUrl}/tenants/${tenantId}/systems`, request, {
       headers: this.authHeaders(),
     });
   }
 
-  updateSystem(id: number, request: UpdateSystemRequest): Observable<SystemResponse> {
+  updateSystem(id: string, request: UpdateSystemRequest): Observable<SystemResponse> {
     return this.http.put<SystemResponse>(`${this.baseUrl}/systems/${id}`, request, { headers: this.authHeaders() });
   }
 
-  updateSystemStatus(id: number, request: UpdateStatusRequest): Observable<SystemResponse> {
+  updateSystemStatus(id: string, request: UpdateStatusRequest): Observable<SystemResponse> {
     return this.http.patch<SystemResponse>(`${this.baseUrl}/systems/${id}/status`, request, {
       headers: this.authHeaders(),
     });
   }
 
-  addRedirectUri(id: number, request: RedirectUriRequest): Observable<SystemResponse> {
+  addRedirectUri(id: string, request: RedirectUriRequest): Observable<SystemResponse> {
     return this.http.post<SystemResponse>(`${this.baseUrl}/systems/${id}/redirect-uris`, request, {
       headers: this.authHeaders(),
     });
   }
 
-  listProfiles(systemId: number): Observable<SystemProfileResponse[]> {
+  listProfiles(systemId: string): Observable<SystemProfileResponse[]> {
     return this.http.get<SystemProfileResponse[]>(`${this.baseUrl}/systems/${systemId}/profiles`, {
       headers: this.authHeaders(),
     });
   }
 
-  createProfile(systemId: number, request: CreateSystemProfileRequest): Observable<SystemProfileResponse> {
+  createProfile(systemId: string, request: CreateSystemProfileRequest): Observable<SystemProfileResponse> {
     return this.http.post<SystemProfileResponse>(`${this.baseUrl}/systems/${systemId}/profiles`, request, {
       headers: this.authHeaders(),
     });
   }
 
   updateProfile(
-    systemId: number,
-    id: number,
+    systemId: string,
+    id: string,
     request: UpdateSystemProfileRequest,
   ): Observable<SystemProfileResponse> {
     return this.http.put<SystemProfileResponse>(`${this.baseUrl}/systems/${systemId}/profiles/${id}`, request, {
@@ -120,7 +126,7 @@ export class AdminApiService {
     });
   }
 
-  updateProfileStatus(systemId: number, id: number, request: UpdateStatusRequest): Observable<SystemProfileResponse> {
+  updateProfileStatus(systemId: string, id: string, request: UpdateStatusRequest): Observable<SystemProfileResponse> {
     return this.http.patch<SystemProfileResponse>(
       `${this.baseUrl}/systems/${systemId}/profiles/${id}/status`,
       request,
@@ -128,59 +134,59 @@ export class AdminApiService {
     );
   }
 
-  listUsers(tenantId: number, page: number, size: number): Observable<Page<UserResponse>> {
+  listUsers(tenantId: string, page: number, size: number): Observable<Page<UserResponse>> {
     return this.http.get<Page<UserResponse>>(`${this.baseUrl}/tenants/${tenantId}/users`, {
       headers: this.authHeaders(),
       params: { page, size },
     });
   }
 
-  getUser(tenantId: number, id: number): Observable<UserResponse> {
+  getUser(tenantId: string, id: string): Observable<UserResponse> {
     return this.http.get<UserResponse>(`${this.baseUrl}/tenants/${tenantId}/users/${id}`, {
       headers: this.authHeaders(),
     });
   }
 
-  createUser(tenantId: number, request: CreateUserRequest): Observable<UserResponse> {
+  createUser(tenantId: string, request: CreateUserRequest): Observable<UserResponse> {
     return this.http.post<UserResponse>(`${this.baseUrl}/tenants/${tenantId}/users`, request, {
       headers: this.authHeaders(),
     });
   }
 
-  updateUser(tenantId: number, id: number, request: UpdateUserRequest): Observable<UserResponse> {
+  updateUser(tenantId: string, id: string, request: UpdateUserRequest): Observable<UserResponse> {
     return this.http.put<UserResponse>(`${this.baseUrl}/tenants/${tenantId}/users/${id}`, request, {
       headers: this.authHeaders(),
     });
   }
 
-  updateUserStatus(tenantId: number, id: number, request: UpdateStatusRequest): Observable<UserResponse> {
+  updateUserStatus(tenantId: string, id: string, request: UpdateStatusRequest): Observable<UserResponse> {
     return this.http.patch<UserResponse>(`${this.baseUrl}/tenants/${tenantId}/users/${id}/status`, request, {
       headers: this.authHeaders(),
     });
   }
 
-  resetUserPassword(tenantId: number, id: number): Observable<void> {
+  resetUserPassword(tenantId: string, id: string): Observable<void> {
     return this.http.post<void>(`${this.baseUrl}/tenants/${tenantId}/users/${id}/reset-password`, null, {
       headers: this.authHeaders(),
     });
   }
 
-  listUserSystems(tenantId: number, userId: number, page: number, size: number): Observable<Page<UserSystemResponse>> {
+  listUserSystems(tenantId: string, userId: string, page: number, size: number): Observable<Page<UserSystemResponse>> {
     return this.http.get<Page<UserSystemResponse>>(`${this.baseUrl}/tenants/${tenantId}/users/${userId}/systems`, {
       headers: this.authHeaders(),
       params: { page, size },
     });
   }
 
-  bindUserToSystem(tenantId: number, userId: number, request: BindSystemRequest): Observable<UserSystemResponse> {
+  bindUserToSystem(tenantId: string, userId: string, request: BindSystemRequest): Observable<UserSystemResponse> {
     return this.http.post<UserSystemResponse>(`${this.baseUrl}/tenants/${tenantId}/users/${userId}/systems`, request, {
       headers: this.authHeaders(),
     });
   }
 
   updateUserSystemStatus(
-    tenantId: number,
-    id: number,
+    tenantId: string,
+    id: string,
     request: UpdateStatusRequest,
   ): Observable<UserSystemResponse> {
     return this.http.patch<UserSystemResponse>(`${this.baseUrl}/tenants/${tenantId}/user-systems/${id}/status`, request, {
@@ -188,7 +194,7 @@ export class AdminApiService {
     });
   }
 
-  listUserSystemProfiles(tenantId: number, userSystemId: number): Observable<UserSystemProfileResponse[]> {
+  listUserSystemProfiles(tenantId: string, userSystemId: string): Observable<UserSystemProfileResponse[]> {
     return this.http.get<UserSystemProfileResponse[]>(
       `${this.baseUrl}/tenants/${tenantId}/user-systems/${userSystemId}/profiles`,
       { headers: this.authHeaders() },
@@ -196,8 +202,8 @@ export class AdminApiService {
   }
 
   bindProfileToUserSystem(
-    tenantId: number,
-    userSystemId: number,
+    tenantId: string,
+    userSystemId: string,
     request: BindProfileRequest,
   ): Observable<UserSystemProfileResponse> {
     return this.http.post<UserSystemProfileResponse>(
@@ -208,9 +214,9 @@ export class AdminApiService {
   }
 
   updateUserSystemProfileStatus(
-    tenantId: number,
-    userSystemId: number,
-    id: number,
+    tenantId: string,
+    userSystemId: string,
+    id: string,
     request: UpdateStatusRequest,
   ): Observable<UserSystemProfileResponse> {
     return this.http.patch<UserSystemProfileResponse>(

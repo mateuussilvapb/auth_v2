@@ -21,7 +21,7 @@ describe('UserBindingsComponent', () => {
 
   const systemsPage: Page<SystemResponse> = {
     content: [
-      { id: 3, clientId: 'CRM_ACME', name: 'CRM', status: 'ACTIVE', publicClient: true, redirectUris: [], thirdParty: false },
+      { id: '3', clientId: 'CRM_ACME', name: 'CRM', status: 'ACTIVE', publicClient: true, redirectUris: [], thirdParty: false },
     ],
     totalElements: 1,
     totalPages: 1,
@@ -30,15 +30,15 @@ describe('UserBindingsComponent', () => {
   };
 
   const userSystemsPage: Page<UserSystemResponse> = {
-    content: [{ id: 10, userId: 2, systemId: 3, tenantId: 1, status: 'ACTIVE' }],
+    content: [{ id: '10', userId: '2', systemId: '3', tenantId: '1', status: 'ACTIVE' }],
     totalElements: 1,
     totalPages: 1,
     number: 0,
     size: 100,
   };
 
-  const profileBindings: UserSystemProfileResponse[] = [{ id: 20, userSystemId: 10, systemProfileId: 5, status: 'ACTIVE' }];
-  const profiles: SystemProfileResponse[] = [{ id: 5, systemId: 3, code: 'ADMIN', description: 'Administrador', status: 'ACTIVE' }];
+  const profileBindings: UserSystemProfileResponse[] = [{ id: '20', userSystemId: '10', systemProfileId: '5', status: 'ACTIVE' }];
+  const profiles: SystemProfileResponse[] = [{ id: '5', systemId: '3', code: 'ADMIN', description: 'Administrador', status: 'ACTIVE' }];
 
   beforeEach(async () => {
     adminApiStub = {
@@ -71,22 +71,22 @@ describe('UserBindingsComponent', () => {
   });
 
   it('deve carregar sistemas disponíveis, vínculos e perfis vinculados', () => {
-    expect(adminApiStub.listSystemsByTenant).toHaveBeenCalledWith(1, 0, 100);
-    expect(adminApiStub.listUserSystems).toHaveBeenCalledWith(1, 2, 0, 100);
+    expect(adminApiStub.listSystemsByTenant).toHaveBeenCalledWith('1', 0, 100);
+    expect(adminApiStub.listUserSystems).toHaveBeenCalledWith('1', '2', 0, 100);
     expect(fixture.componentInstance.bindings()).toEqual(userSystemsPage.content);
-    expect(fixture.componentInstance.profileBindingsByUserSystem[10]).toEqual(profileBindings);
+    expect(fixture.componentInstance.profileBindingsByUserSystem['10']).toEqual(profileBindings);
     expect(fixture.componentInstance.loading()).toBe(false);
   });
 
   it('deve resolver o nome do sistema a partir do id', () => {
-    expect(fixture.componentInstance.systemName(3)).toBe('CRM (CRM_ACME)');
-    expect(fixture.componentInstance.systemName(99)).toBe('Sistema 99');
+    expect(fixture.componentInstance.systemName('3')).toBe('CRM (CRM_ACME)');
+    expect(fixture.componentInstance.systemName('99')).toBe('Sistema 99');
   });
 
   it('deve chamar bindUserToSystem com o systemId selecionado', () => {
-    fixture.componentInstance.newSystemId = 3;
+    fixture.componentInstance.newSystemId = '3';
     fixture.componentInstance.bindToSystem();
-    expect(adminApiStub.bindUserToSystem).toHaveBeenCalledWith(1, 2, { systemId: 3 });
+    expect(adminApiStub.bindUserToSystem).toHaveBeenCalledWith('1', '2', { systemId: '3' });
   });
 
   it('não deve chamar bindUserToSystem sem sistema selecionado', () => {
@@ -96,9 +96,9 @@ describe('UserBindingsComponent', () => {
   });
 
   it('deve chamar bindProfileToUserSystem com o profileId selecionado', () => {
-    fixture.componentInstance.newProfileId[10] = 5;
+    fixture.componentInstance.newProfileId['10'] = '5';
     fixture.componentInstance.bindProfile(userSystemsPage.content[0]);
-    expect(adminApiStub.bindProfileToUserSystem).toHaveBeenCalledWith(1, 10, { profileId: 5 });
+    expect(adminApiStub.bindProfileToUserSystem).toHaveBeenCalledWith('1', '10', { profileId: '5' });
   });
 
   it('deve marcar erro quando a listagem inicial falha', () => {

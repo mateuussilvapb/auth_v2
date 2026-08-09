@@ -1,4 +1,11 @@
 // Espelham os DTOs de com.mssousa.authserver.adapter.in.web.admin (backend, Fase 8/9).
+//
+// Todo campo de ID (TSID, seção 4.2 do plano) é `string`, não `number`: TSIDs regularmente
+// excedem Number.MAX_SAFE_INTEGER do JavaScript (2^53-1) — como number, o JSON.parse do
+// browser perde precisão ao decodificar (confirmado num teste manual: um ID virou outro ID
+// ao dar round-trip pelo backend), quebrando qualquer operação subsequente que dependa do
+// ID exato. O backend serializa esses campos como String pelo mesmo motivo — ver Notas de
+// PROGRESS.md sobre a Fase 9.
 
 export interface Page<T> {
   content: T[];
@@ -9,7 +16,7 @@ export interface Page<T> {
 }
 
 export interface TenantResponse {
-  id: number;
+  id: string;
   code: string;
   name: string;
   status: string;
@@ -30,7 +37,7 @@ export interface UpdateStatusRequest {
 }
 
 export interface SystemResponse {
-  id: number;
+  id: string;
   clientId: string;
   name: string;
   status: string;
@@ -57,8 +64,8 @@ export interface RedirectUriRequest {
 }
 
 export interface SystemProfileResponse {
-  id: number;
-  systemId: number;
+  id: string;
+  systemId: string;
   code: string;
   description: string | null;
   status: string;
@@ -74,8 +81,8 @@ export interface UpdateSystemProfileRequest {
 }
 
 export interface UserResponse {
-  id: number;
-  tenantId: number;
+  id: string;
+  tenantId: string;
   username: string;
   email: string;
   name: string;
@@ -95,24 +102,24 @@ export interface UpdateUserRequest {
 }
 
 export interface UserSystemResponse {
-  id: number;
-  userId: number;
-  systemId: number;
-  tenantId: number;
+  id: string;
+  userId: string;
+  systemId: string;
+  tenantId: string;
   status: string;
 }
 
 export interface BindSystemRequest {
-  systemId: number;
+  systemId: string;
 }
 
 export interface UserSystemProfileResponse {
-  id: number;
-  userSystemId: number;
-  systemProfileId: number;
+  id: string;
+  userSystemId: string;
+  systemProfileId: string;
   status: string;
 }
 
 export interface BindProfileRequest {
-  profileId: number;
+  profileId: string;
 }

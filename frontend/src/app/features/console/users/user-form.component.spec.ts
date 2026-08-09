@@ -34,7 +34,7 @@ describe('UserFormComponent (criação)', () => {
   it('deve chamar createUser e navegar para a lista ao salvar', async () => {
     const router = TestBed.inject(Router);
     const navigateSpy = spyOn(router, 'navigate').and.resolveTo(true);
-    adminApiStub.createUser.and.returnValue(of({ id: 1 } as UserResponse));
+    adminApiStub.createUser.and.returnValue(of({ id: '1' } as UserResponse));
 
     fixture.componentInstance.username = 'joao_silva';
     fixture.componentInstance.email = 'joao@acme.com';
@@ -42,13 +42,13 @@ describe('UserFormComponent (criação)', () => {
     fixture.componentInstance.name = 'João';
     fixture.componentInstance.submit();
 
-    expect(adminApiStub.createUser).toHaveBeenCalledWith(1, {
+    expect(adminApiStub.createUser).toHaveBeenCalledWith('1', {
       username: 'joao_silva',
       email: 'joao@acme.com',
       password: 'senhaSegura123',
       name: 'João',
     });
-    expect(navigateSpy).toHaveBeenCalledWith(['/console/tenants', 1, 'users']);
+    expect(navigateSpy).toHaveBeenCalledWith(['/console/tenants', '1', 'users']);
   });
 
   it('deve mostrar erro quando a criação falha', () => {
@@ -68,7 +68,7 @@ describe('UserFormComponent (edição)', () => {
       getUser: jasmine
         .createSpy('getUser')
         .and.returnValue(
-          of({ id: 2, tenantId: 1, username: 'joao_silva', email: 'joao@acme.com', name: 'João', status: 'ACTIVE' } as UserResponse),
+          of({ id: '2', tenantId: '1', username: 'joao_silva', email: 'joao@acme.com', name: 'João', status: 'ACTIVE' } as UserResponse),
         ),
     };
 
@@ -92,11 +92,11 @@ describe('UserFormComponent (edição)', () => {
   });
 
   it('deve chamar updateUser (sem username/senha) ao salvar', () => {
-    adminApiStub.updateUser.and.returnValue(of({ id: 2 } as UserResponse));
+    adminApiStub.updateUser.and.returnValue(of({ id: '2' } as UserResponse));
 
     fixture.componentInstance.name = 'João da Silva';
     fixture.componentInstance.submit();
 
-    expect(adminApiStub.updateUser).toHaveBeenCalledWith(1, 2, { name: 'João da Silva', email: 'joao@acme.com' });
+    expect(adminApiStub.updateUser).toHaveBeenCalledWith('1', '2', { name: 'João da Silva', email: 'joao@acme.com' });
   });
 });

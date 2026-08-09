@@ -11,7 +11,7 @@ describe('ProfileListComponent', () => {
   let adminApiStub: { listProfiles: jasmine.Spy; createProfile: jasmine.Spy; updateProfileStatus: jasmine.Spy };
 
   const profiles: SystemProfileResponse[] = [
-    { id: 1, systemId: 1, code: 'ADMIN', description: 'Administrador', status: 'ACTIVE' },
+    { id: '1', systemId: '1', code: 'ADMIN', description: 'Administrador', status: 'ACTIVE' },
   ];
 
   beforeEach(async () => {
@@ -35,7 +35,7 @@ describe('ProfileListComponent', () => {
   });
 
   it('deve carregar perfis do systemId da rota', () => {
-    expect(adminApiStub.listProfiles).toHaveBeenCalledWith(1);
+    expect(adminApiStub.listProfiles).toHaveBeenCalledWith('1');
     expect(fixture.componentInstance.profiles()).toEqual(profiles);
   });
 
@@ -50,12 +50,12 @@ describe('ProfileListComponent', () => {
     fixture.componentInstance.newDescription = 'Operador';
     fixture.componentInstance.create();
 
-    expect(adminApiStub.createProfile).toHaveBeenCalledWith(1, { code: 'OPERADOR', description: 'Operador' });
+    expect(adminApiStub.createProfile).toHaveBeenCalledWith('1', { code: 'OPERADOR', description: 'Operador' });
     expect(fixture.componentInstance.newCode).toBe('');
   });
 
   it('deve chamar updateProfileStatus com o status invertido', () => {
     fixture.componentInstance.toggleStatus(profiles[0]);
-    expect(adminApiStub.updateProfileStatus).toHaveBeenCalledWith(1, 1, { status: 'INACTIVE' });
+    expect(adminApiStub.updateProfileStatus).toHaveBeenCalledWith('1', '1', { status: 'INACTIVE' });
   });
 });

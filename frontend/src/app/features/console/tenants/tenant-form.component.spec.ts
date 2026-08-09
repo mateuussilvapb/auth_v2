@@ -37,7 +37,7 @@ describe('TenantFormComponent (criação)', () => {
   it('deve chamar createTenant e navegar para a lista ao salvar', async () => {
     const router = TestBed.inject(Router);
     const navigateSpy = spyOn(router, 'navigate').and.resolveTo(true);
-    adminApiStub.createTenant.and.returnValue(of({ id: 1 } as TenantResponse));
+    adminApiStub.createTenant.and.returnValue(of({ id: '1' } as TenantResponse));
 
     fixture.componentInstance.code = 'acme';
     fixture.componentInstance.name = 'Acme';
@@ -67,7 +67,7 @@ describe('TenantFormComponent (edição)', () => {
       updateTenant: jasmine.createSpy('updateTenant'),
       getTenant: jasmine
         .createSpy('getTenant')
-        .and.returnValue(of({ id: 1, code: 'acme', name: 'Acme', status: 'ACTIVE', logoUrl: null } as TenantResponse)),
+        .and.returnValue(of({ id: '1', code: 'acme', name: 'Acme', status: 'ACTIVE', logoUrl: null } as TenantResponse)),
     };
 
     await TestBed.configureTestingModule({
@@ -90,11 +90,11 @@ describe('TenantFormComponent (edição)', () => {
   });
 
   it('deve chamar updateTenant (sem code) ao salvar', () => {
-    adminApiStub.updateTenant.and.returnValue(of({ id: 1 } as TenantResponse));
+    adminApiStub.updateTenant.and.returnValue(of({ id: '1' } as TenantResponse));
 
     fixture.componentInstance.name = 'Acme Corp';
     fixture.componentInstance.submit();
 
-    expect(adminApiStub.updateTenant).toHaveBeenCalledWith(1, { name: 'Acme Corp' });
+    expect(adminApiStub.updateTenant).toHaveBeenCalledWith('1', { name: 'Acme Corp' });
   });
 });

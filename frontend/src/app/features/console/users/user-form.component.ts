@@ -18,8 +18,8 @@ import { ApiErrorResponse } from '../../../core/models/auth-api.models';
   templateUrl: './user-form.component.html',
 })
 export class UserFormComponent implements OnInit {
-  tenantId = 0;
-  userId: number | null = null;
+  tenantId = '';
+  userId: string | null = null;
   username = '';
   email = '';
   password = '';
@@ -40,13 +40,13 @@ export class UserFormComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.tenantId = Number(this.route.snapshot.paramMap.get('tenantId'));
+    this.tenantId = this.route.snapshot.paramMap.get('tenantId') ?? '';
     const idParam = this.route.snapshot.paramMap.get('id');
     if (!idParam) {
       return;
     }
 
-    this.userId = Number(idParam);
+    this.userId = idParam;
     this.loading.set(true);
     this.adminApi.getUser(this.tenantId, this.userId).subscribe({
       next: (user) => {
