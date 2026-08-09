@@ -7,7 +7,7 @@ import { AuthApiService } from '../../core/services/auth-api.service';
 import { ApiErrorResponse } from '../../core/models/auth-api.models';
 
 /**
- * Rota pública {@code /redefinir-senha?token=...} — destino do link enviado por
+ * Rota pública {@code /reset-password?token=...} — destino do link enviado por
  * {@code POST /api/auth/forgot-password} (seção 7.4). {@code token} vem cru na URL (o
  * e-mail contém o valor bruto, não o hash armazenado em `password_reset_token`).
  */

@@ -94,7 +94,7 @@ Cada fase deve estar verde nos testes antes da seguinte. Atualizado a cada item 
 - [x] CORS para o SPA Angular (`authserver.cors.allowed-origins`, vazio em produção)
 
 ## Fase 9 — Frontend Angular (login, consentimento e console administrativo)
-- [x] Projeto Angular único: rotas públicas (`/login`, `/consent`, `/esqueci-senha`, `/redefinir-senha`) consumindo a API da Fase 7, e rotas protegidas do console consumindo a API da Fase 8 (rotas do console ainda pendentes — ver item de PKCE abaixo)
+- [x] Projeto Angular único: rotas públicas (`/login`, `/consent`, `/esqueci-senha`, `/reset-password`) consumindo a API da Fase 7, e rotas protegidas do console consumindo a API da Fase 8 (rotas do console ainda pendentes — ver item de PKCE abaixo)
 - [ ] Cliente OAuth2 PKCE (`angular-oauth2-oidc`) para o console administrativo
 - [x] Tela de login com branding por tenant e mensagens de erro genéricas
 - [ ] CRUD de tenants, sistemas, perfis, usuários
@@ -307,7 +307,7 @@ Cada fase deve estar verde nos testes antes da seguinte. Atualizado a cada item 
   test manual em navegador como o `/login`.** O fluxo de consentimento exige um `System`
   com `thirdParty = true` para o backend redirecionar para `/consent` de verdade (nenhum
   system de teste manual criado até agora tem essa flag), e `/esqueci-senha`/
-  `/redefinir-senha` exigem receber um e-mail real do Mailhog e extrair o token — cobertura
+  `/reset-password` exigem receber um e-mail real do Mailhog e extrair o token — cobertura
   ponta a ponta real já existe no backend (`OAuth2ConsentFlowIntegrationTest`,
   `ResetPasswordServiceIntegrationTest` e afins), então a UI ficou coberta só até onde os
   testes de componente alcançam. Retomar com smoke test manual quando o console
