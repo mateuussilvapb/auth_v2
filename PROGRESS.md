@@ -422,3 +422,28 @@ Cada fase deve estar verde nos testes antes da seguinte. Atualizado a cada item 
     platform admin, PKCE do console, e `/admin/api/v1/tenants` (bearer token) todos
     funcionando através do nginx em `http://localhost:8090`. Containers de teste removidos
     ao final (`authserver-nginx-test*`), não fazem parte do projeto committado.
+- **Três bugs reais encontrados só ao executar o roteiro manual da seção 14 do plano**
+  (`docker-compose` → `mvn verify` → login no console → criar tenant/sistema/perfis →
+  vincular → PKCE → validar claims) — nenhum apareceu antes porque nenhum teste automatizado
+  exercitava o caminho completo "platform admin de verdade criando um recurso auditado pelo
+  console de verdade":
+  1. **`created_by`/`sub` do JWT de platform admin estourava `VARCHAR(50)`** —
+     `AuthenticatedPlatformAdmin` não implementava `AuthenticatedPrincipal`, então
+     `Authentication.getName()` caía no `toString()` do record inteiro. Corrigido
+     implementando `AuthenticatedPrincipal` (`getName()` retorna só o ID).
+  2. **Efeito colateral da correção acima**: `getName()` colidiu com o record accessor
+     `name()` na introspecção do Jackson usado para persistir
+     `OAuth2Authorization.attributes` — o claim `name` do JWT saía com o ID em vez do nome
+     de exibição. Corrigido renomeando o campo do record para `displayName`.
+  3. **Todo ID (TSID) trafegado como número JSON perdia precisão no Angular** —
+     `Number.MAX_SAFE_INTEGER` do JavaScript é menor que TSIDs de 64 bits; um ID virava
+     outro ID ao dar round-trip pelo `JSON.parse` do browser, quebrando qualquer operação
+     que dependesse do ID exato (ex: criar um sistema sob um tenant recém-criado falhava
+     com "Tenant não encontrado"). Corrigido serializando todo campo de ID como `String`
+     em todos os DTOs administrativos (backend) e nos models/serviços/componentes
+     correspondentes (frontend).
+  - Ver commits `fix(security)`, `fix(admin-api)` e `fix(frontend)` logo antes desta nota
+    para os detalhes de cada um. **Lição geral**: testes automatizados que constroem um
+    JWT "de brinquedo" à mão (`.subject("1")`, por exemplo) ou que nunca serializam/
+    desserializam de verdade pela borda HTTP/JSON não pegam essa classe de bug — só um
+    teste manual ponta a ponta contra o sistema real pegou os três.
