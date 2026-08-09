@@ -59,6 +59,11 @@ management:
       exposure:
         include: health,info,metrics,prometheus
 
+springdoc:
+  # Só documenta a API administrativa (seção 9) — /api/auth/** é consumido pelo SPA
+  # Angular, não por integradores externos, e não precisa de OpenAPI.
+  paths-to-match: /admin/api/v1/**
+
 authserver:
   issuer: ${AUTH_ISSUER:https://auth.seudominio.com}
   email:

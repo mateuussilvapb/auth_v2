@@ -22,10 +22,11 @@ import java.util.Set;
 
 /**
  * Filter chains para {@code /oauth2/**} + OIDC (o servidor de autorização propriamente
- * dito), {@code /admin/api/**} (resource server, exige token de platform admin) e
+ * dito), {@code /admin/api/**} (resource server, exige token de platform admin),
  * {@code /api/auth/**} (público — login/consentimento/esqueci-senha, seção 2.2 e 7.4; a
  * verificação de credenciais acontece dentro do controller via {@code AuthenticationManager},
- * não neste filtro).
+ * não neste filtro) e a documentação OpenAPI (mesma exigência de acesso do
+ * {@code /admin/api/**} que ela documenta).
  * <p>
  * O filter chain de {@code /oauth2/**} precisa ser declarado explicitamente aqui: a
  * autoconfiguração do Spring Boot para o Authorization Server
@@ -64,7 +65,8 @@ public class SecurityConfig {
 
         http.oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()))
                 .exceptionHandling(exceptions -> exceptions.defaultAuthenticationEntryPointFor(
-                        new LoginUrlAuthenticationEntryPoint("/login"), htmlRequestMatcher()));
+                        new LoginUrlAuthenticationEntryPoint("/login"), htmlRequestMatcher()))
+                .cors(Customizer.withDefaults());
 
         return http.build();
     }
@@ -83,6 +85,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth.anyRequest().hasAuthority("ROLE_PLATFORM_ADMIN"))
                 .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter)))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .cors(Customizer.withDefaults())
                 .csrf(csrf -> csrf.disable());
         return http.build();
     }
@@ -94,6 +97,23 @@ public class SecurityConfig {
         http.securityMatcher("/api/auth/**")
                 .authorizeHttpRequests(auth -> auth.anyRequest().permitAll())
                 .securityContext(context -> context.securityContextRepository(securityContextRepository))
+                .cors(Customizer.withDefaults())
+                .csrf(csrf -> csrf.disable());
+        return http.build();
+    }
+
+    /**
+     * A documentação descreve a superfície inteira da API administrativa — mesma
+     * exigência de acesso que os endpoints que ela documenta (seção 9 do plano).
+     */
+    @Bean
+    @Order(3)
+    public SecurityFilterChain openApiSecurityFilterChain(
+            HttpSecurity http, PlatformAdminJwtAuthenticationConverter jwtAuthenticationConverter) throws Exception {
+        http.securityMatcher("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html")
+                .authorizeHttpRequests(auth -> auth.anyRequest().hasAuthority("ROLE_PLATFORM_ADMIN"))
+                .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter)))
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .csrf(csrf -> csrf.disable());
         return http.build();
     }

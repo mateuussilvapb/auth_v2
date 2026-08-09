@@ -32,6 +32,10 @@ authserver:
     sender: ${EMAIL_SENDER:dev@localhost}
   frontend:
     reset-password-url: ${RESET_PASSWORD_URL:http://localhost:4200/reset-password}
+  cors:
+    # ng serve roda em localhost:4200, origem diferente da API — necessário só em dev,
+    # já que em produção o Angular é servido pelo mesmo nginx/domínio (seção 11).
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:4200}
   # Limites de produção (10/30/60 por minuto, ver application.yml) atrapalhariam tanto o
   # desenvolvimento local quanto a suíte de testes de integração, que roda sob este
   # profile e compartilha o mesmo bean singleton de RateLimitFilter entre todas as classes

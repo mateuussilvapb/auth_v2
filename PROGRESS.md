@@ -90,8 +90,8 @@ Cada fase deve estar verde nos testes antes da seguinte. Atualizado a cada item 
   - [x] Usuários (aninhados sob `/tenants/{tenantId}/users/{id}`, inclui reset-password administrativo)
   - [x] Vínculos (aninhados sob `/tenants/{tenantId}/...` — ver Notas)
   - [x] Platform admins (`ManagePlatformAdminUseCase` novo — não existia desde a Fase 4, ver Notas)
-- [ ] OpenAPI/Swagger
-- [ ] CORS para o SPA Angular
+- [x] OpenAPI/Swagger (só `/admin/api/v1/**`, protegido por platform admin — ver Notas)
+- [x] CORS para o SPA Angular (`authserver.cors.allowed-origins`, vazio em produção)
 
 ## Fase 9 — Frontend Angular (login, consentimento e console administrativo)
 - [ ] Projeto Angular único: rotas públicas (`/login`, `/consent`, `/esqueci-senha`) consumindo a API da Fase 7, e rotas protegidas do console consumindo a API da Fase 8
@@ -119,6 +119,9 @@ Cada fase deve estar verde nos testes antes da seguinte. Atualizado a cada item 
 - [ ] CloudWatch Agent para logs e métricas
 - [ ] GitHub Actions: build → test → imagem → deploy
 - [ ] Health checks do Actuator + alarme de indisponibilidade
+- [ ] Decidir e implementar controle de acesso do Actuator (`/actuator/**` hoje não bate
+      em nenhum `securityMatcher` do `SecurityConfig` — passa sem autenticação nenhuma,
+      ver Notas da Fase 8)
 
 ---
 
@@ -130,6 +133,20 @@ Cada fase deve estar verde nos testes antes da seguinte. Atualizado a cada item 
   dentro de um sistema, `UNIQUE (systemId, code)`) — usar a rota flat exigiria uma busca
   extra só para descobrir a qual sistema um `id` de perfil pertence. Mesmo raciocínio já
   aplicado ao `DELETE` de redirect URI do `SystemController`.
+- **`SecurityConfig` não tem filter chain "catch-all".** Cada um dos 4 filter chains
+  (`/oauth2/**`, `/admin/api/**`, `/api/auth/**`, docs OpenAPI) usa `securityMatcher(...)`
+  restrito ao seu prefixo — qualquer caminho que não bata em nenhum deles (hoje:
+  `/actuator/**`) passa batido pelo Spring Security inteiro, sem nenhum filtro de
+  autenticação/autorização aplicado. `/actuator/health,info,metrics,prometheus` está
+  exposto sem autenticação agora. Não é urgente enquanto só a suíte de testes acessa a
+  aplicação, mas **precisa ser resolvido antes do deploy real** (Fase 11) — decidir se
+  actuator fica atrás de rede interna (sem exigir token) ou ganha seu próprio filter chain
+  com auth. Registrar como item explícito do checklist da Fase 11 ao chegar lá.
+- **OpenAPI só documenta `/admin/api/v1/**` e exige o mesmo token de platform admin dos
+  endpoints que documenta.** `/api/auth/**` é consumido pelo SPA Angular (Fase 9), não por
+  integradores externos — não teria valor documentá-lo via Swagger. Igual raciocínio de
+  acesso: a documentação descreve toda a superfície administrativa (nomes de campo, rotas,
+  DTOs), então fica atrás do mesmo controle de acesso que ela descreve, não pública.
 - **Nunca registre um `JsonMapper`/`ObjectMapper` customizado como `@Bean` sem `@Qualifier`
   dedicado.** Descoberto ao escrever os testes do `SystemController` (Fase 8): o
   `oauth2AuthorizationJsonMapper` da Fase 6 era um `@Bean JsonMapper` — como era o único
