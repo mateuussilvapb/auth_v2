@@ -36,6 +36,10 @@ class SystemControllerIntegrationTest extends AbstractRepositoryIntegrationTest 
                                  "initialRedirectUris":["https://crm.initech.com/callback"],"thirdParty":false}
                                 """))
                 .andExpect(status().isCreated())
+                // Regressão: TSID (seção 4.2) excede Number.MAX_SAFE_INTEGER do
+                // JavaScript — "id" precisa ser String no JSON, não number (ver Notas de
+                // PROGRESS.md sobre a Fase 9).
+                .andExpect(jsonPath("$.id").isString())
                 .andReturn().getResponse().getContentAsString();
         return new ObjectMapper().readTree(responseBody).get("id").asLong();
     }

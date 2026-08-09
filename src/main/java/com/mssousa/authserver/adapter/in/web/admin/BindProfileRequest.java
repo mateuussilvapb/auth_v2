@@ -1,6 +1,7 @@
 package com.mssousa.authserver.adapter.in.web.admin;
 
-import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotBlank;
 
-public record BindProfileRequest(@NotNull Long profileId) {
+/** {@code profileId} é {@code String} — ver javadoc de {@link TenantResponse}. */
+public record BindProfileRequest(@NotBlank String profileId) {
 }

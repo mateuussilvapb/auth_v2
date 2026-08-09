@@ -49,7 +49,7 @@ public class BindingController {
     public UserSystemResponse bindUserToSystem(@PathVariable Long tenantId, @PathVariable Long userId,
                                                 @Valid @RequestBody BindSystemRequest request) {
         UserSystem binding = manageBindingUseCase.bindUserToSystem(
-                TenantId.of(tenantId), UserId.of(userId), SystemId.of(request.systemId()));
+                TenantId.of(tenantId), UserId.of(userId), SystemId.of(Long.parseLong(request.systemId())));
         return UserSystemResponse.from(binding);
     }
 
@@ -89,7 +89,7 @@ public class BindingController {
     public UserSystemProfileResponse bindProfile(@PathVariable Long tenantId, @PathVariable Long userSystemId,
                                                   @Valid @RequestBody BindProfileRequest request) {
         UserSystemProfile binding = manageBindingUseCase.bindProfileToUserSystem(
-                TenantId.of(tenantId), UserSystemId.of(userSystemId), SystemProfileId.of(request.profileId()));
+                TenantId.of(tenantId), UserSystemId.of(userSystemId), SystemProfileId.of(Long.parseLong(request.profileId())));
         return UserSystemProfileResponse.from(binding);
     }
 

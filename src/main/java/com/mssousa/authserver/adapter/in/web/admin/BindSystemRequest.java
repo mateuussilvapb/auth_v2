@@ -1,6 +1,7 @@
 package com.mssousa.authserver.adapter.in.web.admin;
 
-import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotBlank;
 
-public record BindSystemRequest(@NotNull Long systemId) {
+/** {@code systemId} é {@code String} — ver javadoc de {@link TenantResponse}. */
+public record BindSystemRequest(@NotBlank String systemId) {
 }

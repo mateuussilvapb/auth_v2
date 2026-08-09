@@ -42,6 +42,13 @@ class TenantControllerIntegrationTest extends AbstractRepositoryIntegrationTest 
                 .andExpect(jsonPath("$.code").value("initech"))
                 .andExpect(jsonPath("$.name").value("Initech"))
                 .andExpect(jsonPath("$.status").value("ACTIVE"))
+                // Regressão: "id" precisa ser String no JSON, não number — um TSID
+                // (seção 4.2 do plano) regularmente excede Number.MAX_SAFE_INTEGER do
+                // JavaScript; serializado como número, o console Angular perde precisão
+                // ao decodificar (confirmado num teste manual: um ID virou outro ID ao
+                // fazer round-trip pelo JSON.parse do browser), quebrando toda operação
+                // subsequente que dependa do ID exato.
+                .andExpect(jsonPath("$.id").isString())
                 .andReturn().getResponse().getContentAsString();
 
         JsonNode createResponse = new ObjectMapper().readTree(createResponseBody);

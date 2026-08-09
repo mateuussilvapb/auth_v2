@@ -45,6 +45,9 @@ class UserControllerIntegrationTest extends AbstractRepositoryIntegrationTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.username").value("peter_gibbons"))
                 .andExpect(jsonPath("$.status").value("ACTIVE"))
+                // Regressão: TSID excede Number.MAX_SAFE_INTEGER do JavaScript — "id"
+                // precisa ser String no JSON, não number (ver Notas de PROGRESS.md).
+                .andExpect(jsonPath("$.id").isString())
                 .andReturn().getResponse().getContentAsString();
         long id = new ObjectMapper().readTree(createResponseBody).get("id").asLong();
 
