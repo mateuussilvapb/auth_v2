@@ -42,7 +42,7 @@ public class SystemRepositoryImpl implements SystemRepository {
 
     @Override
     public Page<System> findAll(Pageable pageable) {
-        return jpaRepository.findAll(pageable).map(mapper::toDomain);
+        return jpaRepository.findAllWithRedirectUris(pageable).map(mapper::toDomain);
     }
 
     @Override

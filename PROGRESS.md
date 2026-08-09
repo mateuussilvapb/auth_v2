@@ -94,9 +94,9 @@ Cada fase deve estar verde nos testes antes da seguinte. Atualizado a cada item 
 - [x] CORS para o SPA Angular (`authserver.cors.allowed-origins`, vazio em produção)
 
 ## Fase 9 — Frontend Angular (login, consentimento e console administrativo)
-- [ ] Projeto Angular único: rotas públicas (`/login`, `/consent`, `/esqueci-senha`) consumindo a API da Fase 7, e rotas protegidas do console consumindo a API da Fase 8
+- [ ] Projeto Angular único: rotas públicas (`/login`, `/consent`, `/esqueci-senha`) consumindo a API da Fase 7, e rotas protegidas do console consumindo a API da Fase 8 (scaffold + `/login` feitos nesta rodada; `/consent` e `/esqueci-senha` ainda pendentes)
 - [ ] Cliente OAuth2 PKCE (`angular-oauth2-oidc`) para o console administrativo
-- [ ] Tela de login com branding por tenant e mensagens de erro genéricas
+- [x] Tela de login com branding por tenant e mensagens de erro genéricas
 - [ ] CRUD de tenants, sistemas, perfis, usuários
 - [ ] Tela de vínculos (usuário → sistemas → perfis)
 - [ ] Guard de rota exigindo platform admin nas rotas do console
@@ -285,3 +285,20 @@ Cada fase deve estar verde nos testes antes da seguinte. Atualizado a cada item 
   valer de fato (e falharia de verdade) assim que houver uma violação real. O item da
   Fase 10 fecha quando a cobertura de regras estiver completa (incluindo as de `adapter`
   não vazar entidade JPA e DTO não entrar em `application`).
+- **`LazyInitializationException` em `SystemEntity.redirectUris` fora de transação —
+  invisível para a suíte de testes, só apareceu ao rodar contra um Postgres real (Fase 9,
+  smoke test manual do login Angular).** `SystemRegisteredClientRepository` (chamado direto
+  pelo filter chain do Spring Security, sem `@Transactional` de serviço de aplicação por
+  cima) lia `System.redirectUris` — `@OneToMany` lazy por padrão — fora de qualquer sessão
+  Hibernate aberta. `AbstractRepositoryIntegrationTest` é `@Transactional`, então todo teste
+  de integração mantém a sessão aberta e nunca reproduz o erro. Corrigido com
+  `@EntityGraph(attributePaths = "redirectUris")` em `SystemJpaRepository.findById`/
+  `findByClientId`, e um novo método `findAllWithRedirectUris` (idem) usado por
+  `SystemRepositoryImpl.findAll`. Regressão coberta em
+  `SystemRepositoryIntegrationTest.deveCarregarRedirectUrisForaDeUmaTransacao`, que usa
+  `@Transactional(propagation = Propagation.NOT_SUPPORTED)` para replicar de fato a ausência
+  de transação (com limpeza manual do registro no `finally`, já que não há rollback
+  automático). **Lição geral:** qualquer repositório JPA chamado por infraestrutura do
+  Spring Security (fora do ciclo normal de use case → `@Transactional`) precisa de
+  `@EntityGraph` em toda coleção lazy que o mapper de domínio acessa — só um teste com
+  `Propagation.NOT_SUPPORTED` pega esse tipo de bug antes de produção.
