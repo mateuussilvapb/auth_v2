@@ -37,4 +37,45 @@ describe('AdminApiService', () => {
     expect(req.request.method).toBe('PATCH');
     req.flush({ id: 1, code: 'acme', name: 'Acme', status: 'INACTIVE', logoUrl: null });
   });
+
+  it('deve criar sistema aninhado sob o tenant', () => {
+    service
+      .createSystem(1, {
+        clientId: 'CRM_ACME',
+        name: 'CRM',
+        publicClient: true,
+        clientSecret: null,
+        initialRedirectUris: ['https://crm.acme.com/callback'],
+        thirdParty: false,
+      })
+      .subscribe();
+
+    const req = httpMock.expectOne((r) => r.url.endsWith('/admin/api/v1/tenants/1/systems'));
+    expect(req.request.method).toBe('POST');
+    req.flush({
+      id: 1,
+      clientId: 'CRM_ACME',
+      name: 'CRM',
+      status: 'ACTIVE',
+      publicClient: true,
+      redirectUris: ['https://crm.acme.com/callback'],
+      thirdParty: false,
+    });
+  });
+
+  it('deve adicionar redirect URI a um sistema existente', () => {
+    service.addRedirectUri(1, { uri: 'https://crm.acme.com/dev-callback' }).subscribe();
+
+    const req = httpMock.expectOne((r) => r.url.endsWith('/admin/api/v1/systems/1/redirect-uris'));
+    expect(req.request.method).toBe('POST');
+    req.flush({
+      id: 1,
+      clientId: 'CRM_ACME',
+      name: 'CRM',
+      status: 'ACTIVE',
+      publicClient: true,
+      redirectUris: ['https://crm.acme.com/callback', 'https://crm.acme.com/dev-callback'],
+      thirdParty: false,
+    });
+  });
 });

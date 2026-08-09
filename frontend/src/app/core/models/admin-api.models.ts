@@ -28,3 +28,30 @@ export interface UpdateTenantRequest {
 export interface UpdateStatusRequest {
   status: string;
 }
+
+export interface SystemResponse {
+  id: number;
+  clientId: string;
+  name: string;
+  status: string;
+  publicClient: boolean;
+  redirectUris: string[];
+  thirdParty: boolean;
+}
+
+export interface CreateSystemRequest {
+  clientId: string;
+  name: string;
+  publicClient: boolean;
+  clientSecret: string | null;
+  initialRedirectUris: string[];
+  thirdParty: boolean;
+}
+
+export interface UpdateSystemRequest {
+  name: string;
+}
+
+export interface RedirectUriRequest {
+  uri: string;
+}

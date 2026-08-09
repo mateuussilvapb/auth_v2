@@ -5,10 +5,14 @@ import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { ConsoleAuthService } from './console-auth.service';
 import {
+  CreateSystemRequest,
   CreateTenantRequest,
   Page,
+  RedirectUriRequest,
+  SystemResponse,
   TenantResponse,
   UpdateStatusRequest,
+  UpdateSystemRequest,
   UpdateTenantRequest,
 } from '../models/admin-api.models';
 
@@ -51,6 +55,35 @@ export class AdminApiService {
 
   updateTenantStatus(id: number, request: UpdateStatusRequest): Observable<TenantResponse> {
     return this.http.patch<TenantResponse>(`${this.baseUrl}/tenants/${id}/status`, request, {
+      headers: this.authHeaders(),
+    });
+  }
+
+  listSystemsByTenant(tenantId: number, page: number, size: number): Observable<Page<SystemResponse>> {
+    return this.http.get<Page<SystemResponse>>(`${this.baseUrl}/tenants/${tenantId}/systems`, {
+      headers: this.authHeaders(),
+      params: { page, size },
+    });
+  }
+
+  createSystem(tenantId: number, request: CreateSystemRequest): Observable<SystemResponse> {
+    return this.http.post<SystemResponse>(`${this.baseUrl}/tenants/${tenantId}/systems`, request, {
+      headers: this.authHeaders(),
+    });
+  }
+
+  updateSystem(id: number, request: UpdateSystemRequest): Observable<SystemResponse> {
+    return this.http.put<SystemResponse>(`${this.baseUrl}/systems/${id}`, request, { headers: this.authHeaders() });
+  }
+
+  updateSystemStatus(id: number, request: UpdateStatusRequest): Observable<SystemResponse> {
+    return this.http.patch<SystemResponse>(`${this.baseUrl}/systems/${id}/status`, request, {
+      headers: this.authHeaders(),
+    });
+  }
+
+  addRedirectUri(id: number, request: RedirectUriRequest): Observable<SystemResponse> {
+    return this.http.post<SystemResponse>(`${this.baseUrl}/systems/${id}/redirect-uris`, request, {
       headers: this.authHeaders(),
     });
   }

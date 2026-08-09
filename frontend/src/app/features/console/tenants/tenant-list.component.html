@@ -26,6 +26,7 @@
             <td>{{ tenant.status }}</td>
             <td>
               <a [routerLink]="['/console/tenants', tenant.id, 'editar']">Editar</a>
+              <a [routerLink]="['/console/tenants', tenant.id, 'systems']">Sistemas</a>
               <button type="button" (click)="toggleStatus(tenant)">
                 {{ tenant.status === 'ACTIVE' ? 'Desativar' : 'Ativar' }}
               </button>
