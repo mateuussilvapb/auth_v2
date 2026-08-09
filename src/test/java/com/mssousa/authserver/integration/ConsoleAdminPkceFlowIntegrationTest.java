@@ -66,7 +66,7 @@ class ConsoleAdminPkceFlowIntegrationTest extends AbstractRepositoryIntegrationT
 
     @Test
     void deveEmitirTokenComClaimPlatformAdminViaConsoleAdministrativo() throws Exception {
-        createAndSaveAdmin("root_admin", "admin@seudominio.com");
+        PlatformAdmin admin = createAndSaveAdmin("root_admin", "admin@seudominio.com");
 
         String redirectUri = consoleRedirectUris.split(",")[0].trim();
         String codeVerifier = generateCodeVerifier();
@@ -118,6 +118,75 @@ class ConsoleAdminPkceFlowIntegrationTest extends AbstractRepositoryIntegrationT
         assertEquals("root_admin", jwt.getClaimAsString("username"));
         assertEquals("admin@seudominio.com", jwt.getClaimAsString("email"));
         assertNull(jwt.getClaimAsString("tenant_id"), "token de platform admin não deveria carregar tenant_id");
+        // Regressão: sem AuthenticatedPlatformAdmin implementar AuthenticatedPrincipal, o
+        // `sub` cai no toString() do record inteiro (~100 caracteres) — estoura
+        // VARCHAR(50) de created_by na primeira escrita auditada feita com este token
+        // (só apareceu num teste manual criando um tenant de verdade pelo console).
+        assertEquals(admin.getId().value().toString(), jwt.getSubject());
+        // Regressão (efeito colateral da correção acima): getName() da interface
+        // AuthenticatedPrincipal colidia com o record accessor name() na introspecção do
+        // Jackson usado para (des)serializar OAuth2Authorization.attributes — sem
+        // @JsonIgnore em getName(), o claim "name" saía com o ID em vez do nome de
+        // verdade. createAndSaveAdmin usa o username como name, então comparar contra o
+        // id (que seria "1") aqui garante que não regrediu.
+        assertEquals("root_admin", jwt.getClaimAsString("name"));
+        assertNotEquals(admin.getId().value().toString(), jwt.getClaimAsString("name"));
+    }
+
+    @Test
+    void deveCriarTenantComTokenDeConsoleSemEstourarCreatedBy() throws Exception {
+        createAndSaveAdmin("root_admin_2", "admin2@seudominio.com");
+
+        String redirectUri = consoleRedirectUris.split(",")[0].trim();
+        String codeVerifier = generateCodeVerifier();
+        String codeChallenge = generateCodeChallenge(codeVerifier);
+
+        MvcResult loginResult = mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"clientId":"%s","usernameOrEmail":"root_admin_2","password":"senhaSegura123"}
+                                """.formatted(consoleClientId)))
+                .andExpect(status().isOk())
+                .andReturn();
+        MockHttpSession session = (MockHttpSession) loginResult.getRequest().getSession(false);
+
+        MvcResult authorizeResult = mockMvc.perform(get("/oauth2/authorize")
+                        .queryParam("response_type", "code")
+                        .queryParam("client_id", consoleClientId)
+                        .queryParam("redirect_uri", redirectUri)
+                        .queryParam("code_challenge", codeChallenge)
+                        .queryParam("code_challenge_method", "S256")
+                        .queryParam("state", "xyz")
+                        .queryParam("scope", "profile")
+                        .session(session))
+                .andExpect(status().is3xxRedirection())
+                .andReturn();
+        String code = UriComponentsBuilder.fromUriString(authorizeResult.getResponse().getRedirectedUrl())
+                .build().getQueryParams().getFirst("code");
+
+        MvcResult tokenResult = mockMvc.perform(post("/oauth2/token")
+                        .param("grant_type", "authorization_code")
+                        .param("code", code)
+                        .param("redirect_uri", redirectUri)
+                        .param("client_id", consoleClientId)
+                        .param("code_verifier", codeVerifier)
+                        .contentType(MediaType.APPLICATION_FORM_URLENCODED))
+                .andExpect(status().isOk())
+                .andReturn();
+        String accessToken = new ObjectMapper().readTree(tokenResult.getResponse().getContentAsString())
+                .get("access_token").asText();
+
+        // Reprodução fiel do bug: POST real em /admin/api/v1/tenants (Fase 8, escrita
+        // auditada via JpaAuditingConfig) usando o bearer token de verdade emitido acima
+        // — não o JWT sintético que AbstractRepositoryIntegrationTest.platformAdmin()
+        // constrói à mão com .subject("1").
+        mockMvc.perform(post("/admin/api/v1/tenants")
+                        .header("Authorization", "Bearer " + accessToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"code":"console-e2e","name":"Console E2E"}
+                                """))
+                .andExpect(status().isCreated());
     }
 
     private String generateCodeVerifier() {

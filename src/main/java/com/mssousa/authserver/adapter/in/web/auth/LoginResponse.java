@@ -16,6 +16,6 @@ public record LoginResponse(String username, String name) {
     }
 
     public static LoginResponse from(AuthenticatedPlatformAdmin authenticatedPlatformAdmin) {
-        return new LoginResponse(authenticatedPlatformAdmin.username().value(), authenticatedPlatformAdmin.name());
+        return new LoginResponse(authenticatedPlatformAdmin.username().value(), authenticatedPlatformAdmin.displayName());
     }
 }
