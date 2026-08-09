@@ -55,3 +55,20 @@ export interface UpdateSystemRequest {
 export interface RedirectUriRequest {
   uri: string;
 }
+
+export interface SystemProfileResponse {
+  id: number;
+  systemId: number;
+  code: string;
+  description: string | null;
+  status: string;
+}
+
+export interface CreateSystemProfileRequest {
+  code: string;
+  description: string | null;
+}
+
+export interface UpdateSystemProfileRequest {
+  description: string | null;
+}

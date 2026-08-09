@@ -10,6 +10,7 @@ import { TenantListComponent } from './features/console/tenants/tenant-list.comp
 import { TenantFormComponent } from './features/console/tenants/tenant-form.component';
 import { SystemListComponent } from './features/console/systems/system-list.component';
 import { SystemFormComponent } from './features/console/systems/system-form.component';
+import { ProfileListComponent } from './features/console/profiles/profile-list.component';
 import { consoleAuthGuard } from './core/guards/console-auth.guard';
 
 /**
@@ -31,5 +32,6 @@ export const routes: Routes = [
   { path: 'console/tenants/:id/editar', component: TenantFormComponent, canActivate: [consoleAuthGuard] },
   { path: 'console/tenants/:tenantId/systems', component: SystemListComponent, canActivate: [consoleAuthGuard] },
   { path: 'console/tenants/:tenantId/systems/novo', component: SystemFormComponent, canActivate: [consoleAuthGuard] },
+  { path: 'console/systems/:systemId/profiles', component: ProfileListComponent, canActivate: [consoleAuthGuard] },
   { path: '', redirectTo: 'login', pathMatch: 'full' },
 ];

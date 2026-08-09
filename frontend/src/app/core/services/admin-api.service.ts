@@ -5,13 +5,16 @@ import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { ConsoleAuthService } from './console-auth.service';
 import {
+  CreateSystemProfileRequest,
   CreateSystemRequest,
   CreateTenantRequest,
   Page,
   RedirectUriRequest,
+  SystemProfileResponse,
   SystemResponse,
   TenantResponse,
   UpdateStatusRequest,
+  UpdateSystemProfileRequest,
   UpdateSystemRequest,
   UpdateTenantRequest,
 } from '../models/admin-api.models';
@@ -86,5 +89,35 @@ export class AdminApiService {
     return this.http.post<SystemResponse>(`${this.baseUrl}/systems/${id}/redirect-uris`, request, {
       headers: this.authHeaders(),
     });
+  }
+
+  listProfiles(systemId: number): Observable<SystemProfileResponse[]> {
+    return this.http.get<SystemProfileResponse[]>(`${this.baseUrl}/systems/${systemId}/profiles`, {
+      headers: this.authHeaders(),
+    });
+  }
+
+  createProfile(systemId: number, request: CreateSystemProfileRequest): Observable<SystemProfileResponse> {
+    return this.http.post<SystemProfileResponse>(`${this.baseUrl}/systems/${systemId}/profiles`, request, {
+      headers: this.authHeaders(),
+    });
+  }
+
+  updateProfile(
+    systemId: number,
+    id: number,
+    request: UpdateSystemProfileRequest,
+  ): Observable<SystemProfileResponse> {
+    return this.http.put<SystemProfileResponse>(`${this.baseUrl}/systems/${systemId}/profiles/${id}`, request, {
+      headers: this.authHeaders(),
+    });
+  }
+
+  updateProfileStatus(systemId: number, id: number, request: UpdateStatusRequest): Observable<SystemProfileResponse> {
+    return this.http.patch<SystemProfileResponse>(
+      `${this.baseUrl}/systems/${systemId}/profiles/${id}/status`,
+      request,
+      { headers: this.authHeaders() },
+    );
   }
 }

@@ -29,6 +29,7 @@
         <button type="button" (click)="toggleStatus(system)">
           {{ system.status === 'ACTIVE' ? 'Desativar' : 'Ativar' }}
         </button>
+        <a [routerLink]="['/console/systems', system.id, 'profiles']">Perfis</a>
       </div>
     }
   }

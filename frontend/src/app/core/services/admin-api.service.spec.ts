@@ -78,4 +78,28 @@ describe('AdminApiService', () => {
       thirdParty: false,
     });
   });
+
+  it('deve listar perfis de um sistema sem paginação', () => {
+    service.listProfiles(1).subscribe();
+
+    const req = httpMock.expectOne((r) => r.url.endsWith('/admin/api/v1/systems/1/profiles'));
+    expect(req.request.method).toBe('GET');
+    req.flush([{ id: 1, systemId: 1, code: 'ADMIN', description: 'Administrador', status: 'ACTIVE' }]);
+  });
+
+  it('deve criar perfil aninhado sob o sistema', () => {
+    service.createProfile(1, { code: 'ADMIN', description: 'Administrador' }).subscribe();
+
+    const req = httpMock.expectOne((r) => r.url.endsWith('/admin/api/v1/systems/1/profiles'));
+    expect(req.request.method).toBe('POST');
+    req.flush({ id: 1, systemId: 1, code: 'ADMIN', description: 'Administrador', status: 'ACTIVE' });
+  });
+
+  it('deve chamar PATCH .../status ao alterar status de perfil', () => {
+    service.updateProfileStatus(1, 2, { status: 'INACTIVE' }).subscribe();
+
+    const req = httpMock.expectOne((r) => r.url.endsWith('/admin/api/v1/systems/1/profiles/2/status'));
+    expect(req.request.method).toBe('PATCH');
+    req.flush({ id: 2, systemId: 1, code: 'ADMIN', description: 'Administrador', status: 'INACTIVE' });
+  });
 });
