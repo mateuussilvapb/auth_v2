@@ -50,6 +50,16 @@ final class ValueObjectMixins {
         abstract Long value();
     }
 
+    abstract static class PlatformAdminIdMixin {
+        @JsonCreator
+        static Object of(Long value) {
+            return null;
+        }
+
+        @JsonValue
+        abstract Long value();
+    }
+
     abstract static class UsernameMixin {
         @JsonCreator
         static Object of(String value) {

@@ -12,6 +12,16 @@ spring:
     username: ${DB_USERNAME:authserver}
     password: ${DB_PASSWORD:authserver}
 
+  security:
+    oauth2:
+      authorizationserver:
+        # Precisa bater com o issuer real e alcançável em dev (localhost:8080) — sem este
+        # override, o discovery document OIDC (/.well-known/openid-configuration) declara
+        # o issuer de produção (application.yml), e clients que validam o campo `issuer`
+        # do documento contra a própria configuração (angular-oauth2-oidc do console
+        # administrativo, seção 2.2/D6) rejeitam silenciosamente o documento.
+        issuer: ${AUTH_ISSUER:http://localhost:8080}
+
   jpa:
     show-sql: true
     properties:
@@ -28,10 +38,13 @@ spring:
     password: ${SMTP_PASSWORD:}
 
 authserver:
+  issuer: ${AUTH_ISSUER:http://localhost:8080}
   email:
     sender: ${EMAIL_SENDER:dev@localhost}
   frontend:
     reset-password-url: ${RESET_PASSWORD_URL:http://localhost:4200/reset-password}
+  console-client:
+    redirect-uris: ${CONSOLE_REDIRECT_URIS:http://localhost:4200/console/callback}
   cors:
     # ng serve roda em localhost:4200, origem diferente da API — necessário só em dev,
     # já que em produção o Angular é servido pelo mesmo nginx/domínio (seção 11).

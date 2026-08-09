@@ -1,7 +1,9 @@
 package com.mssousa.authserver.config.security.jackson;
 
 import com.mssousa.authserver.adapter.in.web.security.ClientAwareAuthenticationToken;
+import com.mssousa.authserver.application.model.AuthenticatedPlatformAdmin;
 import com.mssousa.authserver.application.model.AuthenticatedUser;
+import com.mssousa.authserver.domain.model.platform.PlatformAdminId;
 import com.mssousa.authserver.domain.model.system.SystemId;
 import com.mssousa.authserver.domain.model.tenant.TenantId;
 import com.mssousa.authserver.domain.model.user.Email;
@@ -50,9 +52,11 @@ public final class OAuth2AuthorizationJsonMapperFactory {
                 .addModules(securityModules)
                 .addMixIn(ClientAwareAuthenticationToken.class, ClientAwareAuthenticationTokenMixin.class)
                 .addMixIn(AuthenticatedUser.class, AuthenticatedUserMixin.class)
+                .addMixIn(AuthenticatedPlatformAdmin.class, AuthenticatedPlatformAdminMixin.class)
                 .addMixIn(UserId.class, ValueObjectMixins.UserIdMixin.class)
                 .addMixIn(TenantId.class, ValueObjectMixins.TenantIdMixin.class)
                 .addMixIn(SystemId.class, ValueObjectMixins.SystemIdMixin.class)
+                .addMixIn(PlatformAdminId.class, ValueObjectMixins.PlatformAdminIdMixin.class)
                 .addMixIn(Username.class, ValueObjectMixins.UsernameMixin.class)
                 .addMixIn(Email.class, ValueObjectMixins.EmailMixin.class)
                 .build();

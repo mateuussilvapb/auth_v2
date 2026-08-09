@@ -11,7 +11,6 @@ import org.springframework.security.oauth2.server.authorization.client.Registere
 import org.springframework.security.oauth2.server.authorization.client.RegisteredClientRepository;
 import org.springframework.security.oauth2.server.authorization.settings.ClientSettings;
 import org.springframework.security.oauth2.server.authorization.settings.TokenSettings;
-import org.springframework.stereotype.Component;
 
 import java.time.Duration;
 
@@ -20,8 +19,14 @@ import java.time.Duration;
  * de {@code oauth2_registered_client} (seção 4.3 e 7.3 do plano). Um {@link System} vira
  * um {@link RegisteredClient} a cada resolução — não há cache; qualquer alteração
  * administrativa (rotação de secret, nova redirect URI) vale imediatamente.
+ * <p>
+ * Não é {@code @Component}: construído explicitamente por
+ * {@code RegisteredClientRepositoryConfig} e combinado com o client estático do console
+ * administrativo via {@link CompositeRegisteredClientRepository} — dois beans
+ * {@code @Component} do mesmo tipo {@link RegisteredClientRepository} tornariam ambíguo
+ * todo ponto de injeção da aplicação.
+ * </p>
  */
-@Component
 public class SystemRegisteredClientRepository implements RegisteredClientRepository {
 
     private static final Duration ACCESS_TOKEN_TTL = Duration.ofMinutes(15);

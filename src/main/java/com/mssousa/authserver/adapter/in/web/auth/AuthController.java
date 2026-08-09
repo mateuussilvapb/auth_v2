@@ -3,6 +3,7 @@ package com.mssousa.authserver.adapter.in.web.auth;
 import com.mssousa.authserver.adapter.in.web.security.ClientAwareAuthenticationToken;
 import com.mssousa.authserver.application.exception.AuthenticationFailedException;
 import com.mssousa.authserver.application.exception.ResourceNotFoundException;
+import com.mssousa.authserver.application.model.AuthenticatedPlatformAdmin;
 import com.mssousa.authserver.application.model.AuthenticatedUser;
 import com.mssousa.authserver.application.port.in.GetTenantBrandingUseCase;
 import com.mssousa.authserver.application.port.in.ResetPasswordUseCase;
@@ -82,7 +83,16 @@ public class AuthController {
         SecurityContextHolder.setContext(context);
         securityContextRepository.saveContext(context, httpRequest, httpResponse);
 
-        return LoginResponse.from((AuthenticatedUser) authenticated.getPrincipal());
+        // Duas identidades caem no mesmo endpoint (seção 2.1/2.2/D6): usuário de tenant
+        // (ClientAwareAuthenticationToken/AuthenticatedUser) e platform admin do console
+        // administrativo Angular (fallback do ProviderManager para
+        // PlatformAdminAuthenticationProvider/AuthenticatedPlatformAdmin — client_id não
+        // resolve nenhum System).
+        Object principal = authenticated.getPrincipal();
+        if (principal instanceof AuthenticatedPlatformAdmin authenticatedPlatformAdmin) {
+            return LoginResponse.from(authenticatedPlatformAdmin);
+        }
+        return LoginResponse.from((AuthenticatedUser) principal);
     }
 
     @PostMapping("/forgot-password")

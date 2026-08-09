@@ -94,12 +94,12 @@ Cada fase deve estar verde nos testes antes da seguinte. Atualizado a cada item 
 - [x] CORS para o SPA Angular (`authserver.cors.allowed-origins`, vazio em produção)
 
 ## Fase 9 — Frontend Angular (login, consentimento e console administrativo)
-- [x] Projeto Angular único: rotas públicas (`/login`, `/consent`, `/esqueci-senha`, `/reset-password`) consumindo a API da Fase 7, e rotas protegidas do console consumindo a API da Fase 8 (rotas do console ainda pendentes — ver item de PKCE abaixo)
-- [ ] Cliente OAuth2 PKCE (`angular-oauth2-oidc`) para o console administrativo
+- [x] Projeto Angular único: rotas públicas (`/login`, `/consent`, `/esqueci-senha`, `/reset-password`) consumindo a API da Fase 7, e rota `/console` protegida consumindo a API da Fase 8 (só o dashboard placeholder existe — CRUD é item à parte abaixo)
+- [x] Cliente OAuth2 PKCE (`angular-oauth2-oidc`) para o console administrativo — ver Notas (client estático `RegisteredClientRepositoryConfig`, login de platform admin via `/api/auth/login`)
 - [x] Tela de login com branding por tenant e mensagens de erro genéricas
 - [ ] CRUD de tenants, sistemas, perfis, usuários
 - [ ] Tela de vínculos (usuário → sistemas → perfis)
-- [ ] Guard de rota exigindo platform admin nas rotas do console
+- [x] Guard de rota exigindo platform admin nas rotas do console (`consoleAuthGuard` — token só é emitido para platform admin nesse client, ver Notas)
 - [ ] Build de produção servido por nginx (mesmo domínio do auth server)
 
 ## Fase 10 — Qualidade
@@ -313,3 +313,73 @@ Cada fase deve estar verde nos testes antes da seguinte. Atualizado a cada item 
   testes de componente alcançam. Retomar com smoke test manual quando o console
   administrativo (CRUD de sistemas) permitir marcar `thirdParty=true` pela própria UI, ou
   antes do deploy real (Fase 11).
+- **Como o console administrativo Angular vira um OAuth2 client foi resolvido nesta
+  rodada** (a nota antiga "não decidido nem implementado" acima está desatualizada).
+  Decisões de design:
+  - `RegisteredClientRepositoryConfig` (novo, `config/security`) monta um `RegisteredClient`
+    estático (não vem da tabela `system` — o console não pertence a nenhum tenant, D3/D9
+    exigem 1 sistema : 1 tenant) via `InMemoryRegisteredClientRepository`, combinado com
+    `SystemRegisteredClientRepository` por meio de um novo
+    `CompositeRegisteredClientRepository` (`adapter/out/security/oauth2`, primeiro delegate
+    que resolver o client vence). `SystemRegisteredClientRepository` deixou de ser
+    `@Component` — dois beans `RegisteredClientRepository` no contexto tornariam ambíguo
+    todo ponto de injeção da aplicação; agora só o `@Bean` da config o constrói.
+  - `authserver.console-client.client-id`/`redirect-uris` (novo em `application.yml`,
+    default `console` / `${issuer}/console/callback`, override em `application-dev.yml` para
+    `http://localhost:4200/console/callback`).
+  - **Login de platform admin passa pelo mesmo `POST /api/auth/login`** dos usuários de
+    tenant. Antes desta rodada isso não funcionava de verdade:
+    `PlatformAdminAuthenticationProvider.supports()` só aceitava
+    `UsernamePasswordAuthenticationToken`, mas `AuthController.login()` sempre constrói um
+    `ClientAwareAuthenticationToken` — o `ProviderManager` nunca chegava a tentar esse
+    provider para o request real do controller (só o teste unitário, construído à mão com
+    `UsernamePasswordAuthenticationToken`, mascarava isso). Corrigido fazendo
+    `PlatformAdminAuthenticationProvider` suportar os dois tipos de token — quando
+    `UserAuthenticationProvider` falha (client_id "console" não resolve nenhum `System`),
+    o `ProviderManager` cai para este provider, que ignora o `clientId` e autentica só por
+    usuário/senha (mesmo comportamento de sempre, seção 2.1).
+  - Novo record de transporte `AuthenticatedPlatformAdmin` (`application/model`, análogo a
+    `AuthenticatedUser`) substitui o agregado `PlatformAdmin` como principal do
+    `Authentication` de sessão — evita carregar o hash de senha do agregado até
+    `OAuth2Authorization.attributes` (`JdbcOAuth2AuthorizationService`) e mantém o padrão já
+    usado para usuário de tenant. `JwtTokenCustomizer.customizeForPlatformAdmin` e
+    `LoginResponse.from(...)` (nova sobrecarga) passaram a usá-lo; novos mixins Jackson
+    (`AuthenticatedPlatformAdminMixin`, `PlatformAdminIdMixin`) em
+    `OAuth2AuthorizationJsonMapperFactory`.
+  - **Dois bugs de configuração só apareceram no smoke test manual em navegador** (nenhum
+    teste MockMvc os pega, porque nenhum executa `angular-oauth2-oidc` de verdade):
+    1. CORS não cobria `/.well-known/**` — `OAuthService.loadDiscoveryDocument()` do console
+       é um `fetch` cross-origin real em dev (`ng serve` em `:4200`, backend em `:8080`);
+       sem CORS nesse path, o browser bloqueia a resposta antes do JS conseguir lê-la.
+       `CorsConfig` ganhou `/.well-known/**` na lista de patterns.
+    2. `authserver.issuer`/`spring.security.oauth2.authorizationserver.issuer` nunca tinham
+       override em `application-dev.yml` — o documento de descoberta OIDC sempre declarava
+       o issuer de produção (`https://auth.seudominio.com`) mesmo rodando em
+       `localhost:8080`. `angular-oauth2-oidc` valida `doc.issuer === this.issuer` e rejeita
+       silenciosamente (só loga erro) quando não bate — o guard do console falhava sem
+       nenhuma exceção visível. `application-dev.yml` agora sobrescreve os dois para
+       `http://localhost:8080` por padrão.
+  - **Gap estrutural de dev, sem bug em produção**: `SpaLoginAuthenticationEntryPoint` e
+    `authorizationEndpoint.consentPage(...)` sempre usaram caminho relativo (`/login`,
+    `/consent`) — correto em produção, onde nginx serve Angular e backend na mesma origem
+    (seção 11). Em dev, uma chamada de verdade a `GET /oauth2/authorize` sem sessão (como o
+    `initCodeFlow()` do console faz) redireciona para `http://localhost:8080/login`, que não
+    existe (Angular só é servido em `:4200` via `ng serve`) — 404 Whitelabel. Isso sempre
+    afetou o fluxo de login de usuário de tenant também, só nunca foi exercitado de verdade
+    (os testes manuais anteriores sempre navegavam direto para `:4200/login?...` a mão,
+    pulando o redirect real). Resolvido tornando os dois configuráveis
+    (`authserver.frontend.login-url`/`consent-url`, novo, default `/login`/`/consent` em
+    todo profile — **não** override em `application-dev.yml`, para não mudar o
+    comportamento validado por `SpaLoginAuthenticationEntryPointIntegrationTest`). Para
+    testar manualmente com `ng serve` + `mvn spring-boot:run` em portas separadas, exportar
+    `LOGIN_URL=http://localhost:4200/login CONSENT_URL=http://localhost:4200/consent` só
+    nessa sessão manual.
+  - Frontend: `ConsoleAuthService` (`core/services`) encapsula `OAuthService`
+    (`angular-oauth2-oidc`, `provideOAuthClient()` em `app.config.ts`); `consoleAuthGuard`
+    (`core/guards`) dispara `initCodeFlow()` quando não há token válido;
+    `ConsoleCallbackComponent` (`/console/callback`) troca código por token
+    (`tryLoginCodeFlow`); `ConsoleDashboardComponent` (`/console`, atrás do guard) só decodifica
+    e exibe os claims do access token (`core/util/jwt.ts`) — placeholder até o CRUD
+    administrativo (próximo item do checklist).
+  - Verificado ponta a ponta manualmente: login como platform admin → `/oauth2/authorize` →
+    `/console/callback` (troca de código) → dashboard exibindo "Administrador (root_admin)".

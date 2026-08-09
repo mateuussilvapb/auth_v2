@@ -1,6 +1,7 @@
 package com.mssousa.authserver.adapter.in.web.security;
 
 import com.mssousa.authserver.application.exception.AuthenticationFailedException;
+import com.mssousa.authserver.application.model.AuthenticatedPlatformAdmin;
 import com.mssousa.authserver.application.port.in.AuthenticatePlatformAdminUseCase;
 import com.mssousa.authserver.domain.model.platform.PlatformAdmin;
 import com.mssousa.authserver.domain.model.platform.PlatformAdminId;
@@ -48,7 +49,7 @@ class PlatformAdminAuthenticationProviderTest {
                 UsernamePasswordAuthenticationToken.unauthenticated("root_admin", "senhaSegura123"));
 
         assertTrue(result.isAuthenticated());
-        assertInstanceOf(PlatformAdmin.class, result.getPrincipal());
+        assertInstanceOf(AuthenticatedPlatformAdmin.class, result.getPrincipal());
         assertTrue(result.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .anyMatch("ROLE_PLATFORM_ADMIN"::equals));
@@ -64,8 +65,23 @@ class PlatformAdminAuthenticationProviderTest {
     }
 
     @Test
-    void deveSuportarApenasUsernamePasswordAuthenticationToken() {
+    void deveSuportarUsernamePasswordEClientAwareAuthenticationToken() {
         assertTrue(provider.supports(UsernamePasswordAuthenticationToken.class));
-        assertFalse(provider.supports(ClientAwareAuthenticationToken.class));
+        // ClientAwareAuthenticationToken é o que POST /api/auth/login de fato constrói
+        // (Fase 7/9) — o fallback do ProviderManager para platform admin (console
+        // administrativo Angular) depende deste provider suportá-lo, ignorando o
+        // clientId carregado.
+        assertTrue(provider.supports(ClientAwareAuthenticationToken.class));
+    }
+
+    @Test
+    void deveAutenticarViaClientAwareAuthenticationTokenIgnorandoClientId() {
+        when(authenticatePlatformAdminUseCase.authenticate("root_admin", "senhaSegura123")).thenReturn(activeAdmin());
+
+        Authentication result = provider.authenticate(
+                ClientAwareAuthenticationToken.unauthenticated("console", "root_admin", "senhaSegura123"));
+
+        assertTrue(result.isAuthenticated());
+        assertInstanceOf(AuthenticatedPlatformAdmin.class, result.getPrincipal());
     }
 }

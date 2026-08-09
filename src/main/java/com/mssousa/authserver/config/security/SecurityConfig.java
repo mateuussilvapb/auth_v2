@@ -2,6 +2,7 @@ package com.mssousa.authserver.config.security;
 
 import com.mssousa.authserver.adapter.in.web.security.PlatformAdminAuthenticationProvider;
 import com.mssousa.authserver.adapter.in.web.security.UserAuthenticationProvider;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
@@ -54,13 +55,16 @@ public class SecurityConfig {
 
     @Bean
     @Order(0)
-    public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain authorizationServerSecurityFilterChain(
+            HttpSecurity http,
+            @Value("${authserver.frontend.login-url}") String loginUrl,
+            @Value("${authserver.frontend.consent-url}") String consentUrl) throws Exception {
         OAuth2AuthorizationServerConfigurer authorizationServerConfigurer = new OAuth2AuthorizationServerConfigurer();
         // Rota pública do SPA Angular (seção 2.2/9 do plano) — mesmo padrão do /login: o
         // Angular lê client_id/scope/state da URL, chama POST /api/auth/consent com a
         // decisão do usuário, e refaz GET /oauth2/authorize (que já sucede, pois o
         // consentimento foi gravado).
-        authorizationServerConfigurer.authorizationEndpoint(endpoint -> endpoint.consentPage("/consent"));
+        authorizationServerConfigurer.authorizationEndpoint(endpoint -> endpoint.consentPage(consentUrl));
 
         http.securityMatcher(authorizationServerConfigurer.getEndpointsMatcher())
                 .with(authorizationServerConfigurer, Customizer.withDefaults())
@@ -70,7 +74,7 @@ public class SecurityConfig {
 
         http.oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()))
                 .exceptionHandling(exceptions -> exceptions.defaultAuthenticationEntryPointFor(
-                        new SpaLoginAuthenticationEntryPoint("/login"), htmlRequestMatcher()))
+                        new SpaLoginAuthenticationEntryPoint(loginUrl), htmlRequestMatcher()))
                 .cors(Customizer.withDefaults());
 
         return http.build();

@@ -1,11 +1,11 @@
 package com.mssousa.authserver.adapter.out.security.jwt;
 
 import com.mssousa.authserver.adapter.in.web.security.ClientAwareAuthenticationToken;
+import com.mssousa.authserver.application.model.AuthenticatedPlatformAdmin;
 import com.mssousa.authserver.application.model.AuthenticatedUser;
 import com.mssousa.authserver.application.model.AuthorizedUser;
 import com.mssousa.authserver.application.port.in.AuthorizeUserUseCase;
 import com.mssousa.authserver.application.port.out.TenantRepository;
-import com.mssousa.authserver.domain.model.platform.PlatformAdmin;
 import com.mssousa.authserver.domain.model.platform.PlatformAdminId;
 import com.mssousa.authserver.domain.model.system.ClientId;
 import com.mssousa.authserver.domain.model.system.RedirectUri;
@@ -14,7 +14,6 @@ import com.mssousa.authserver.domain.model.tenant.Tenant;
 import com.mssousa.authserver.domain.model.tenant.TenantCode;
 import com.mssousa.authserver.domain.model.tenant.TenantId;
 import com.mssousa.authserver.domain.model.user.Email;
-import com.mssousa.authserver.domain.model.user.Password;
 import com.mssousa.authserver.domain.model.user.UserId;
 import com.mssousa.authserver.domain.model.user.Username;
 import org.junit.jupiter.api.BeforeEach;
@@ -96,10 +95,8 @@ class JwtTokenCustomizerTest {
 
     @Test
     void deveAdicionarClaimsSemTenantParaPlatformAdmin() {
-        PlatformAdmin admin = PlatformAdmin.builder()
-                .id(PlatformAdminId.of(1L)).username(Username.of("root_admin"))
-                .email(Email.of("admin@seudominio.com")).password(Password.fromPlainText("senhaSegura123"))
-                .name("Administrador").build();
+        AuthenticatedPlatformAdmin admin = new AuthenticatedPlatformAdmin(
+                PlatformAdminId.of(1L), Username.of("root_admin"), Email.of("admin@seudominio.com"), "Administrador");
         Authentication principal = UsernamePasswordAuthenticationToken.authenticated(admin, null,
                 List.of(new SimpleGrantedAuthority("ROLE_PLATFORM_ADMIN")));
 

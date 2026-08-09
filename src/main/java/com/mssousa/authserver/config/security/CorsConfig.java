@@ -43,6 +43,11 @@ public class CorsConfig {
         source.registerCorsConfiguration("/api/auth/**", configuration);
         source.registerCorsConfiguration("/oauth2/**", configuration);
         source.registerCorsConfiguration("/admin/api/**", configuration);
+        // Documento de descoberta OIDC (/.well-known/openid-configuration), consumido pelo
+        // OAuthService (angular-oauth2-oidc) do console administrativo antes de disparar
+        // initCodeFlow — sem CORS aqui, o fetch cross-origin falha em dev (ng serve em
+        // localhost:4200, backend em localhost:8080; mesma origem em produção, seção 11).
+        source.registerCorsConfiguration("/.well-known/**", configuration);
         return source;
     }
 }

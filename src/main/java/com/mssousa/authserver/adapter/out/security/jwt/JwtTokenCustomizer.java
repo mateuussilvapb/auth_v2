@@ -1,10 +1,10 @@
 package com.mssousa.authserver.adapter.out.security.jwt;
 
+import com.mssousa.authserver.application.model.AuthenticatedPlatformAdmin;
 import com.mssousa.authserver.application.model.AuthenticatedUser;
 import com.mssousa.authserver.application.model.AuthorizedUser;
 import com.mssousa.authserver.application.port.in.AuthorizeUserUseCase;
 import com.mssousa.authserver.application.port.out.TenantRepository;
-import com.mssousa.authserver.domain.model.platform.PlatformAdmin;
 import com.mssousa.authserver.domain.model.tenant.Tenant;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.server.authorization.OAuth2TokenType;
@@ -40,8 +40,8 @@ public class JwtTokenCustomizer implements OAuth2TokenCustomizer<JwtEncodingCont
 
         if (principal instanceof AuthenticatedUser authenticatedUser) {
             customizeForUser(context, authenticatedUser);
-        } else if (principal instanceof PlatformAdmin platformAdmin) {
-            customizeForPlatformAdmin(context, platformAdmin);
+        } else if (principal instanceof AuthenticatedPlatformAdmin authenticatedPlatformAdmin) {
+            customizeForPlatformAdmin(context, authenticatedPlatformAdmin);
         }
     }
 
@@ -63,11 +63,11 @@ public class JwtTokenCustomizer implements OAuth2TokenCustomizer<JwtEncodingCont
                 .claim("profiles", authorizedUser.profileCodes());
     }
 
-    private void customizeForPlatformAdmin(JwtEncodingContext context, PlatformAdmin platformAdmin) {
+    private void customizeForPlatformAdmin(JwtEncodingContext context, AuthenticatedPlatformAdmin authenticatedPlatformAdmin) {
         context.getClaims()
                 .claim("platform_admin", true)
-                .claim("username", platformAdmin.getUsername().value())
-                .claim("email", platformAdmin.getEmail().value())
-                .claim("name", platformAdmin.getName());
+                .claim("username", authenticatedPlatformAdmin.username().value())
+                .claim("email", authenticatedPlatformAdmin.email().value())
+                .claim("name", authenticatedPlatformAdmin.name());
     }
 }
