@@ -94,7 +94,7 @@ Cada fase deve estar verde nos testes antes da seguinte. Atualizado a cada item 
 - [x] CORS para o SPA Angular (`authserver.cors.allowed-origins`, vazio em produção)
 
 ## Fase 9 — Frontend Angular (login, consentimento e console administrativo)
-- [ ] Projeto Angular único: rotas públicas (`/login`, `/consent`, `/esqueci-senha`) consumindo a API da Fase 7, e rotas protegidas do console consumindo a API da Fase 8 (scaffold + `/login` feitos nesta rodada; `/consent` e `/esqueci-senha` ainda pendentes)
+- [x] Projeto Angular único: rotas públicas (`/login`, `/consent`, `/esqueci-senha`, `/redefinir-senha`) consumindo a API da Fase 7, e rotas protegidas do console consumindo a API da Fase 8 (rotas do console ainda pendentes — ver item de PKCE abaixo)
 - [ ] Cliente OAuth2 PKCE (`angular-oauth2-oidc`) para o console administrativo
 - [x] Tela de login com branding por tenant e mensagens de erro genéricas
 - [ ] CRUD de tenants, sistemas, perfis, usuários
@@ -302,3 +302,14 @@ Cada fase deve estar verde nos testes antes da seguinte. Atualizado a cada item 
   Spring Security (fora do ciclo normal de use case → `@Transactional`) precisa de
   `@EntityGraph` em toda coleção lazy que o mapper de domínio acessa — só um teste com
   `Propagation.NOT_SUPPORTED` pega esse tipo de bug antes de produção.
+- **`ConsentComponent`/`ForgotPasswordComponent`/`ResetPasswordComponent` (Fase 9) só têm
+  verificação automatizada (testes unitários Angular + `ng build` de produção), não smoke
+  test manual em navegador como o `/login`.** O fluxo de consentimento exige um `System`
+  com `thirdParty = true` para o backend redirecionar para `/consent` de verdade (nenhum
+  system de teste manual criado até agora tem essa flag), e `/esqueci-senha`/
+  `/redefinir-senha` exigem receber um e-mail real do Mailhog e extrair o token — cobertura
+  ponta a ponta real já existe no backend (`OAuth2ConsentFlowIntegrationTest`,
+  `ResetPasswordServiceIntegrationTest` e afins), então a UI ficou coberta só até onde os
+  testes de componente alcançam. Retomar com smoke test manual quando o console
+  administrativo (CRUD de sistemas) permitir marcar `thirdParty=true` pela própria UI, ou
+  antes do deploy real (Fase 11).
