@@ -1,3 +1,5 @@
+package com.mssousa.authserver.application.port.in;
+
 import com.mssousa.authserver.application.exception.ResourceNotFoundException;
 import com.mssousa.authserver.domain.model.tenant.TenantId;
 import com.mssousa.authserver.domain.model.user.UserId;
