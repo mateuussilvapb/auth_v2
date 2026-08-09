@@ -89,7 +89,7 @@ Cada fase deve estar verde nos testes antes da seguinte. Atualizado a cada item 
   - [x] Perfis (aninhados sob `/systems/{systemId}/profiles/{id}` — ver Notas)
   - [x] Usuários (aninhados sob `/tenants/{tenantId}/users/{id}`, inclui reset-password administrativo)
   - [x] Vínculos (aninhados sob `/tenants/{tenantId}/...` — ver Notas)
-  - [ ] Platform admins
+  - [x] Platform admins (`ManagePlatformAdminUseCase` novo — não existia desde a Fase 4, ver Notas)
 - [ ] OpenAPI/Swagger
 - [ ] CORS para o SPA Angular
 
@@ -162,13 +162,12 @@ Cada fase deve estar verde nos testes antes da seguinte. Atualizado a cada item 
   então não há risco de vazamento entre tenants. Único consumidor por enquanto:
   `ResetPasswordService.confirmReset`, que só tem o `userId` guardado no token de reset
   (a tabela `password_reset_token` não tem coluna de tenant).
-- **Gestão de Platform Admin ainda não tem use case.** A Fase 4 lista explicitamente
-  "tenant, sistema, perfil, usuário e vínculos" — sem platform admin — então
-  `ManagePlatformAdminUseCase`/`PlatformAdminManagementService` não foram criados agora
-  (o `PlatformAdminPolicy`, da Fase 2, segue sem consumidor). A API administrativa
-  (Fase 8) precisa de `POST/GET/PATCH /platform-admins` (seção 9), então esse use case
-  precisa existir antes dela — criar quando alguma fase intermediária pedir, ou como
-  parte da própria Fase 8 se nenhuma outra reivindicar antes.
+- **Gestão de Platform Admin ganhou use case na própria Fase 8.** A Fase 4 excluiu
+  platform admin deliberadamente ("tenant, sistema, perfil, usuário e vínculos"), então
+  `ManagePlatformAdminUseCase`/`PlatformAdminManagementService` foram criados só agora,
+  ao construir `/admin/api/v1/platform-admins` (seção 9). Primeiro consumidor real de
+  `PlatformAdminPolicy` (Fase 2) — a regra "nunca desativar o último admin ativo" só
+  passou a ser exercitada com este controller.
 - **Domain services exigem `@Bean` explícito.** `TenantConsistencyValidator`,
   `AccessValidator`, `PlatformAdminPolicy` e `ProfileUniquenessPolicy` são POJOs puros
   (regra 5.1.1) e não têm `@Component`. `config/DomainServicesConfig` os registra como
