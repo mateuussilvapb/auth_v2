@@ -36,6 +36,17 @@ spring:
     port: ${SMTP_PORT:1025}
     username: ${SMTP_USERNAME:}
     password: ${SMTP_PASSWORD:}
+    # Mailhog (usado em dev/e2e) não suporta AUTH nem STARTTLS — sem este override, o
+    # `auth: true`/`starttls.enable: true` do application.yml (necessários para SMTP real
+    # em produção) faz o JavaMailSender tentar autenticar com credenciais vazias e falhar
+    # com AuthenticationFailedException, derrubando toda a criação de usuário (a chamada a
+    # EmailSenderPort acontece dentro da mesma transação, seção 6 do plano).
+    properties:
+      mail:
+        smtp:
+          auth: false
+          starttls:
+            enable: false
 
 authserver:
   issuer: ${AUTH_ISSUER:http://localhost:8080}

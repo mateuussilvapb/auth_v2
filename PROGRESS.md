@@ -447,3 +447,34 @@ Cada fase deve estar verde nos testes antes da seguinte. Atualizado a cada item 
     JWT "de brinquedo" à mão (`.subject("1")`, por exemplo) ou que nunca serializam/
     desserializam de verdade pela borda HTTP/JSON não pegam essa classe de bug — só um
     teste manual ponta a ponta contra o sistema real pegou os três.
+- **Roteiro manual da seção 14 concluído de ponta a ponta** (passos 2 a 11; passo 12,
+  `pg_dump`/restore, é explicitamente Fase 11 e fica para lá). Um quarto bug real apareceu
+  já no passo 6 (criar usuário):
+  4. **`POST /admin/api/v1/tenants/{id}/users` falhava com 500 sempre que
+     `EmailSenderPort.sendWelcomeEmail` era chamado em dev/e2e contra o Mailhog.**
+     `application.yml` (produção) fixa `spring.mail.properties.mail.smtp.auth: true` e
+     `starttls.enable: true` — corretos para SMTP real (Gmail/SendGrid/etc.), mas
+     `application-dev.yml` só sobrescrevia `host`/`port`/`username`/`password`, não essas
+     duas flags. Sem usuário/senha configurados (Mailhog não exige nenhum dos dois),
+     `JavaMailSenderImpl` ainda tentava autenticar por causa de `auth: true`, e
+     `jakarta.mail.AuthenticationFailedException: failed to connect, no password
+     specified?` subia sem tratamento — como o envio do e-mail acontece dentro da mesma
+     `@Transactional` de `UserManagementService.createUser`, a criação inteira do usuário
+     era revertida. Corrigido sobrescrevendo `auth: false`/`starttls.enable: false` em
+     `application-dev.yml`. **Lição**: como `EmailSenderPort` é chamado dentro da mesma
+     transação do caso de uso, qualquer falha de infraestrutura de e-mail (config errada,
+     servidor fora do ar) derruba a operação de negócio inteira — nenhum teste automatizado
+     pega isso porque os testes de integração usam um `EmailSenderPort` fake/mock, nunca o
+     `SmtpEmailSender` real contra um servidor de verdade.
+  - Passos 5, 7, 8, 9, 10 e 11 confirmados exatamente como descrito no plano: perfil
+    `ADMIN` repetido em `CRM_GLOBEX` (código único por sistema, não global); vínculo
+    usuário↔sistema cross-tenant rejeitado com 400 e mensagem clara; PKCE completo como
+    usuário de tenant (não platform admin) retornando `tenant_id`/`client_id`/
+    `profiles: ["ADMIN"]` corretos no JWT; assinatura validada contra `/oauth2/jwks` via
+    Web Crypto no próprio browser; tenant desativado → login rejeitado com 401 genérico
+    ("Invalid credentials", sem vazar a causa).
+  - **Bug de UX encontrado mas não corrigido nesta rodada** (fora do escopo do roteiro,
+    registrado para retomar): o dashboard do console (`/console`) continua exibindo
+    "Logado como Administrador" mesmo com o access token JWT expirado — só falha de fato
+    na primeira chamada de API subsequente. `ConsoleAuthService`/`consoleAuthGuard` não
+    verificam `expires_at` ao exibir a página, só ao decidir se dispara `initCodeFlow()`.
