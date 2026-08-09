@@ -10,13 +10,16 @@ import { ConsoleAuthService } from '../services/console-auth.service';
  * de página inteira, então o {@code false} retornado aqui nunca chega a importar para o
  * roteador Angular.
  */
-export const consoleAuthGuard: CanActivateFn = async () => {
+export const consoleAuthGuard: CanActivateFn = () => {
   const consoleAuth = inject(ConsoleAuthService);
+  return checkAuthenticated(consoleAuth);
+};
 
+async function checkAuthenticated(consoleAuth: ConsoleAuthService): Promise<boolean> {
   if (consoleAuth.isAuthenticated()) {
     return true;
   }
 
   await consoleAuth.login();
   return false;
-};
+}

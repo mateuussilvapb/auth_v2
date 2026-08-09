@@ -32,7 +32,11 @@ export class ConsoleAuthService {
       clientId: environment.consoleClientId,
       responseType: 'code',
       scope: 'profile',
-      requireHttps: environment.production,
+      // 'remoteOnly' em vez de environment.production: exige HTTPS para qualquer domínio
+      // real (produção sempre é TLS via nginx/Let's Encrypt, seção 11), mas permite
+      // http://localhost — necessário para testar o build de produção localmente (nginx
+      // servindo dist/, sem certificado) sem enfraquecer a checagem em produção de verdade.
+      requireHttps: 'remoteOnly',
       strictDiscoveryDocumentValidation: false,
       // Sem "openid" no scope (seção 7.2 — o projeto não usa OIDC id_token, só o access
       // token JWT já carrega os claims necessários via JwtTokenCustomizer), então não há

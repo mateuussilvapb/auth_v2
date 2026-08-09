@@ -104,7 +104,7 @@ Cada fase deve estar verde nos testes antes da seguinte. Atualizado a cada item 
       `/console/tenants/:tenantId/users/:userId/bindings`, ver Notas (endpoints GET novos
       no backend)
 - [x] Guard de rota exigindo platform admin nas rotas do console (`consoleAuthGuard` — token só é emitido para platform admin nesse client, ver Notas)
-- [ ] Build de produção servido por nginx (mesmo domínio do auth server)
+- [x] Build de produção servido por nginx (mesmo domínio do auth server) — `frontend/nginx.conf`, ver Notas (dois bugs reais só apareceram nesse smoke test)
 
 ## Fase 10 — Qualidade
 - [ ] Testes ArchUnit das regras da seção 5.1
@@ -387,3 +387,38 @@ Cada fase deve estar verde nos testes antes da seguinte. Atualizado a cada item 
     administrativo (próximo item do checklist).
   - Verificado ponta a ponta manualmente: login como platform admin → `/oauth2/authorize` →
     `/console/callback` (troca de código) → dashboard exibindo "Administrador (root_admin)".
+- **Build de produção + nginx (último item da Fase 9) verificado com um nginx real
+  (Docker, `nginx:alpine`) servindo `dist/frontend/browser` e fazendo reverse proxy para o
+  backend** (`/oauth2/**`, `/.well-known/**`, `/api/auth/**`, `/admin/api/**`,
+  `/v3/api-docs|swagger-ui` → `auth-server:8080`; tudo mais cai em `try_files ... /index.html`
+  para o Angular Router funcionar em deep link/refresh). Config nova: `frontend/nginx.conf`,
+  reaproveitável pela imagem Docker da Fase 11 (`auth-server` é o nome de serviço Compose
+  esperado). Dois bugs reais só apareceram rodando o build de produção de verdade atrás do
+  nginx — nenhum teste automatizado ou smoke test anterior (sempre contra `ng serve`) os
+  pega:
+  1. **`nginx.conf` inicial usava `proxy_set_header Host $host`, que remove a porta** — o
+     `Location` do redirect de `SpaLoginAuthenticationEntryPoint` virava
+     `http://localhost/login?...` (sem `:8090`), quebrando a navegação same-origin que é a
+     razão de existir do nginx aqui. Trocado para `$http_host` (preserva a porta) nos 5
+     blocos `proxy_pass`.
+  2. **`ConsoleAuthService` configurava `requireHttps: environment.production`** — no build
+     de produção (`environment.production = true`), isso rejeita QUALQUER issuer HTTP,
+     inclusive `http://localhost` usado para testar o build de produção localmente sem
+     TLS. O guard falhava silenciosamente (a exceção de `loadDiscoveryDocument()` era
+     engolida dentro de uma promise não observada — só apareceu marcando `document.title`
+     passo a passo, já que `console.log`/`console.error` de builds de produção não foram
+     capturados pela ferramenta de leitura de console usada para depurar). Trocado para
+     `requireHttps: 'remoteOnly'` — exige HTTPS para qualquer domínio real (produção sempre
+     é TLS via nginx/Let's Encrypt, seção 11) mas permite `http://localhost` explicitamente,
+     sem enfraquecer a checagem em produção de verdade.
+  - **Lição de depuração**: ao investigar um guard/rota que parece "não fazer nada" num
+    build de produção servido por nginx/Docker, não confie apenas em
+    `read_console_messages` do Chrome — logs de builds otimizados podem não ser capturados
+    pela ferramenta de leitura de console a tempo. Marcar `document.title` em pontos-chave
+    do fluxo é um canal mais confiável para localizar onde a execução realmente para.
+  - Smoke test manual: `docker run nginx:alpine` com `-v dist/frontend/browser:/usr/share/nginx/html`
+    e `-v frontend/nginx.conf:/etc/nginx/conf.d/default.conf`, `--add-host=auth-server:host-gateway`
+    apontando para o backend rodando via `mvn spring-boot:run` no host — login completo como
+    platform admin, PKCE do console, e `/admin/api/v1/tenants` (bearer token) todos
+    funcionando através do nginx em `http://localhost:8090`. Containers de teste removidos
+    ao final (`authserver-nginx-test*`), não fazem parte do projeto committado.
