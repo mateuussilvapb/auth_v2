@@ -102,4 +102,22 @@ describe('AdminApiService', () => {
     expect(req.request.method).toBe('PATCH');
     req.flush({ id: 2, systemId: 1, code: 'ADMIN', description: 'Administrador', status: 'INACTIVE' });
   });
+
+  it('deve criar usuário aninhado sob o tenant', () => {
+    service
+      .createUser(1, { username: 'joao_silva', email: 'joao@acme.com', password: 'senhaSegura123', name: 'João' })
+      .subscribe();
+
+    const req = httpMock.expectOne((r) => r.url.endsWith('/admin/api/v1/tenants/1/users'));
+    expect(req.request.method).toBe('POST');
+    req.flush({ id: 1, tenantId: 1, username: 'joao_silva', email: 'joao@acme.com', name: 'João', status: 'ACTIVE' });
+  });
+
+  it('deve chamar POST .../reset-password sem corpo', () => {
+    service.resetUserPassword(1, 2).subscribe();
+
+    const req = httpMock.expectOne((r) => r.url.endsWith('/admin/api/v1/tenants/1/users/2/reset-password'));
+    expect(req.request.method).toBe('POST');
+    req.flush(null);
+  });
 });

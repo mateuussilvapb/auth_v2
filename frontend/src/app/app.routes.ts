@@ -11,14 +11,16 @@ import { TenantFormComponent } from './features/console/tenants/tenant-form.comp
 import { SystemListComponent } from './features/console/systems/system-list.component';
 import { SystemFormComponent } from './features/console/systems/system-form.component';
 import { ProfileListComponent } from './features/console/profiles/profile-list.component';
+import { UserListComponent } from './features/console/users/user-list.component';
+import { UserFormComponent } from './features/console/users/user-form.component';
 import { consoleAuthGuard } from './core/guards/console-auth.guard';
 
 /**
  * Rotas públicas (seção 2.2/9 do plano): /login, /consent, /esqueci-senha,
  * /reset-password. Rotas protegidas do console administrativo sob /console (seção 2.2/D6)
  * — client OAuth2 PKCE estático (RegisteredClientRepositoryConfig no backend), platform
- * admin autenticado via consoleAuthGuard. CRUD de perfis/usuários e a tela de vínculos
- * ainda não existem — próximos itens do checklist da Fase 9.
+ * admin autenticado via consoleAuthGuard. Só a tela de vínculos ainda não existe —
+ * próximo (e último) item do checklist de CRUD da Fase 9.
  */
 export const routes: Routes = [
   { path: 'login', component: LoginComponent },
@@ -33,5 +35,8 @@ export const routes: Routes = [
   { path: 'console/tenants/:tenantId/systems', component: SystemListComponent, canActivate: [consoleAuthGuard] },
   { path: 'console/tenants/:tenantId/systems/novo', component: SystemFormComponent, canActivate: [consoleAuthGuard] },
   { path: 'console/systems/:systemId/profiles', component: ProfileListComponent, canActivate: [consoleAuthGuard] },
+  { path: 'console/tenants/:tenantId/users', component: UserListComponent, canActivate: [consoleAuthGuard] },
+  { path: 'console/tenants/:tenantId/users/novo', component: UserFormComponent, canActivate: [consoleAuthGuard] },
+  { path: 'console/tenants/:tenantId/users/:id/editar', component: UserFormComponent, canActivate: [consoleAuthGuard] },
   { path: '', redirectTo: 'login', pathMatch: 'full' },
 ];

@@ -97,9 +97,9 @@ Cada fase deve estar verde nos testes antes da seguinte. Atualizado a cada item 
 - [x] Projeto Angular único: rotas públicas (`/login`, `/consent`, `/esqueci-senha`, `/reset-password`) consumindo a API da Fase 7, e rota `/console` protegida consumindo a API da Fase 8 (só o dashboard placeholder existe — CRUD é item à parte abaixo)
 - [x] Cliente OAuth2 PKCE (`angular-oauth2-oidc`) para o console administrativo — ver Notas (client estático `RegisteredClientRepositoryConfig`, login de platform admin via `/api/auth/login`)
 - [x] Tela de login com branding por tenant e mensagens de erro genéricas
-- [ ] CRUD de tenants, sistemas, perfis, usuários (tenants, sistemas e perfis feitos —
-      `AdminApiService`, `/console/tenants`, `/console/tenants/:tenantId/systems`,
-      `/console/systems/:systemId/profiles`; usuários pendente)
+- [x] CRUD de tenants, sistemas, perfis, usuários — `AdminApiService`,
+      `/console/tenants`, `/console/tenants/:tenantId/systems`,
+      `/console/systems/:systemId/profiles`, `/console/tenants/:tenantId/users`
 - [ ] Tela de vínculos (usuário → sistemas → perfis)
 - [x] Guard de rota exigindo platform admin nas rotas do console (`consoleAuthGuard` — token só é emitido para platform admin nesse client, ver Notas)
 - [ ] Build de produção servido por nginx (mesmo domínio do auth server)

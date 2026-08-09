@@ -8,6 +8,7 @@ import {
   CreateSystemProfileRequest,
   CreateSystemRequest,
   CreateTenantRequest,
+  CreateUserRequest,
   Page,
   RedirectUriRequest,
   SystemProfileResponse,
@@ -17,6 +18,8 @@ import {
   UpdateSystemProfileRequest,
   UpdateSystemRequest,
   UpdateTenantRequest,
+  UpdateUserRequest,
+  UserResponse,
 } from '../models/admin-api.models';
 
 /**
@@ -119,5 +122,42 @@ export class AdminApiService {
       request,
       { headers: this.authHeaders() },
     );
+  }
+
+  listUsers(tenantId: number, page: number, size: number): Observable<Page<UserResponse>> {
+    return this.http.get<Page<UserResponse>>(`${this.baseUrl}/tenants/${tenantId}/users`, {
+      headers: this.authHeaders(),
+      params: { page, size },
+    });
+  }
+
+  getUser(tenantId: number, id: number): Observable<UserResponse> {
+    return this.http.get<UserResponse>(`${this.baseUrl}/tenants/${tenantId}/users/${id}`, {
+      headers: this.authHeaders(),
+    });
+  }
+
+  createUser(tenantId: number, request: CreateUserRequest): Observable<UserResponse> {
+    return this.http.post<UserResponse>(`${this.baseUrl}/tenants/${tenantId}/users`, request, {
+      headers: this.authHeaders(),
+    });
+  }
+
+  updateUser(tenantId: number, id: number, request: UpdateUserRequest): Observable<UserResponse> {
+    return this.http.put<UserResponse>(`${this.baseUrl}/tenants/${tenantId}/users/${id}`, request, {
+      headers: this.authHeaders(),
+    });
+  }
+
+  updateUserStatus(tenantId: number, id: number, request: UpdateStatusRequest): Observable<UserResponse> {
+    return this.http.patch<UserResponse>(`${this.baseUrl}/tenants/${tenantId}/users/${id}/status`, request, {
+      headers: this.authHeaders(),
+    });
+  }
+
+  resetUserPassword(tenantId: number, id: number): Observable<void> {
+    return this.http.post<void>(`${this.baseUrl}/tenants/${tenantId}/users/${id}/reset-password`, null, {
+      headers: this.authHeaders(),
+    });
   }
 }
