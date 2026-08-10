@@ -39,13 +39,23 @@ Espelha os checklists de `docs/PLANO-MODERNIZACAO.md`, fase por fase. Ver també
 
 ## Fase 2 — Angular 20 → 21 + zoneless
 
-- [ ] `ng update @angular/core@21 @angular/cli@21`
-- [ ] `ng update angular-oauth2-oidc@21`
-- [ ] Remover `zone.js`.
-- [ ] Remover `@angular/platform-browser-dynamic`.
-- [ ] Renomear componentes para o padrão sem sufixo (opcional nesta fase).
-- [ ] `ng build` verde.
-- [ ] Smoke test manual obrigatório do fluxo PKCE completo.
+- [x] `ng update @angular/core@21 @angular/cli@21`. Trouxe automaticamente a migration
+      opcional de control flow (`*ngIf`/`*ngFor` → `@if`/`@for`) em 14 componentes.
+- [x] `ng update angular-oauth2-oidc@21`
+- [x] Remover `zone.js` do runtime: tirado de `polyfills` em `angular.json` (target `build`)
+      e trocado `provideZoneChangeDetection({ eventCoalescing: true })` por
+      `provideBrowserGlobalErrorListeners()` em `app.config.ts`, igual à referência.
+      **`zone.js` continua como dependência e nos polyfills do target `test`** — o Karma
+      ainda depende dele; sai de vez na Fase 3 (migração para Vitest).
+- [x] Remover `@angular/platform-browser-dynamic` (não era importado em lugar nenhum).
+- [ ] Renomear componentes para o padrão sem sufixo — adiado para a Fase 5 (obrigatório lá,
+      opcional aqui; não fiz para não misturar rename com upgrade de versão no diff).
+- [x] `ng build` verde. Bundle: 379.17 kB raw / 92.24 kB transfer (caiu vs. Fase 1 — sem o
+      polyfill do zone.js). `ng test` também verde, 69/69.
+- [x] Smoke test manual obrigatório do fluxo PKCE completo — **sem regressão sob zoneless**.
+      Login como platform admin, redirect PKCE completo, navegação interna autenticada
+      (`/console/tenants`, chamada à admin-api, paginação renderizada) tudo funcionando sem
+      Zone.js. Sem erros no console do navegador.
 
 ---
 

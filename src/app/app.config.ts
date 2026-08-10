@@ -1,4 +1,4 @@
-import { ApplicationConfig, provideZoneChangeDetection } from '@angular/core';
+import { ApplicationConfig, provideBrowserGlobalErrorListeners } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { provideHttpClient, withFetch } from '@angular/common/http';
 import { provideOAuthClient } from 'angular-oauth2-oidc';
@@ -7,7 +7,7 @@ import { routes } from './app.routes';
 
 export const appConfig: ApplicationConfig = {
   providers: [
-    provideZoneChangeDetection({ eventCoalescing: true }),
+    provideBrowserGlobalErrorListeners(),
     provideRouter(routes),
     // withFetch: cookie de sessão HttpOnly (seção 7.1) precisa ir em toda chamada às
     // rotas /api/auth/** — os serviços fazem isso explicitamente via { withCredentials: true }.
