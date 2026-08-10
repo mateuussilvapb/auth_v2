@@ -21,11 +21,19 @@ Espelha os checklists de `docs/PLANO-MODERNIZACAO.md`, fase por fase. Ver també
 
 ## Fase 1 — Angular 19 → 20
 
-- [ ] `ng update @angular/core@20 @angular/cli@20`
-- [ ] `ng update angular-oauth2-oidc@20`
-- [ ] Migração do builder: `@angular-devkit/build-angular` → `@angular/build`.
-- [ ] Rodar as migrations automáticas de `inject()` e signals oferecidas pelo `ng update`.
-- [ ] `ng build` + `ng test` verdes.
+- [x] `ng update @angular/core@20 @angular/cli@20`
+- [x] `ng update angular-oauth2-oidc@20`
+- [x] Migração do builder: `@angular-devkit/build-angular` → `@angular/build`.
+      `ng update @angular/cli --name use-application-builder` não rodou (o schematic runner
+      sempre busca a CLI mais recente do registro — hoje 22.x — que exige Node ≥22.22.3;
+      a máquina tem 22.16.0). Migração feita manualmente: instalado `@angular/build@20.3.33`
+      e trocados os builders em `angular.json` (`build`, `serve`, `extract-i18n`) para
+      `@angular/build:*`. `test` continua em `@angular-devkit/build-angular:karma` até a
+      Fase 3 (Vitest via `@angular/build:unit-test`).
+- [x] Rodar as migrations automáticas de `inject()` e signals oferecidas pelo `ng update`.
+      Nenhuma mudança de código foi necessária (projeto já usava `inject()`/`signal()`).
+- [x] `ng build` + `ng test` verdes. Bundle: 409.65 kB raw / 102.74 kB transfer (leve alta
+      vs. baseline, esperado). 69/69 testes.
 
 ---
 
@@ -115,6 +123,16 @@ Espelha os checklists de `docs/PLANO-MODERNIZACAO.md`, fase por fase. Ver també
 ---
 
 ## Notas
+
+- **Node.js local (22.16.0) está abaixo do que o `ng update` passou a exigir para rodar
+  schematics via CLI temporária (≥22.22.3).** `ng update @angular/core@20`/`@cli@20` e
+  `ng update angular-oauth2-oidc@20` funcionaram (a CLI temporária baixada casava com a
+  versão alvo pedida). Mas `ng update @angular/cli --name <migration>` sempre busca a
+  **última** versão publicada da CLI (hoje 22.x) para rodar a migration, e essa falha no
+  Node atual. Isso vai bloquear migrations futuras dependentes desse mecanismo (ex.:
+  `control-flow-migration`, `router-current-navigation`, que ficaram como opcionais não
+  aplicadas nesta rodada). Se precisar delas, ou atualizar o Node da máquina, ou aplicar a
+  mudança manualmente como foi feito com `use-application-builder`.
 
 - **Ambiente local tem Postgres nativo do Windows disputando a porta 5432** com o
   `docker-compose.yml` do `auth_api_v2` — os dois processos escutam em `0.0.0.0:5432` e o
