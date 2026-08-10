@@ -1,0 +1,49 @@
+@use 'variables' as *;
+@use 'mixins' as *;
+
+.layout-sidebar {
+  position: fixed;
+  width: 260px;
+  height: calc(100vh - 4rem);
+  top: 4rem;
+  left: 0;
+  overflow-y: auto;
+  background-color: var(--p-content-background);
+  border-right: 1px solid var(--p-content-border-color);
+  padding: 1rem 0.75rem;
+  transition:
+    transform $transitionDuration,
+    left $transitionDuration;
+}
+
+.layout-menu {
+  margin: 0;
+  padding: 0;
+  list-style-type: none;
+
+  a {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.625rem 0.75rem;
+    margin-bottom: 0.25rem;
+    border-radius: $borderRadius;
+    color: var(--p-text-color);
+    cursor: pointer;
+    transition: background $transitionDuration;
+
+    &:hover {
+      background: var(--p-content-hover-background);
+    }
+
+    &:focus {
+      @include focused-inset();
+    }
+
+    &.active {
+      background: var(--p-highlight-background);
+      color: var(--p-highlight-color);
+      font-weight: 600;
+    }
+  }
+}

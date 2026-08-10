@@ -83,15 +83,34 @@ Espelha os checklists de `docs/PLANO-MODERNIZACAO.md`, fase por fase. Ver també
 
 ## Fase 4 — Fundação de design
 
-- [ ] Instalar `primeng@21`, `@angular/cdk@21`, `@primeuix/themes`, `primeflex`, `primeicons`.
-- [ ] Dev: `prettier`.
-- [ ] `styles.css` → `styles.scss` + config em `angular.json`.
-- [ ] Criar `src/assets/scss/**` (seção 7.1 do guia).
-- [ ] Criar `core/config/providers/primeng.provider.ts` com `AuthServerPreset`.
-- [ ] Criar `i18n/primeng-pt.ts` + `LOCALE_ID: 'pt-BR'`.
-- [ ] Providers globais: `MessageService`, `ConfirmationService`, `DialogService`.
-- [ ] Elevar budgets em `angular.json`.
-- [ ] Verificar tema claro e escuro.
+- [x] Instalar `primeng@21.1.9`, `@angular/cdk@21.2.14`, `@primeuix/themes@2.0.3`,
+      `primeflex@4.0.0`, `primeicons@7.0.0` (mesmas versões da referência).
+- [x] Dev: `prettier` (instalado na Fase 3 junto do vitest; sem config própria ainda —
+      revisitar se o time quiser regras específicas).
+- [x] `styles.css` → `styles.scss` (agregador `@use 'assets/scss/base'`) + `angular.json`
+      (`inlineStyleLanguage: scss`, `styles: [styles.scss, primeflex.css]`, schematic de
+      componente default para `style: scss`).
+- [x] Criado `src/assets/scss/**` (seção 7.1 do guia): `base.scss`, `base/_reset.scss`,
+      `_typography.scss` (Manrope + JetBrains Mono via Google Fonts, escala tipográfica da
+      seção 3), `utils/_variables.scss` (índigo/raio/transição, seção 2.1/4 — **sem**
+      gradiente, divergência deliberada da referência), `utils/_mixins.scss`
+      (`focused()`/`focused-inset()`), `utils/_topbar.scss`, `utils/_menu.scss`,
+      `utils/_content.scss` (inclui `.public-layout`/`.public-layout-card` para o shell das
+      telas públicas). `primeNG/` ainda sem arquivos — nada para sobrescrever até as telas
+      reais da Fase 6/7 revelarem necessidade.
+- [x] Criado `core/config/providers/primeng.provider.ts` com `AuthServerPreset` — paleta
+      índigo da seção 2.4 do guia, `darkModeSelector: '.app-dark'`, `ripple: false`.
+- [x] Criado `i18n/primeng-pt.ts` (tradução completa) + `LOCALE_ID: 'pt-BR'` +
+      `registerLocaleData(localePt)` em `app.config.ts`.
+- [x] Providers globais registrados em `app.config.ts`: `PRIMENG_PROVIDER`, `MessageService`,
+      `ConfirmationService`, `DialogService`.
+- [x] Budgets elevados para 1MB/1.5MB (igual à referência). Build de produção: 1.06MB raw —
+      dentro do budget de erro, warning esperado (registrado no plano).
+- [x] Tema claro e escuro verificados com `p-button` (`severity` default e `danger`) inserido
+      temporariamente em `/login` e revertido depois: `--p-primary-color` trocou de
+      `#4f46e5` (light, `primary.600`) para `#818cf8` (dark, `primary.400`) ao alternar a
+      classe `.app-dark`; `body` escureceu para `#0b1020`. Preset funcionando; nenhuma tela
+      real foi tocada (o CSS antigo do `/login` continua intacto até a Fase 6).
 
 ---
 

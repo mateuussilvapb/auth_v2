@@ -1,0 +1,37 @@
+@use 'variables' as *;
+@use 'mixins' as *;
+
+.layout-topbar {
+  position: fixed;
+  height: 4rem;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  padding: 0 1.5rem;
+  background-color: var(--p-content-background);
+  border-bottom: 1px solid var(--p-content-border-color);
+  transition: left $transitionDuration;
+  display: flex;
+  align-items: center;
+
+  .layout-topbar-logo {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 700;
+    font-size: 1.125rem;
+    color: var(--p-text-color);
+
+    &:focus {
+      @include focused();
+    }
+  }
+
+  .layout-topbar-actions {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+}

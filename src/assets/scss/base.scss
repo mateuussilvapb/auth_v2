@@ -1,0 +1,19 @@
+@use 'base/reset';
+@use 'typography';
+@use 'utils/variables';
+@use 'utils/mixins';
+@use 'utils/topbar';
+@use 'utils/menu';
+@use 'utils/content';
+
+body {
+  transition: background 0.25s;
+}
+
+html:not(.app-dark) body {
+  background: #f8fafc;
+}
+
+html.app-dark body {
+  background: #0b1020;
+}
