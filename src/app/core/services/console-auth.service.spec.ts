@@ -1,30 +1,31 @@
 import { TestBed } from '@angular/core/testing';
 import { OAuthService } from 'angular-oauth2-oidc';
+import type { Mock } from 'vitest';
 
 import { ConsoleAuthService } from './console-auth.service';
 
 describe('ConsoleAuthService', () => {
   let service: ConsoleAuthService;
   let oauthServiceStub: {
-    configure: jasmine.Spy;
-    loadDiscoveryDocument: jasmine.Spy;
-    tryLoginCodeFlow: jasmine.Spy;
-    initCodeFlow: jasmine.Spy;
-    hasValidAccessToken: jasmine.Spy;
-    logOut: jasmine.Spy;
-    getAccessToken: jasmine.Spy;
+    configure: Mock;
+    loadDiscoveryDocument: Mock;
+    tryLoginCodeFlow: Mock;
+    initCodeFlow: Mock;
+    hasValidAccessToken: Mock;
+    logOut: Mock;
+    getAccessToken: Mock;
     discoveryDocumentLoaded: boolean;
   };
 
   beforeEach(() => {
     oauthServiceStub = {
-      configure: jasmine.createSpy('configure'),
-      loadDiscoveryDocument: jasmine.createSpy('loadDiscoveryDocument').and.resolveTo(undefined),
-      tryLoginCodeFlow: jasmine.createSpy('tryLoginCodeFlow').and.resolveTo(undefined),
-      initCodeFlow: jasmine.createSpy('initCodeFlow'),
-      hasValidAccessToken: jasmine.createSpy('hasValidAccessToken').and.returnValue(false),
-      logOut: jasmine.createSpy('logOut'),
-      getAccessToken: jasmine.createSpy('getAccessToken').and.returnValue('token'),
+      configure: vi.fn(),
+      loadDiscoveryDocument: vi.fn().mockResolvedValue(undefined),
+      tryLoginCodeFlow: vi.fn().mockResolvedValue(undefined),
+      initCodeFlow: vi.fn(),
+      hasValidAccessToken: vi.fn().mockReturnValue(false),
+      logOut: vi.fn(),
+      getAccessToken: vi.fn().mockReturnValue('token'),
       discoveryDocumentLoaded: false,
     };
 

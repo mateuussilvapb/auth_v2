@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
+import type { Mock } from 'vitest';
 
 import { UserBindingsComponent } from './user-bindings.component';
 import { AdminApiService } from '../../../core/services/admin-api.service';
@@ -9,14 +10,14 @@ import { Page, SystemProfileResponse, SystemResponse, UserSystemProfileResponse,
 describe('UserBindingsComponent', () => {
   let fixture: ComponentFixture<UserBindingsComponent>;
   let adminApiStub: {
-    listSystemsByTenant: jasmine.Spy;
-    listUserSystems: jasmine.Spy;
-    listUserSystemProfiles: jasmine.Spy;
-    listProfiles: jasmine.Spy;
-    bindUserToSystem: jasmine.Spy;
-    updateUserSystemStatus: jasmine.Spy;
-    bindProfileToUserSystem: jasmine.Spy;
-    updateUserSystemProfileStatus: jasmine.Spy;
+    listSystemsByTenant: Mock;
+    listUserSystems: Mock;
+    listUserSystemProfiles: Mock;
+    listProfiles: Mock;
+    bindUserToSystem: Mock;
+    updateUserSystemStatus: Mock;
+    bindProfileToUserSystem: Mock;
+    updateUserSystemProfileStatus: Mock;
   };
 
   const systemsPage: Page<SystemResponse> = {
@@ -42,16 +43,14 @@ describe('UserBindingsComponent', () => {
 
   beforeEach(async () => {
     adminApiStub = {
-      listSystemsByTenant: jasmine.createSpy('listSystemsByTenant').and.returnValue(of(systemsPage)),
-      listUserSystems: jasmine.createSpy('listUserSystems').and.returnValue(of(userSystemsPage)),
-      listUserSystemProfiles: jasmine.createSpy('listUserSystemProfiles').and.returnValue(of(profileBindings)),
-      listProfiles: jasmine.createSpy('listProfiles').and.returnValue(of(profiles)),
-      bindUserToSystem: jasmine.createSpy('bindUserToSystem').and.returnValue(of(userSystemsPage.content[0])),
-      updateUserSystemStatus: jasmine.createSpy('updateUserSystemStatus').and.returnValue(of(userSystemsPage.content[0])),
-      bindProfileToUserSystem: jasmine.createSpy('bindProfileToUserSystem').and.returnValue(of(profileBindings[0])),
-      updateUserSystemProfileStatus: jasmine
-        .createSpy('updateUserSystemProfileStatus')
-        .and.returnValue(of(profileBindings[0])),
+      listSystemsByTenant: vi.fn().mockReturnValue(of(systemsPage)),
+      listUserSystems: vi.fn().mockReturnValue(of(userSystemsPage)),
+      listUserSystemProfiles: vi.fn().mockReturnValue(of(profileBindings)),
+      listProfiles: vi.fn().mockReturnValue(of(profiles)),
+      bindUserToSystem: vi.fn().mockReturnValue(of(userSystemsPage.content[0])),
+      updateUserSystemStatus: vi.fn().mockReturnValue(of(userSystemsPage.content[0])),
+      bindProfileToUserSystem: vi.fn().mockReturnValue(of(profileBindings[0])),
+      updateUserSystemProfileStatus: vi.fn().mockReturnValue(of(profileBindings[0])),
     };
 
     await TestBed.configureTestingModule({
@@ -102,7 +101,7 @@ describe('UserBindingsComponent', () => {
   });
 
   it('deve marcar erro quando a listagem inicial falha', () => {
-    adminApiStub.listUserSystems.and.returnValue(throwError(() => new Error('falhou')));
+    adminApiStub.listUserSystems.mockReturnValue(throwError(() => new Error('falhou')));
     fixture.componentInstance.load();
     expect(fixture.componentInstance.errorMessage()).not.toBeNull();
   });

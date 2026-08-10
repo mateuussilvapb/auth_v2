@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
+import type { Mock } from 'vitest';
 
 import { UserListComponent } from './user-list.component';
 import { AdminApiService } from '../../../core/services/admin-api.service';
@@ -8,7 +9,7 @@ import { Page, UserResponse } from '../../../core/models/admin-api.models';
 
 describe('UserListComponent', () => {
   let fixture: ComponentFixture<UserListComponent>;
-  let adminApiStub: { listUsers: jasmine.Spy; updateUserStatus: jasmine.Spy; resetUserPassword: jasmine.Spy };
+  let adminApiStub: { listUsers: Mock; updateUserStatus: Mock; resetUserPassword: Mock };
 
   const page: Page<UserResponse> = {
     content: [{ id: '1', tenantId: '1', username: 'joao_silva', email: 'joao@acme.com', name: 'João', status: 'ACTIVE' }],
@@ -20,9 +21,9 @@ describe('UserListComponent', () => {
 
   beforeEach(async () => {
     adminApiStub = {
-      listUsers: jasmine.createSpy('listUsers').and.returnValue(of(page)),
-      updateUserStatus: jasmine.createSpy('updateUserStatus').and.returnValue(of(page.content[0])),
-      resetUserPassword: jasmine.createSpy('resetUserPassword').and.returnValue(of(undefined)),
+      listUsers: vi.fn().mockReturnValue(of(page)),
+      updateUserStatus: vi.fn().mockReturnValue(of(page.content[0])),
+      resetUserPassword: vi.fn().mockReturnValue(of(undefined)),
     };
 
     await TestBed.configureTestingModule({
@@ -44,7 +45,7 @@ describe('UserListComponent', () => {
   });
 
   it('deve marcar erro quando a listagem falha', () => {
-    adminApiStub.listUsers.and.returnValue(throwError(() => new Error('falhou')));
+    adminApiStub.listUsers.mockReturnValue(throwError(() => new Error('falhou')));
     fixture.componentInstance.load();
     expect(fixture.componentInstance.errorMessage()).not.toBeNull();
   });

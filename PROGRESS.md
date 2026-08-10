@@ -61,11 +61,23 @@ Espelha os checklists de `docs/PLANO-MODERNIZACAO.md`, fase por fase. Ver també
 
 ## Fase 3 — Migração do runner de testes para Vitest
 
-- [ ] Remover Karma/Jasmine.
-- [ ] Adicionar `vitest` + `jsdom`; `angular.json` → `@angular/build:unit-test`.
-- [ ] Converter os 20 specs (Jasmine → Vitest).
-- [ ] Trocar `HttpClientTestingModule` por `provideHttpClientTesting()`.
-- [ ] `ng test` verde com a mesma quantidade de testes de antes.
+- [x] Remover Karma/Jasmine (`karma`, `karma-*`, `jasmine-core`, `@types/jasmine`) e `zone.js`
+      (agora fora do runtime **e** dos testes — zoneless de ponta a ponta).
+      `@angular-devkit/build-angular` também saiu (só existia para o builder `karma`).
+- [x] Adicionar `vitest@^4.1.10` + `jsdom`; `angular.json` → `@angular/build:unit-test`
+      (config mínima, igual à referência — só o builder, sem opções explícitas; runner
+      `vitest` e `buildTarget` são os defaults). `tsconfig.spec.json` → `types: ["vitest/globals"]`.
+- [x] Converter os 18 specs (69 testes) de Jasmine para Vitest. Conversão mecânica via
+      sed + ajustes manuais nos casos multi-linha: `jasmine.createSpy('x')` → `vi.fn()`,
+      `.and.returnValue(` → `.mockReturnValue(`, `.and.resolveTo(` → `.mockResolvedValue(`,
+      `jasmine.Spy` → `Mock` (import `type { Mock } from 'vitest'`), `jasmine.objectContaining`
+      → `expect.objectContaining`, `spyOn(` → `vi.spyOn(`.
+- [x] Trocar `HttpClientTestingModule` por `provideHttpClient()` + `provideHttpClientTesting()`
+      nos 5 arquivos que usavam (login, consent, forgot-password, reset-password,
+      admin-api.service).
+- [x] `ng test` verde, **69/69** — mesma quantidade de testes de antes (a nota do plano
+      dizia "20 specs"; o número real medido na Fase 0 já era 69 testes em 18 arquivos de
+      spec — nenhum teste foi perdido na conversão).
 
 ---
 
@@ -133,6 +145,19 @@ Espelha os checklists de `docs/PLANO-MODERNIZACAO.md`, fase por fase. Ver també
 ---
 
 ## Notas
+
+- **`vi.spyOn(router, 'navigate').mockResolvedValue(true)` sozinho não bastava sob o novo
+  runner Vitest/zoneless** em 3 specs (`tenant-form`, `system-form`, `user-form`): o
+  `Router` real, configurado com `provideRouter([])` (sem rotas), lançava `NG04002: Cannot
+  match any routes` como **unhandled rejection** depois do teste já ter passado — o
+  `Test Files`/`Tests` ficavam verdes mas o processo saía com código de erro por causa dos
+  "Unhandled Errors". Não identifiquei a origem exata da segunda navegação (a asserção do
+  spy já confirma que o componente chamou `router.navigate` corretamente uma vez). Mitigação
+  aplicada: trocar `provideRouter([])` por `provideRouter([{ path: '**', component:
+  <ComponenteDaTela> }])` nesses 3 specs, dando ao router real uma rota para casar caso
+  alguma navegação escape do mock. Resolveu sem alterar a asserção de negócio do teste. Se
+  aparecer de novo em specs futuras (Fase 6/7) que usam `spyOn(router, 'navigate')` com
+  `provideRouter([])`, aplicar o mesmo padrão.
 
 - **Node.js local (22.16.0) está abaixo do que o `ng update` passou a exigir para rodar
   schematics via CLI temporária (≥22.22.3).** `ng update @angular/core@20`/`@cli@20` e

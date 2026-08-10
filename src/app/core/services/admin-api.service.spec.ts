@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
 
 import { AdminApiService } from './admin-api.service';
 import { ConsoleAuthService } from './console-auth.service';
@@ -10,8 +11,11 @@ describe('AdminApiService', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      imports: [HttpClientTestingModule],
-      providers: [{ provide: ConsoleAuthService, useValue: { getAccessToken: () => 'fake-token' } }],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        { provide: ConsoleAuthService, useValue: { getAccessToken: () => 'fake-token' } },
+      ],
     });
 
     service = TestBed.inject(AdminApiService);

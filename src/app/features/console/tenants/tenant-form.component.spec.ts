@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, provideRouter, Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
+import type { Mock } from 'vitest';
 
 import { TenantFormComponent } from './tenant-form.component';
 import { AdminApiService } from '../../../core/services/admin-api.service';
@@ -8,18 +9,18 @@ import { TenantResponse } from '../../../core/models/admin-api.models';
 
 describe('TenantFormComponent (criação)', () => {
   let fixture: ComponentFixture<TenantFormComponent>;
-  let adminApiStub: { createTenant: jasmine.Spy; getTenant: jasmine.Spy };
+  let adminApiStub: { createTenant: Mock; getTenant: Mock };
 
   beforeEach(async () => {
     adminApiStub = {
-      createTenant: jasmine.createSpy('createTenant'),
-      getTenant: jasmine.createSpy('getTenant'),
+      createTenant: vi.fn(),
+      getTenant: vi.fn(),
     };
 
     await TestBed.configureTestingModule({
       imports: [TenantFormComponent],
       providers: [
-        provideRouter([]),
+        provideRouter([{ path: '**', component: TenantFormComponent }]),
         { provide: AdminApiService, useValue: adminApiStub },
         { provide: ActivatedRoute, useValue: { snapshot: { paramMap: convertToParamMap({}) } } },
       ],
@@ -36,8 +37,8 @@ describe('TenantFormComponent (criação)', () => {
 
   it('deve chamar createTenant e navegar para a lista ao salvar', async () => {
     const router = TestBed.inject(Router);
-    const navigateSpy = spyOn(router, 'navigate').and.resolveTo(true);
-    adminApiStub.createTenant.and.returnValue(of({ id: '1' } as TenantResponse));
+    const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+    adminApiStub.createTenant.mockReturnValue(of({ id: '1' } as TenantResponse));
 
     fixture.componentInstance.code = 'acme';
     fixture.componentInstance.name = 'Acme';
@@ -45,10 +46,11 @@ describe('TenantFormComponent (criação)', () => {
 
     expect(adminApiStub.createTenant).toHaveBeenCalledWith({ code: 'acme', name: 'Acme' });
     expect(navigateSpy).toHaveBeenCalledWith(['/console/tenants']);
+    await fixture.whenStable();
   });
 
   it('deve mostrar erro quando a criação falha', () => {
-    adminApiStub.createTenant.and.returnValue(
+    adminApiStub.createTenant.mockReturnValue(
       throwError(() => ({ error: { message: 'código já existe' } })),
     );
 
@@ -60,20 +62,20 @@ describe('TenantFormComponent (criação)', () => {
 
 describe('TenantFormComponent (edição)', () => {
   let fixture: ComponentFixture<TenantFormComponent>;
-  let adminApiStub: { updateTenant: jasmine.Spy; getTenant: jasmine.Spy };
+  let adminApiStub: { updateTenant: Mock; getTenant: Mock };
 
   beforeEach(async () => {
     adminApiStub = {
-      updateTenant: jasmine.createSpy('updateTenant'),
-      getTenant: jasmine
-        .createSpy('getTenant')
-        .and.returnValue(of({ id: '1', code: 'acme', name: 'Acme', status: 'ACTIVE', logoUrl: null } as TenantResponse)),
+      updateTenant: vi.fn(),
+      getTenant: vi
+        .fn()
+        .mockReturnValue(of({ id: '1', code: 'acme', name: 'Acme', status: 'ACTIVE', logoUrl: null } as TenantResponse)),
     };
 
     await TestBed.configureTestingModule({
       imports: [TenantFormComponent],
       providers: [
-        provideRouter([]),
+        provideRouter([{ path: '**', component: TenantFormComponent }]),
         { provide: AdminApiService, useValue: adminApiStub },
         { provide: ActivatedRoute, useValue: { snapshot: { paramMap: convertToParamMap({ id: '1' }) } } },
       ],
@@ -90,7 +92,7 @@ describe('TenantFormComponent (edição)', () => {
   });
 
   it('deve chamar updateTenant (sem code) ao salvar', () => {
-    adminApiStub.updateTenant.and.returnValue(of({ id: '1' } as TenantResponse));
+    adminApiStub.updateTenant.mockReturnValue(of({ id: '1' } as TenantResponse));
 
     fixture.componentInstance.name = 'Acme Corp';
     fixture.componentInstance.submit();

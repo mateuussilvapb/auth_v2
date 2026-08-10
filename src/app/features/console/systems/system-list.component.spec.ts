@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
+import type { Mock } from 'vitest';
 
 import { SystemListComponent } from './system-list.component';
 import { AdminApiService } from '../../../core/services/admin-api.service';
@@ -8,7 +9,7 @@ import { Page, SystemResponse } from '../../../core/models/admin-api.models';
 
 describe('SystemListComponent', () => {
   let fixture: ComponentFixture<SystemListComponent>;
-  let adminApiStub: { listSystemsByTenant: jasmine.Spy; updateSystemStatus: jasmine.Spy; addRedirectUri: jasmine.Spy };
+  let adminApiStub: { listSystemsByTenant: Mock; updateSystemStatus: Mock; addRedirectUri: Mock };
 
   const page: Page<SystemResponse> = {
     content: [
@@ -30,9 +31,9 @@ describe('SystemListComponent', () => {
 
   beforeEach(async () => {
     adminApiStub = {
-      listSystemsByTenant: jasmine.createSpy('listSystemsByTenant').and.returnValue(of(page)),
-      updateSystemStatus: jasmine.createSpy('updateSystemStatus').and.returnValue(of(page.content[0])),
-      addRedirectUri: jasmine.createSpy('addRedirectUri').and.returnValue(of(page.content[0])),
+      listSystemsByTenant: vi.fn().mockReturnValue(of(page)),
+      updateSystemStatus: vi.fn().mockReturnValue(of(page.content[0])),
+      addRedirectUri: vi.fn().mockReturnValue(of(page.content[0])),
     };
 
     await TestBed.configureTestingModule({
@@ -54,7 +55,7 @@ describe('SystemListComponent', () => {
   });
 
   it('deve marcar erro quando a listagem falha', () => {
-    adminApiStub.listSystemsByTenant.and.returnValue(throwError(() => new Error('falhou')));
+    adminApiStub.listSystemsByTenant.mockReturnValue(throwError(() => new Error('falhou')));
     fixture.componentInstance.load();
     expect(fixture.componentInstance.errorMessage()).not.toBeNull();
   });

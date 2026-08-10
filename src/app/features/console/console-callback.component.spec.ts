@@ -23,7 +23,7 @@ describe('ConsoleCallbackComponent', () => {
       completeLoginFlow: async () => {},
       isAuthenticated: () => true,
     });
-    const navigateSpy = spyOn(router, 'navigate').and.resolveTo(true);
+    const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
 
     fixture.detectChanges();
     await fixture.whenStable();

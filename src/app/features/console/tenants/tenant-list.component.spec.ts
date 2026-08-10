@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
+import type { Mock } from 'vitest';
 
 import { TenantListComponent } from './tenant-list.component';
 import { AdminApiService } from '../../../core/services/admin-api.service';
@@ -8,7 +9,7 @@ import { Page, TenantResponse } from '../../../core/models/admin-api.models';
 
 describe('TenantListComponent', () => {
   let fixture: ComponentFixture<TenantListComponent>;
-  let adminApiStub: { listTenants: jasmine.Spy; updateTenantStatus: jasmine.Spy };
+  let adminApiStub: { listTenants: Mock; updateTenantStatus: Mock };
 
   const page: Page<TenantResponse> = {
     content: [{ id: '1', code: 'acme', name: 'Acme', status: 'ACTIVE', logoUrl: null }],
@@ -20,8 +21,8 @@ describe('TenantListComponent', () => {
 
   beforeEach(async () => {
     adminApiStub = {
-      listTenants: jasmine.createSpy('listTenants').and.returnValue(of(page)),
-      updateTenantStatus: jasmine.createSpy('updateTenantStatus').and.returnValue(of(page.content[0])),
+      listTenants: vi.fn().mockReturnValue(of(page)),
+      updateTenantStatus: vi.fn().mockReturnValue(of(page.content[0])),
     };
 
     await TestBed.configureTestingModule({
@@ -39,7 +40,7 @@ describe('TenantListComponent', () => {
   });
 
   it('deve marcar erro quando a listagem falha', () => {
-    adminApiStub.listTenants.and.returnValue(throwError(() => new Error('falhou')));
+    adminApiStub.listTenants.mockReturnValue(throwError(() => new Error('falhou')));
 
     fixture.componentInstance.load();
 

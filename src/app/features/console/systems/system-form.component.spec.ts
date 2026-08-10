@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, provideRouter, Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
+import type { Mock } from 'vitest';
 
 import { SystemFormComponent } from './system-form.component';
 import { AdminApiService } from '../../../core/services/admin-api.service';
@@ -8,15 +9,15 @@ import { SystemResponse } from '../../../core/models/admin-api.models';
 
 describe('SystemFormComponent', () => {
   let fixture: ComponentFixture<SystemFormComponent>;
-  let adminApiStub: { createSystem: jasmine.Spy };
+  let adminApiStub: { createSystem: Mock };
 
   beforeEach(async () => {
-    adminApiStub = { createSystem: jasmine.createSpy('createSystem') };
+    adminApiStub = { createSystem: vi.fn() };
 
     await TestBed.configureTestingModule({
       imports: [SystemFormComponent],
       providers: [
-        provideRouter([]),
+        provideRouter([{ path: '**', component: SystemFormComponent }]),
         { provide: AdminApiService, useValue: adminApiStub },
         { provide: ActivatedRoute, useValue: { snapshot: { paramMap: convertToParamMap({ tenantId: '1' }) } } },
       ],
@@ -37,9 +38,9 @@ describe('SystemFormComponent', () => {
   });
 
   it('deve enviar clientSecret null quando publicClient=true', () => {
-    adminApiStub.createSystem.and.returnValue(of({ id: '1' } as SystemResponse));
+    adminApiStub.createSystem.mockReturnValue(of({ id: '1' } as SystemResponse));
     const router = TestBed.inject(Router);
-    const navigateSpy = spyOn(router, 'navigate').and.resolveTo(true);
+    const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
 
     fixture.componentInstance.clientId = 'CRM_ACME';
     fixture.componentInstance.name = 'CRM';
@@ -59,7 +60,7 @@ describe('SystemFormComponent', () => {
   });
 
   it('deve enviar o clientSecret informado quando publicClient=false', () => {
-    adminApiStub.createSystem.and.returnValue(of({ id: '1' } as SystemResponse));
+    adminApiStub.createSystem.mockReturnValue(of({ id: '1' } as SystemResponse));
 
     fixture.componentInstance.clientId = 'BACKOFFICE_ACME';
     fixture.componentInstance.name = 'Backoffice';
@@ -70,12 +71,12 @@ describe('SystemFormComponent', () => {
 
     expect(adminApiStub.createSystem).toHaveBeenCalledWith(
       '1',
-      jasmine.objectContaining({ publicClient: false, clientSecret: 'super-secreto' }),
+      expect.objectContaining({ publicClient: false, clientSecret: 'super-secreto' }),
     );
   });
 
   it('deve mostrar erro quando a criação falha', () => {
-    adminApiStub.createSystem.and.returnValue(throwError(() => ({ error: { message: 'client_id já existe' } })));
+    adminApiStub.createSystem.mockReturnValue(throwError(() => ({ error: { message: 'client_id já existe' } })));
 
     fixture.componentInstance.submit();
 

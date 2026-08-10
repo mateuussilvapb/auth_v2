@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, provideRouter, Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
+import type { Mock } from 'vitest';
 
 import { UserFormComponent } from './user-form.component';
 import { AdminApiService } from '../../../core/services/admin-api.service';
@@ -8,15 +9,15 @@ import { UserResponse } from '../../../core/models/admin-api.models';
 
 describe('UserFormComponent (criação)', () => {
   let fixture: ComponentFixture<UserFormComponent>;
-  let adminApiStub: { createUser: jasmine.Spy; getUser: jasmine.Spy };
+  let adminApiStub: { createUser: Mock; getUser: Mock };
 
   beforeEach(async () => {
-    adminApiStub = { createUser: jasmine.createSpy('createUser'), getUser: jasmine.createSpy('getUser') };
+    adminApiStub = { createUser: vi.fn(), getUser: vi.fn() };
 
     await TestBed.configureTestingModule({
       imports: [UserFormComponent],
       providers: [
-        provideRouter([]),
+        provideRouter([{ path: '**', component: UserFormComponent }]),
         { provide: AdminApiService, useValue: adminApiStub },
         { provide: ActivatedRoute, useValue: { snapshot: { paramMap: convertToParamMap({ tenantId: '1' }) } } },
       ],
@@ -33,8 +34,8 @@ describe('UserFormComponent (criação)', () => {
 
   it('deve chamar createUser e navegar para a lista ao salvar', async () => {
     const router = TestBed.inject(Router);
-    const navigateSpy = spyOn(router, 'navigate').and.resolveTo(true);
-    adminApiStub.createUser.and.returnValue(of({ id: '1' } as UserResponse));
+    const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
+    adminApiStub.createUser.mockReturnValue(of({ id: '1' } as UserResponse));
 
     fixture.componentInstance.username = 'joao_silva';
     fixture.componentInstance.email = 'joao@acme.com';
@@ -52,7 +53,7 @@ describe('UserFormComponent (criação)', () => {
   });
 
   it('deve mostrar erro quando a criação falha', () => {
-    adminApiStub.createUser.and.returnValue(throwError(() => ({ error: { message: 'usuário já existe' } })));
+    adminApiStub.createUser.mockReturnValue(throwError(() => ({ error: { message: 'usuário já existe' } })));
     fixture.componentInstance.submit();
     expect(fixture.componentInstance.errorMessage()).toBe('usuário já existe');
   });
@@ -60,14 +61,14 @@ describe('UserFormComponent (criação)', () => {
 
 describe('UserFormComponent (edição)', () => {
   let fixture: ComponentFixture<UserFormComponent>;
-  let adminApiStub: { updateUser: jasmine.Spy; getUser: jasmine.Spy };
+  let adminApiStub: { updateUser: Mock; getUser: Mock };
 
   beforeEach(async () => {
     adminApiStub = {
-      updateUser: jasmine.createSpy('updateUser'),
-      getUser: jasmine
-        .createSpy('getUser')
-        .and.returnValue(
+      updateUser: vi.fn(),
+      getUser: vi
+        .fn()
+        .mockReturnValue(
           of({ id: '2', tenantId: '1', username: 'joao_silva', email: 'joao@acme.com', name: 'João', status: 'ACTIVE' } as UserResponse),
         ),
     };
@@ -75,7 +76,7 @@ describe('UserFormComponent (edição)', () => {
     await TestBed.configureTestingModule({
       imports: [UserFormComponent],
       providers: [
-        provideRouter([]),
+        provideRouter([{ path: '**', component: UserFormComponent }]),
         { provide: AdminApiService, useValue: adminApiStub },
         { provide: ActivatedRoute, useValue: { snapshot: { paramMap: convertToParamMap({ tenantId: '1', id: '2' }) } } },
       ],
@@ -92,7 +93,7 @@ describe('UserFormComponent (edição)', () => {
   });
 
   it('deve chamar updateUser (sem username/senha) ao salvar', () => {
-    adminApiStub.updateUser.and.returnValue(of({ id: '2' } as UserResponse));
+    adminApiStub.updateUser.mockReturnValue(of({ id: '2' } as UserResponse));
 
     fixture.componentInstance.name = 'João da Silva';
     fixture.componentInstance.submit();

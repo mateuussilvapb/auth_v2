@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
+import type { Mock } from 'vitest';
 
 import { ProfileListComponent } from './profile-list.component';
 import { AdminApiService } from '../../../core/services/admin-api.service';
@@ -8,7 +9,7 @@ import { SystemProfileResponse } from '../../../core/models/admin-api.models';
 
 describe('ProfileListComponent', () => {
   let fixture: ComponentFixture<ProfileListComponent>;
-  let adminApiStub: { listProfiles: jasmine.Spy; createProfile: jasmine.Spy; updateProfileStatus: jasmine.Spy };
+  let adminApiStub: { listProfiles: Mock; createProfile: Mock; updateProfileStatus: Mock };
 
   const profiles: SystemProfileResponse[] = [
     { id: '1', systemId: '1', code: 'ADMIN', description: 'Administrador', status: 'ACTIVE' },
@@ -16,9 +17,9 @@ describe('ProfileListComponent', () => {
 
   beforeEach(async () => {
     adminApiStub = {
-      listProfiles: jasmine.createSpy('listProfiles').and.returnValue(of(profiles)),
-      createProfile: jasmine.createSpy('createProfile').and.returnValue(of(profiles[0])),
-      updateProfileStatus: jasmine.createSpy('updateProfileStatus').and.returnValue(of(profiles[0])),
+      listProfiles: vi.fn().mockReturnValue(of(profiles)),
+      createProfile: vi.fn().mockReturnValue(of(profiles[0])),
+      updateProfileStatus: vi.fn().mockReturnValue(of(profiles[0])),
     };
 
     await TestBed.configureTestingModule({
@@ -40,7 +41,7 @@ describe('ProfileListComponent', () => {
   });
 
   it('deve marcar erro quando a listagem falha', () => {
-    adminApiStub.listProfiles.and.returnValue(throwError(() => new Error('falhou')));
+    adminApiStub.listProfiles.mockReturnValue(throwError(() => new Error('falhou')));
     fixture.componentInstance.load();
     expect(fixture.componentInstance.errorMessage()).not.toBeNull();
   });
