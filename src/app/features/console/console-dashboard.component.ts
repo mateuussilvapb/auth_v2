@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+
 import { Component, OnInit, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
@@ -12,7 +12,7 @@ import { decodeJwtPayload } from '../../core/util/jwt';
  */
 @Component({
   selector: 'app-console-dashboard',
-  imports: [CommonModule, RouterLink],
+  imports: [RouterLink],
   templateUrl: './console-dashboard.component.html',
 })
 export class ConsoleDashboardComponent implements OnInit {

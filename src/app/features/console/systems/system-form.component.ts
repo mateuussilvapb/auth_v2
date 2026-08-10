@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+
 import { Component, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -9,7 +9,7 @@ import { ApiErrorResponse } from '../../../core/models/auth-api.models';
 /** Rota {@code /console/tenants/:tenantId/systems/novo} — só criação (sem edição de client_id/tipo). */
 @Component({
   selector: 'app-system-form',
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [FormsModule, RouterLink],
   templateUrl: './system-form.component.html',
 })
 export class SystemFormComponent {

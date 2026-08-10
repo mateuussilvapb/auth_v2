@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+
 import { Component, OnInit, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
@@ -11,7 +11,7 @@ import { TenantResponse } from '../../../core/models/admin-api.models';
  */
 @Component({
   selector: 'app-tenant-list',
-  imports: [CommonModule, RouterLink],
+  imports: [RouterLink],
   templateUrl: './tenant-list.component.html',
 })
 export class TenantListComponent implements OnInit {

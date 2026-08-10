@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+
 import { Component, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
@@ -20,7 +20,7 @@ import {
  */
 @Component({
   selector: 'app-user-bindings',
-  imports: [CommonModule, FormsModule],
+  imports: [FormsModule],
   templateUrl: './user-bindings.component.html',
 })
 export class UserBindingsComponent implements OnInit {

@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+
 import { Component, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
@@ -14,7 +14,7 @@ import { SystemProfileResponse } from '../../../core/models/admin-api.models';
  */
 @Component({
   selector: 'app-profile-list',
-  imports: [CommonModule, FormsModule],
+  imports: [FormsModule],
   templateUrl: './profile-list.component.html',
 })
 export class ProfileListComponent implements OnInit {

@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+
 import { Component, OnInit, signal } from '@angular/core';
 import { Router } from '@angular/router';
 
@@ -12,7 +12,7 @@ import { ConsoleAuthService } from '../../core/services/console-auth.service';
  */
 @Component({
   selector: 'app-console-callback',
-  imports: [CommonModule],
+  imports: [],
   template: `
     @if (errorMessage()) {
       <p role="alert">{{ errorMessage() }}</p>

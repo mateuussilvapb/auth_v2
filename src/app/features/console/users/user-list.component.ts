@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+
 import { Component, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 
@@ -13,7 +13,7 @@ import { UserResponse } from '../../../core/models/admin-api.models';
  */
 @Component({
   selector: 'app-user-list',
-  imports: [CommonModule, RouterLink],
+  imports: [RouterLink],
   templateUrl: './user-list.component.html',
 })
 export class UserListComponent implements OnInit {

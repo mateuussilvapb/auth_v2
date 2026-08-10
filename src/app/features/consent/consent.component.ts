@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+
 import { Component, OnInit, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 
@@ -16,7 +16,7 @@ import { ApiErrorResponse } from '../../core/models/auth-api.models';
  */
 @Component({
   selector: 'app-consent',
-  imports: [CommonModule],
+  imports: [],
   templateUrl: './consent.component.html',
   styleUrl: './consent.component.css',
 })
