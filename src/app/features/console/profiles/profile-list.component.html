@@ -1,0 +1,49 @@
+<div class="console-page">
+  <h1>Perfis</h1>
+
+  @if (errorMessage()) {
+    <p class="error" role="alert">{{ errorMessage() }}</p>
+  }
+
+  @if (loading()) {
+    <p>Carregando...</p>
+  } @else {
+    <table>
+      <thead>
+        <tr>
+          <th>Código</th>
+          <th>Descrição</th>
+          <th>Status</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (profile of profiles(); track profile.id) {
+          <tr>
+            <td>{{ profile.code }}</td>
+            <td>{{ profile.description }}</td>
+            <td>{{ profile.status }}</td>
+            <td>
+              <button type="button" (click)="toggleStatus(profile)">
+                {{ profile.status === 'ACTIVE' ? 'Desativar' : 'Ativar' }}
+              </button>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+
+    <h2>Novo perfil</h2>
+    <form (ngSubmit)="create()" #profileForm="ngForm">
+      <label for="code">Código</label>
+      <input id="code" name="code" type="text" [(ngModel)]="newCode" required />
+
+      <label for="description">Descrição</label>
+      <input id="description" name="description" type="text" [(ngModel)]="newDescription" />
+
+      <button type="submit" [disabled]="profileForm.invalid || submitting()">
+        {{ submitting() ? 'Salvando...' : 'Adicionar' }}
+      </button>
+    </form>
+  }
+</div>

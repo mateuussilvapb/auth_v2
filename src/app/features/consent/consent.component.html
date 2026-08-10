@@ -1,0 +1,24 @@
+<div class="consent-page">
+  <div class="consent-card">
+    <h1>Autorização necessária</h1>
+
+    @if (clientId) {
+      <p>O sistema <strong>{{ clientId }}</strong> está solicitando acesso a:</p>
+      <ul>
+        @for (scope of scopes; track scope) {
+          <li>{{ scope }}</li>
+        }
+      </ul>
+
+      @if (errorMessage()) {
+        <p class="error" role="alert">{{ errorMessage() }}</p>
+      }
+
+      <button type="button" [disabled]="submitting()" (click)="authorize()">
+        {{ submitting() ? 'Autorizando...' : 'Autorizar' }}
+      </button>
+    } @else {
+      <p class="error" role="alert">{{ errorMessage() }}</p>
+    }
+  </div>
+</div>
