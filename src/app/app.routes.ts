@@ -1,49 +1,99 @@
 import { Routes } from '@angular/router';
 
-import { LoginComponent } from './features/login/login.component';
-import { ConsentComponent } from './features/consent/consent.component';
-import { ForgotPasswordComponent } from './features/forgot-password/forgot-password.component';
-import { ResetPasswordComponent } from './features/reset-password/reset-password.component';
-import { ConsoleCallbackComponent } from './features/console/console-callback.component';
-import { ConsoleDashboardComponent } from './features/console/console-dashboard.component';
-import { TenantListComponent } from './features/console/tenants/tenant-list.component';
-import { TenantFormComponent } from './features/console/tenants/tenant-form.component';
-import { SystemListComponent } from './features/console/systems/system-list.component';
-import { SystemFormComponent } from './features/console/systems/system-form.component';
-import { ProfileListComponent } from './features/console/profiles/profile-list.component';
-import { UserListComponent } from './features/console/users/user-list.component';
-import { UserFormComponent } from './features/console/users/user-form.component';
-import { UserBindingsComponent } from './features/console/bindings/user-bindings.component';
 import { consoleAuthGuard } from './core/guards/console-auth.guard';
 
 /**
- * Rotas públicas (seção 2.2/9 do plano): /login, /consent, /esqueci-senha,
- * /reset-password. Rotas protegidas do console administrativo sob /console (seção 2.2/D6)
- * — client OAuth2 PKCE estático (RegisteredClientRepositoryConfig no backend), platform
- * admin autenticado via consoleAuthGuard. Cobre todo o checklist de Fase 9 (CRUD +
- * vínculos) — CRUD administrativo restante (billing, auditoria etc.) não faz parte do
- * plano original.
+ * Duas árvores (guia de estilo, seção 1.1/7.1; plano, Fase 5): pública — sem shell, zero
+ * fricção — e `/console` — protegida por {@code consoleAuthGuard}, com o shell
+ * `ConsoleLayout` (topbar + sidebar). Tudo lazy via `loadComponent`; `/console/callback`
+ * fica fora do guard porque é o próprio destino do fluxo PKCE (ainda sem token válido).
  */
 export const routes: Routes = [
-  { path: 'login', component: LoginComponent },
-  { path: 'consent', component: ConsentComponent },
-  { path: 'esqueci-senha', component: ForgotPasswordComponent },
-  { path: 'reset-password', component: ResetPasswordComponent },
-  { path: 'console/callback', component: ConsoleCallbackComponent },
-  { path: 'console', component: ConsoleDashboardComponent, canActivate: [consoleAuthGuard] },
-  { path: 'console/tenants', component: TenantListComponent, canActivate: [consoleAuthGuard] },
-  { path: 'console/tenants/novo', component: TenantFormComponent, canActivate: [consoleAuthGuard] },
-  { path: 'console/tenants/:id/editar', component: TenantFormComponent, canActivate: [consoleAuthGuard] },
-  { path: 'console/tenants/:tenantId/systems', component: SystemListComponent, canActivate: [consoleAuthGuard] },
-  { path: 'console/tenants/:tenantId/systems/novo', component: SystemFormComponent, canActivate: [consoleAuthGuard] },
-  { path: 'console/systems/:systemId/profiles', component: ProfileListComponent, canActivate: [consoleAuthGuard] },
-  { path: 'console/tenants/:tenantId/users', component: UserListComponent, canActivate: [consoleAuthGuard] },
-  { path: 'console/tenants/:tenantId/users/novo', component: UserFormComponent, canActivate: [consoleAuthGuard] },
-  { path: 'console/tenants/:tenantId/users/:id/editar', component: UserFormComponent, canActivate: [consoleAuthGuard] },
+  { path: 'login', loadComponent: () => import('./pages/login/components/login/login').then((m) => m.Login) },
   {
-    path: 'console/tenants/:tenantId/users/:userId/bindings',
-    component: UserBindingsComponent,
+    path: 'consent',
+    loadComponent: () => import('./pages/consent/components/consent/consent').then((m) => m.Consent),
+  },
+  {
+    path: 'esqueci-senha',
+    loadComponent: () =>
+      import('./pages/forgot-password/components/forgot-password/forgot-password').then((m) => m.ForgotPassword),
+  },
+  {
+    path: 'reset-password',
+    loadComponent: () =>
+      import('./pages/reset-password/components/reset-password/reset-password').then((m) => m.ResetPassword),
+  },
+  {
+    path: 'console/callback',
+    loadComponent: () =>
+      import('./pages/console/callback/components/console-callback/console-callback').then(
+        (m) => m.ConsoleCallback,
+      ),
+  },
+  {
+    path: 'console',
     canActivate: [consoleAuthGuard],
+    loadComponent: () => import('./core/layout/console-layout/console-layout').then((m) => m.ConsoleLayout),
+    children: [
+      {
+        path: '',
+        loadComponent: () =>
+          import('./pages/console/dashboard/components/console-dashboard/console-dashboard').then(
+            (m) => m.ConsoleDashboard,
+          ),
+      },
+      {
+        path: 'tenants',
+        loadComponent: () =>
+          import('./pages/console/tenants/components/tenant-list/tenant-list').then((m) => m.TenantList),
+      },
+      {
+        path: 'tenants/novo',
+        loadComponent: () =>
+          import('./pages/console/tenants/components/tenant-form/tenant-form').then((m) => m.TenantForm),
+      },
+      {
+        path: 'tenants/:id/editar',
+        loadComponent: () =>
+          import('./pages/console/tenants/components/tenant-form/tenant-form').then((m) => m.TenantForm),
+      },
+      {
+        path: 'tenants/:tenantId/systems',
+        loadComponent: () =>
+          import('./pages/console/systems/components/system-list/system-list').then((m) => m.SystemList),
+      },
+      {
+        path: 'tenants/:tenantId/systems/novo',
+        loadComponent: () =>
+          import('./pages/console/systems/components/system-form/system-form').then((m) => m.SystemForm),
+      },
+      {
+        path: 'systems/:systemId/profiles',
+        loadComponent: () =>
+          import('./pages/console/profiles/components/profile-list/profile-list').then((m) => m.ProfileList),
+      },
+      {
+        path: 'tenants/:tenantId/users',
+        loadComponent: () =>
+          import('./pages/console/users/components/user-list/user-list').then((m) => m.UserList),
+      },
+      {
+        path: 'tenants/:tenantId/users/novo',
+        loadComponent: () =>
+          import('./pages/console/users/components/user-form/user-form').then((m) => m.UserForm),
+      },
+      {
+        path: 'tenants/:tenantId/users/:id/editar',
+        loadComponent: () =>
+          import('./pages/console/users/components/user-form/user-form').then((m) => m.UserForm),
+      },
+      {
+        path: 'tenants/:tenantId/users/:userId/bindings',
+        loadComponent: () =>
+          import('./pages/console/bindings/components/user-bindings/user-bindings').then((m) => m.UserBindings),
+      },
+    ],
   },
   { path: '', redirectTo: 'login', pathMatch: 'full' },
 ];

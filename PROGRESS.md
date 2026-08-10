@@ -116,13 +116,44 @@ Espelha os checklists de `docs/PLANO-MODERNIZACAO.md`, fase por fase. Ver també
 
 ## Fase 5 — Estrutura compartilhada
 
-- [ ] `features/` → `pages/`.
-- [ ] Portar `ListBase`, `FormBase`, `LayoutBasePages`, `FormLabel`, `LoadingOverlay`,
-      wrapper de `MessageService`, `Toast`.
-- [ ] Criar `StatusTag` e `CopyField`.
-- [ ] Criar `core/layout/public-layout` e `core/layout/console-layout`.
-- [ ] Reestruturar `app.routes.ts` (pública e `/console`, lazy).
-- [ ] `ng build` + `ng test` verdes.
+- [x] `features/` → `pages/`, seguindo o padrão da referência: cada componente na sua
+      própria pasta `pages/<modulo>/components/<nome>/<nome>.ts` (sem sufixo `Component`,
+      arquivo sem `.component.`), console aninhado em `pages/console/<modulo>/`.
+      **Desvio deliberado do padrão `core/{models,dtos,services}` por página**:
+      `AdminApiService`/`AuthApiService`/`ConsoleAuthService` e os models
+      (`admin-api.models.ts`, `auth-api.models.ts`) continuam em `app/core/` (não
+      fragmentados por página) — guia 1.1 pede explicitamente para preservá-los sem
+      reescrita gratuita, e são consumidos por várias páginas (não fariam sentido
+      "pertencendo" a uma única).
+- [x] Portadas `ListBase`, `FormBase`, `LayoutBasePages`, `FormLabel`, `LoadingOverlay`,
+      wrapper de `MessageService`, `Toast` — sem alteração de contrato, exceto removendo a
+      dependência de `ThemeService`/classes de gradiente da referência (não existem neste
+      projeto; `LayoutBasePages` usa `severity="primary"` direto). **Nota de compatibilidade
+      para Fase 6/7**: `FormBase.isEditMode/isCreateMode/isViewMode` detectam o modo por
+      substring da URL (`'cadastro'`/`'edicao'`/`'visualizacao'`, contrato original da
+      referência) — as rotas atuais deste projeto usam `'novo'`/`'editar'`, que **não**
+      batem com esse contrato. Ao adotar `FormBase` nos formulários reais (Fase 6/7),
+      renomear os segmentos de rota para `cadastro`/`edicao` ou passar o modo explicitamente
+      via `dialogData`.
+- [x] Criados `StatusTag` (mapeamento único de status, guia 2.3) e `CopyField` (mono +
+      copiar + máscara opcional, guia 5.5) — específicos deste projeto.
+- [x] Criados os dois layouts: `core/layout/console-layout` (topbar + sidebar + LayoutService,
+      portados da referência; sidebar só com "Tenants" por ora — Sistemas/Perfis/Usuários/
+      Vínculos/Platform Admins entram na Fase 7) e `core/layout/public-layout` (card
+      centralizado). **`console-layout` já está ligado às rotas `/console/**`** (smoke test
+      manual confirmou navegação, guard e shell funcionando); **`public-layout` foi criado
+      mas ainda não ligado às rotas públicas** — as telas antigas (`/login` etc.) têm o
+      próprio card com CSS hardcoded, e embrulhá-las agora criaria caixa dupla. Passam a usar
+      `public-layout` quando forem reescritas na Fase 6.
+- [x] `app.routes.ts` reestruturado em duas árvores lazy (`loadComponent`), com `/console`
+      como rota pai (`ConsoleLayout` + `consoleAuthGuard` uma vez só, protegendo toda a
+      subárvore) e `children` para cada tela. `/console/callback` fica fora do guard
+      (é o próprio destino do fluxo PKCE, ainda sem token).
+- [x] `ng build` verde — bundle inicial caiu para 992.62 kB/160.17 kB (lazy loading real:
+      cada tela é seu próprio chunk, poucos KB cada). `ng test` verde: **114/114** (69
+      preexistentes + 45 novos, cobrindo todo shared/core criado nesta fase).
+- [x] Smoke test manual: login + PKCE, guard, navegação aninhada `/console/tenants` dentro
+      do novo `ConsoleLayout`, tudo funcionando pós-reestruturação.
 
 ---
 

@@ -1,0 +1,20 @@
+<div class="copy-field">
+  @if (label()) {
+    <span class="text-small text-color-secondary">{{ label() }}</span>
+  }
+  <div class="copy-field-row">
+    <code class="text-mono copy-field-value">
+      {{ masked() && !revealed() ? '••••••••••••••••' : value() }}
+    </code>
+    @if (masked()) {
+      <p-button
+        [icon]="revealed() ? 'pi pi-eye-slash' : 'pi pi-eye'"
+        [text]="true"
+        severity="secondary"
+        [attr.aria-label]="revealed() ? 'Ocultar valor' : 'Exibir valor'"
+        (onClick)="toggleReveal()"
+      />
+    }
+    <p-button icon="pi pi-copy" [text]="true" severity="secondary" aria-label="Copiar valor" (onClick)="copy()" />
+  </div>
+</div>
