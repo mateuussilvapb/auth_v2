@@ -1,10 +1,14 @@
-
-import { Component, OnInit, signal } from '@angular/core';
+//Angular
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 
+//Aplicação
 import { AuthApiService } from '../../../../core/services/auth-api.service';
 import { AuthorizeContinuationService } from '../../../../core/services/authorize-continuation.service';
 import { ApiErrorResponse } from '../../../../core/models/auth-api.models';
+
+//Externos
+import { ButtonModule } from 'primeng/button';
 
 /**
  * Rota pública {@code /consent} (seção 2.2 do plano) — destino do
@@ -16,22 +20,20 @@ import { ApiErrorResponse } from '../../../../core/models/auth-api.models';
  */
 @Component({
   selector: 'app-consent',
-  imports: [],
+  imports: [ButtonModule],
   templateUrl: './consent.html',
-  styleUrl: './consent.css',
 })
 export class Consent implements OnInit {
+  private readonly route = inject(ActivatedRoute);
+  private readonly authApi = inject(AuthApiService);
+  private readonly continuation = inject(AuthorizeContinuationService);
+
   clientId = '';
   scopes: string[] = [];
 
   errorMessage = signal<string | null>(null);
   submitting = signal(false);
-
-  constructor(
-    private readonly route: ActivatedRoute,
-    private readonly authApi: AuthApiService,
-    private readonly continuation: AuthorizeContinuationService,
-  ) {}
+  denied = signal(false);
 
   ngOnInit(): void {
     const clientId = this.route.snapshot.queryParamMap.get('client_id');
@@ -43,6 +45,12 @@ export class Consent implements OnInit {
 
     this.clientId = clientId;
     this.scopes = scope.split(' ').filter((s) => s.length > 0);
+  }
+
+  deny(): void {
+    // Não há endpoint de negação no backend (só de gravação do consentimento) — negar
+    // aqui é simplesmente não completar o fluxo, sem retomar /oauth2/authorize.
+    this.denied.set(true);
   }
 
   async authorize(): Promise<void> {

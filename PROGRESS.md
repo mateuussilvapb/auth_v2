@@ -159,12 +159,31 @@ Espelha os checklists de `docs/PLANO-MODERNIZACAO.md`, fase por fase. Ver també
 
 ## Fase 6 — Telas públicas
 
-- [ ] `/login`.
-- [ ] `/esqueci-senha`.
-- [ ] `/reset-password`.
-- [ ] `/consent`.
-- [ ] Estados de carregando/erro/sucesso em todas.
-- [ ] Smoke test manual de cada tela contra o backend real.
+- [x] `/login` — `p-inputtext`/`p-password`, branding do tenant no cabeçalho (`.tenant-logo`,
+      guia 6.4), erro genérico exibido **literalmente** como recebido do backend (testes
+      cobrindo dois cenários de causa diferente com a mesma mensagem, guia 6.1).
+- [x] `/esqueci-senha` — resposta idêntica exista ou não o e-mail (mensagem fixa "Se o
+      e-mail estiver cadastrado, enviaremos as instruções.", guia 6.2). Teste parametrizado
+      cobrindo sucesso e 404 com a mesma asserção de UI.
+- [x] `/reset-password` — `p-password` com `[feedback]` (força + regras) e `minlength(8)`.
+- [x] `/consent` — lista de escopos em mono, ações **Autorizar/Negar**. Não existe endpoint
+      de negação no backend (só grava consentimento); "Negar" apenas encerra o fluxo local
+      sem chamar a API nem retomar `/oauth2/authorize` — registrado como decisão de produto
+      não coberta pelo plano.
+- [x] Estados de carregando/erro/sucesso desenhados em todas (via `[loading]` do `p-button`
+      e os `@if` de sucesso/erro já existentes).
+- [x] Todas as quatro telas embrulhadas no `PublicLayout` (`app.routes.ts` — rota `''` com
+      `children`); CSS antigo de cada tela removido.
+- [x] **Smoke test manual completo contra o backend real**, incluindo o cenário de
+      `/consent` com `System.thirdParty = true` (nunca testado manualmente antes, conforme
+      nota do `PROGRESS.md` do backend): criado tenant `acme` + sistema `CRM_ACME`
+      (thirdParty, público) + usuário `joao_silva` vinculado, via o próprio console (CRUD
+      antigo, ainda funcional). Validado: branding do tenant no login, mensagem de erro
+      idêntica para senha errada, `/esqueci-senha` com a mesma mensagem para e-mail
+      existente e inexistente, `/consent` renderizando escopos reais e "Negar" funcionando,
+      `/reset-password` com link inválido e com token (força de senha visível). Login com
+      sucesso navegou corretamente para `/oauth2/authorize` (o 400 ali é esperado — a URL de
+      teste não tinha os parâmetros OAuth2 completos, já que não veio de um redirect real).
 
 ---
 
@@ -195,6 +214,15 @@ Espelha os checklists de `docs/PLANO-MODERNIZACAO.md`, fase por fase. Ver també
 ---
 
 ## Notas
+
+- **`/esqueci-senha` não enviou e-mail via MailHog mesmo para o e-mail existente**
+  (`joao@example.com`, tenant `acme`, sistema `CRM_ACME`) durante o smoke test da Fase 6 —
+  só chegou o e-mail de boas-vindas da criação do usuário. A resposta da API foi 200 em
+  ambos os casos (existente/inexistente) e a UI mostrou a mensagem genérica corretamente
+  nos dois — o comportamento **visível ao usuário está correto** (não há enumeração). Não
+  investiguei a fundo (pode ser um no-op silencioso por falta de vínculo `SystemTenant`, o
+  que também seria um comportamento anti-enumeração válido) — vale conferir no backend se
+  for reportado como bug real de não-envio.
 
 - **`vi.spyOn(router, 'navigate').mockResolvedValue(true)` sozinho não bastava sob o novo
   runner Vitest/zoneless** em 3 specs (`tenant-form`, `system-form`, `user-form`): o

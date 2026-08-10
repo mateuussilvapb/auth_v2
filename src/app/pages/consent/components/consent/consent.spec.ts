@@ -42,6 +42,12 @@ describe('Consent', () => {
     expect(component.clientId).toBe('CRM_ACME');
     expect(component.scopes).toEqual(['profile']);
   });
+
+  it('deny() sinaliza negado sem chamar POST /api/auth/consent', () => {
+    component.deny();
+
+    expect(component.denied()).toBe(true);
+  });
 });
 
 describe('Consent sem client_id/scope na query string', () => {

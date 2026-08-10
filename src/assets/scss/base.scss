@@ -17,3 +17,14 @@ html:not(.app-dark) body {
 html.app-dark body {
   background: #0b1020;
 }
+
+.error-color {
+  color: var(--p-red-500);
+}
+
+// Branding de tenant (guia de estilo, seção 6.4) — conteúdo de terceiro, confinado ao
+// cabeçalho do card público, altura fixa para nunca afetar o layout.
+.tenant-logo {
+  max-height: 48px;
+  margin-bottom: 0.5rem;
+}

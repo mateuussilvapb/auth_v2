@@ -1,38 +1,49 @@
+//Angular
+import { Component, OnInit, inject, signal } from '@angular/core';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 
-import { Component, OnInit, signal } from '@angular/core';
-import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-
+//Aplicação
 import { AuthApiService } from '../../../../core/services/auth-api.service';
 import { AuthorizeContinuationService } from '../../../../core/services/authorize-continuation.service';
 import { BrandingResponse, ApiErrorResponse } from '../../../../core/models/auth-api.models';
+import { FormLabel } from '../../../../shared/components/form-label/form-label';
+
+//Externos
+import { ButtonModule } from 'primeng/button';
+import { InputTextModule } from 'primeng/inputtext';
+import { PasswordModule } from 'primeng/password';
 
 /**
  * Rota pública {@code /login} (seção 2.2/7.1 do plano) — não autentica via OAuth2. Envia
  * usuário/senha para {@code POST /api/auth/login} (sessão) e, em caso de sucesso, retoma
  * {@code GET /oauth2/authorize} preservado na query string desta rota.
+ *
+ * Guia de estilo, seção 6.1: a mensagem de erro é exibida **literalmente** como recebida
+ * do backend — proibido diferenciar usuário inexistente de senha incorreta, por texto,
+ * foco automático ou qualquer outro sinal.
  */
 @Component({
   selector: 'app-login',
-  imports: [FormsModule, RouterLink],
+  imports: [ReactiveFormsModule, RouterLink, ButtonModule, InputTextModule, PasswordModule, FormLabel],
   templateUrl: './login.html',
-  styleUrl: './login.css',
 })
 export class Login implements OnInit {
+  private readonly route = inject(ActivatedRoute);
+  private readonly authApi = inject(AuthApiService);
+  private readonly continuation = inject(AuthorizeContinuationService);
+  private readonly fb = inject(FormBuilder);
+
   clientId = '';
-  usernameOrEmail = '';
-  password = '';
+
+  form = this.fb.group({
+    usernameOrEmail: this.fb.control('', { validators: [Validators.required] }),
+    password: this.fb.control('', { validators: [Validators.required] }),
+  });
 
   branding = signal<BrandingResponse | null>(null);
   errorMessage = signal<string | null>(null);
   submitting = signal(false);
-
-  constructor(
-    private readonly route: ActivatedRoute,
-    private readonly router: Router,
-    private readonly authApi: AuthApiService,
-    private readonly continuation: AuthorizeContinuationService,
-  ) {}
 
   ngOnInit(): void {
     const clientId = this.route.snapshot.queryParamMap.get('client_id');
@@ -53,10 +64,16 @@ export class Login implements OnInit {
   }
 
   async submit(): Promise<void> {
+    if (this.form.invalid) {
+      return;
+    }
+
     this.errorMessage.set(null);
     this.submitting.set(true);
 
-    this.authApi.login({ clientId: this.clientId, usernameOrEmail: this.usernameOrEmail, password: this.password }).subscribe({
+    const { usernameOrEmail, password } = this.form.getRawValue();
+
+    this.authApi.login({ clientId: this.clientId, usernameOrEmail: usernameOrEmail!, password: password! }).subscribe({
       next: async () => {
         const params = await this.continuation.captureParams();
         this.continuation.continueAuthorize(params);

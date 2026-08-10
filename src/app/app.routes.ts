@@ -3,26 +3,36 @@ import { Routes } from '@angular/router';
 import { consoleAuthGuard } from './core/guards/console-auth.guard';
 
 /**
- * Duas árvores (guia de estilo, seção 1.1/7.1; plano, Fase 5): pública — sem shell, zero
- * fricção — e `/console` — protegida por {@code consoleAuthGuard}, com o shell
- * `ConsoleLayout` (topbar + sidebar). Tudo lazy via `loadComponent`; `/console/callback`
- * fica fora do guard porque é o próprio destino do fluxo PKCE (ainda sem token válido).
+ * Duas árvores (guia de estilo, seção 1.1/7.1; plano, Fase 5): pública — shell
+ * `PublicLayout`, card centralizado, zero fricção — e `/console` — protegida por
+ * {@code consoleAuthGuard}, com o shell `ConsoleLayout` (topbar + sidebar). Tudo lazy via
+ * `loadComponent`; `/console/callback` fica fora do guard porque é o próprio destino do
+ * fluxo PKCE (ainda sem token válido).
  */
 export const routes: Routes = [
-  { path: 'login', loadComponent: () => import('./pages/login/components/login/login').then((m) => m.Login) },
   {
-    path: 'consent',
-    loadComponent: () => import('./pages/consent/components/consent/consent').then((m) => m.Consent),
-  },
-  {
-    path: 'esqueci-senha',
-    loadComponent: () =>
-      import('./pages/forgot-password/components/forgot-password/forgot-password').then((m) => m.ForgotPassword),
-  },
-  {
-    path: 'reset-password',
-    loadComponent: () =>
-      import('./pages/reset-password/components/reset-password/reset-password').then((m) => m.ResetPassword),
+    path: '',
+    loadComponent: () => import('./core/layout/public-layout/public-layout').then((m) => m.PublicLayout),
+    children: [
+      { path: 'login', loadComponent: () => import('./pages/login/components/login/login').then((m) => m.Login) },
+      {
+        path: 'consent',
+        loadComponent: () => import('./pages/consent/components/consent/consent').then((m) => m.Consent),
+      },
+      {
+        path: 'esqueci-senha',
+        loadComponent: () =>
+          import('./pages/forgot-password/components/forgot-password/forgot-password').then(
+            (m) => m.ForgotPassword,
+          ),
+      },
+      {
+        path: 'reset-password',
+        loadComponent: () =>
+          import('./pages/reset-password/components/reset-password/reset-password').then((m) => m.ResetPassword),
+      },
+      { path: '', redirectTo: 'login', pathMatch: 'full' },
+    ],
   },
   {
     path: 'console/callback',
@@ -95,5 +105,4 @@ export const routes: Routes = [
       },
     ],
   },
-  { path: '', redirectTo: 'login', pathMatch: 'full' },
 ];

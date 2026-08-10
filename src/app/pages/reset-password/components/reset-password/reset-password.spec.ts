@@ -44,7 +44,7 @@ describe('ResetPassword', () => {
   });
 
   it('deve marcar success ao redefinir com sucesso', () => {
-    component.newPassword = 'novaSenhaSegura123';
+    component.form.setValue({ newPassword: 'novaSenhaSegura123' });
     component.submit();
 
     const req = httpMock.expectOne((r) => r.url.endsWith('/api/auth/reset-password'));

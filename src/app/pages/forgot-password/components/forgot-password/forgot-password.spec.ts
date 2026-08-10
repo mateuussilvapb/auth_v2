@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
-import { provideHttpClientTesting, HttpTestingController } from '@angular/common/http/testing';
+import { provideHttpClientTesting, HttpTestingController, TestRequest } from '@angular/common/http/testing';
 import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
 
 import { ForgotPassword } from './forgot-password';
@@ -42,13 +42,31 @@ describe('ForgotPassword', () => {
     expect(component.clientId).toBe('CRM_ACME');
   });
 
-  it('deve marcar submitted mesmo quando a API retorna erro (evita enumeração de contas)', () => {
-    component.usernameOrEmail = 'usuario_inexistente';
-    component.submit();
+  function respondSuccess(req: TestRequest): void {
+    req.flush(null);
+  }
 
-    const req = httpMock.expectOne((r) => r.url.endsWith('/api/auth/forgot-password'));
+  function respondNotFound(req: TestRequest): void {
     req.flush('erro', { status: 404, statusText: 'Not Found' });
+  }
 
-    expect(component.submitted()).toBe(true);
-  });
+  it.each([
+    ['usuário existente', respondSuccess],
+    ['usuário inexistente', respondNotFound],
+  ])(
+    'exibe a mesma mensagem de sucesso para %s — a API não diferencia, a UI também não pode (guia 6.2)',
+    (_cenario, respond) => {
+      component.form.setValue({ usernameOrEmail: 'alguem@example.com' });
+      component.submit();
+
+      const req = httpMock.expectOne((r) => r.url.endsWith('/api/auth/forgot-password'));
+      respond(req);
+
+      expect(component.submitted()).toBe(true);
+
+      fixture.detectChanges();
+      const text = fixture.nativeElement.textContent as string;
+      expect(text).toContain('Se o e-mail estiver cadastrado, enviaremos as instruções.');
+    },
+  );
 });
