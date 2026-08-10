@@ -39,6 +39,8 @@ arquitetura hexagonal (Ports & Adapters). Todo o frontend (login, consentimento 
 administrativo) é um único projeto Angular com cliente OAuth2 PKCE — o backend não faz
 nenhuma renderização server-side (sem Thymeleaf).
 
+O frontend vive em repositório separado: `auth_frontend_v2` (sibling deste diretório).
+
 ## Como subir o ambiente de desenvolvimento
 
 ```bash

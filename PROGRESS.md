@@ -478,3 +478,17 @@ Cada fase deve estar verde nos testes antes da seguinte. Atualizado a cada item 
     "Logado como Administrador" mesmo com o access token JWT expirado — só falha de fato
     na primeira chamada de API subsequente. `ConsoleAuthService`/`consoleAuthGuard` não
     verificam `expires_at` ao exibir a página, só ao decidir se dispara `initCodeFlow()`.
+- **Frontend extraído para repositório próprio em 2026-08-10** (`java_projects/auth_frontend_v2`,
+  sibling deste repo, `.git` independente e primeiro commit sem histórico anterior). Deixa
+  de ser um monorepo backend+frontend. Motivo: nenhum registrado além de separar o ciclo de
+  vida dos dois projetos — decisão do usuário, não decorre de um problema encontrado.
+  Consequências que ainda precisam de decisão:
+  - **Fase 11 (deploy) previa um único host servindo nginx + estáticos do Angular + auth-server**
+    (seção 11 do plano). Com dois repos, o pipeline de deploy (`GitHub Actions`, item da
+    Fase 11) precisa buscar/buildar os dois — via submodule, checkout duplo na Actions, ou
+    publicando o `dist/frontend/browser` de `auth_frontend_v2` como artefato consumido pelo
+    build do backend. Não decidido; retomar ao iniciar a Fase 11.
+  - `docs/03-subir-ambiente-local.md` (seção 6) e `README.md` já atualizados para o novo
+    layout (`cd ../auth_frontend_v2` em vez de `cd frontend`). O restante das menções a
+    "frontend Angular" no plano e neste arquivo é conceitual (não referencia caminho de
+    arquivo) e continua válido sem alteração.
