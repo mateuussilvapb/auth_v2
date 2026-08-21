@@ -111,7 +111,10 @@ INSERT INTO platform_admin (id, username, email, password_hash, name, status, cr
 VALUES (
     1,                              -- qualquer BIGINT único; não precisa ser TSID de verdade
     'admin',
-    'admin@localhost',
+    'admin@promissorias.local',     -- precisa de TLD com ponto — "admin@localhost" quebra
+                                     -- Email.of() ao reconstruir o agregado do banco (o VO
+                                     -- exige `\.[A-Za-z]{2,}` após o @), e o erro só aparece
+                                     -- no login, como "Formato de email inválido" (400)
     '$2a$12$...',                  -- hash gerado no passo 4.1
     'Administrador',
     'ACTIVE',
@@ -155,12 +158,47 @@ Para testar o fluxo de login como **usuário comum** de um sistema satélite esp
 preciso primeiro cadastrar tenant/sistema/perfis/usuário — ver
 `docs/04-guia-operacional-administracao.md`.
 
+## 7. Seed de dados de desenvolvimento (script)
+
+Repetir os passos 3-6 manualmente (platform admin, tenant, system, 4 perfis, usuário de
+teste) toda vez que o volume do Postgres for resetado é lento e propenso a erro — foi
+exatamente isso que causou o incidente registrado no `PROGRESS.md` do `sistema_promissorias`
+(gate S094, 2026-08-21): o ambiente local precisou ser reconstruído do zero para validar
+login/navegação, e refazer isso à mão a cada sessão não escala.
+
+`scripts/dev-seed.js` automatiza os passos 4-6 inteiros (platform admin via SQL direto +
+login/PKCE do console + tenant + system `PROMISSORIAS` + 4 perfis + usuário de teste), via
+chamadas HTTP diretas à Admin API. **Não é commitado** (está no `.gitignore` — é dado de
+desenvolvimento local, não código do projeto). Se o arquivo não existir na sua cópia,
+peça para ele ser gerado novamente a partir desta seção + do contrato da Admin API em
+`src/main/java/.../adapter/in/web/admin/`.
+
+Pré-requisitos: Postgres do compose no ar (`docker compose up -d`), Auth Server rodando em
+`:8080` (passo 3), Node.js disponível (só usa módulos nativos — sem `npm install`).
+
+```bash
+node scripts/dev-seed.js
+```
+
+**Não é idempotente** — assume volume vazio/recém-resetado. Rodar duas vezes sem resetar o
+volume entre as rodadas falha em algum `POST` (client_id/tenant code/username já existe).
+
+Credenciais fixas que o script cria (só uso local, nunca usar em produção):
+
+| Papel | Username | Senha |
+|---|---|---|
+| Platform admin | `admin` | `DevSeed123!` |
+| Usuário de teste (`PROMISSORIAS`, perfil `ADMIN`) | `teste_promissorias` | `TesteDev123!` |
+
 ## Resumo rápido (depois da primeira vez)
 
 ```bash
 docker compose up -d
 export EMAIL_SENDER=dev@localhost
 mvn spring-boot:run
+# se o volume do Postgres foi resetado (down -v) e o platform admin/tenant/usuário de
+# teste sumiram, rodar de novo (não commitado, ver seção 7):
+node scripts/dev-seed.js
 # em outro terminal, se quiser o frontend (repo separado, auth_frontend_v2):
 cd ../auth_frontend_v2 && ng serve
 ```

@@ -42,3 +42,8 @@ build/
 .env.*
 application-local.yml
 application-local.yaml
+
+# Script de seed de dados de dev (tenant/system/perfis/usuário de teste) —
+# só local, nunca commitado (ver docs/03-subir-ambiente-local.md §7)
+scripts/dev-seed.js
+cp.txt
