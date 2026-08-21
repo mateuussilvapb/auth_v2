@@ -29,7 +29,7 @@ import java.time.Duration;
  */
 public class SystemRegisteredClientRepository implements RegisteredClientRepository {
 
-    private static final Duration ACCESS_TOKEN_TTL = Duration.ofMinutes(15);
+    private static final Duration ACCESS_TOKEN_TTL = Duration.ofMinutes(60);
     private static final Duration REFRESH_TOKEN_TTL = Duration.ofHours(8);
 
     private final SystemRepository systemRepository;

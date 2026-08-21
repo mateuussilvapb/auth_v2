@@ -95,7 +95,7 @@ class SystemRegisteredClientRepositoryTest {
 
         assertTrue(client.getClientSettings().isRequireProofKey());
         assertFalse(client.getClientSettings().isRequireAuthorizationConsent());
-        assertEquals(Duration.ofMinutes(15), client.getTokenSettings().getAccessTokenTimeToLive());
+        assertEquals(Duration.ofMinutes(60), client.getTokenSettings().getAccessTokenTimeToLive());
         assertEquals(Duration.ofHours(8), client.getTokenSettings().getRefreshTokenTimeToLive());
         assertFalse(client.getTokenSettings().isReuseRefreshTokens());
     }

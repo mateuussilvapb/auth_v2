@@ -131,6 +131,20 @@ Cada fase deve estar verde nos testes antes da seguinte. Atualizado a cada item 
 
 ## Notas
 
+- **Access token TTL aumentado de 15 min para 60 min** (`SystemRegisteredClientRepository`,
+  2026-08-21), a pedido do sistema satélite `sistema_promissorias`. Motivo: clients
+  públicos PKCE (`ClientAuthenticationMethod.NONE`) nunca recebem `refresh_token` do
+  Spring Authorization Server — é uma restrição deliberada do framework (não emite
+  refresh token para `NONE` independente de `AuthorizationGrantType.REFRESH_TOKEN`
+  estar registrado; confirmado nas issues oficiais do projeto, ex. spring-authorization-server#296),
+  não uma configuração que faltava aqui. Sem refresh token, a única forma de renovar é
+  refazer o `authorization_code` flow via redirect completo, o que recarrega a página
+  inteira do SPA consumidor a cada expiração — problemático para formulários longos.
+  Aumentar o TTL não resolve a causa raiz (só reduz a frequência do redirect); a correção
+  completa exigiria um client confidencial com BFF (recomendação oficial do Spring para
+  SPA), que é uma mudança de arquitetura maior, fora de escopo por ora. TTL continua
+  **hardcoded e global** (mesmo valor para console admin e todo sistema satélite); tornar
+  configurável (por env var ou por client) é melhoria futura, não decidida ainda.
 - **Rotas de perfil aninhadas sob `/systems/{systemId}/profiles/{id}`, não
   `/profiles/{id}` como a tabela da seção 9 sugere.** `ManageProfileUseCase` exige
   `systemId` **e** `id` em toda operação além de criar/listar (`SystemProfile` só existe
