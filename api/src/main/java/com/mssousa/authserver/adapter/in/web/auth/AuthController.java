@@ -10,6 +10,7 @@ import com.mssousa.authserver.application.port.in.ResetPasswordUseCase;
 import com.mssousa.authserver.domain.exception.DomainException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -93,6 +94,22 @@ public class AuthController {
             return LoginResponse.from(authenticatedPlatformAdmin);
         }
         return LoginResponse.from((AuthenticatedUser) principal);
+    }
+
+    /**
+     * Invalida a sessão HTTP (cookie de sessão, mesmo mecanismo do login — ver javadoc da
+     * classe). Sem isso, um client OAuth2 que limpe só os tokens localmente (ex.: o console
+     * Angular, que não usa {@code openid}/{@code id_token} e por isso não pode fazer
+     * RP-initiated logout via {@code end_session_endpoint}) reautentica silenciosamente no
+     * próximo {@code GET /oauth2/authorize}, porque a sessão continuaria válida.
+     */
+    @PostMapping("/logout")
+    public void logout(HttpServletRequest httpRequest) {
+        HttpSession session = httpRequest.getSession(false);
+        if (session != null) {
+            session.invalidate();
+        }
+        SecurityContextHolder.clearContext();
     }
 
     @PostMapping("/forgot-password")

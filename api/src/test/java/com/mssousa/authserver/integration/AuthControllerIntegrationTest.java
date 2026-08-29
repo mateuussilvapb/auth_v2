@@ -16,17 +16,22 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockHttpSession;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 
 import org.mockito.ArgumentCaptor;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -136,6 +141,48 @@ class AuthControllerIntegrationTest extends AbstractRepositoryIntegrationTest {
                         .content(correctPasswordBody))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.message").value(GENERIC_ERROR));
+    }
+
+    @Test
+    void deveInvalidarSessaoAoDeslogarImpedindoReautenticacaoSilenciosaNoAuthorize() throws Exception {
+        Tenant tenant = createAndSaveTenant("wonka");
+        System system = createAndSaveSystem("CRM_WONKA_LOGOUT");
+        systemTenantRepository.save(SystemTenant.builder()
+                .id(SystemTenantId.of(idGenerator.generate()))
+                .tenantId(tenant.getId()).systemId(system.getId()).build());
+        User user = createAndSaveUser(tenant.getId(), "charlie_bucket", "charlie@wonka.com");
+        userSystemRepository.save(UserSystem.builder()
+                .id(UserSystemId.of(idGenerator.generate()))
+                .userId(user.getId()).systemId(system.getId()).tenantId(tenant.getId()).build());
+
+        MvcResult loginResult = mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"clientId":"%s","usernameOrEmail":"charlie_bucket","password":"senhaSegura123"}
+                                """.formatted(system.getClientId().value())))
+                .andExpect(status().isOk())
+                .andReturn();
+        MockHttpSession session = (MockHttpSession) loginResult.getRequest().getSession(false);
+        assertNotNull(session, "login deveria ter criado uma sessão");
+        assertFalse(session.isInvalid());
+
+        mockMvc.perform(post("/api/auth/logout").session(session))
+                .andExpect(status().isOk());
+
+        assertTrue(session.isInvalid(), "logout deveria invalidar a sessão HTTP");
+
+        String redirectUri = system.getRedirectUris().get(0).value();
+        mockMvc.perform(get("/oauth2/authorize")
+                        .accept(MediaType.TEXT_HTML)
+                        .queryParam("response_type", "code")
+                        .queryParam("client_id", system.getClientId().value())
+                        .queryParam("redirect_uri", redirectUri)
+                        .queryParam("code_challenge", "abc123")
+                        .queryParam("code_challenge_method", "S256")
+                        .queryParam("state", "xyz")
+                        .session(session))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(header().string("Location", org.hamcrest.Matchers.startsWith("/login?")));
     }
 
     @Test
