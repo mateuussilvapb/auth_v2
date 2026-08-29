@@ -129,6 +129,49 @@ Cada fase deve estar verde nos testes antes da seguinte. Atualizado a cada item 
 
 ---
 
+## Gaps conhecidos — trabalho futuro, não planejado ainda
+
+- **Não existe hoje um admin intermediário, escopado ao próprio tenant** (só
+  `PlatformAdmin`, que vê todos os tenants, e `User`, que só autentica). Avaliado em
+  2026-08-28 a pedido do usuário. Desenho para quando este item for priorizado:
+  - **Não criar um novo agregado.** Adicionar um flag `isTenantAdmin` diretamente em
+    `User` (mesma tabela, mesmo tenant) — análogo a como `PlatformAdmin` é ortogonal a
+    tenant, mas aqui o admin **é** um usuário do tenant, só que elevado. Evita duplicar
+    autenticação/reset de senha/bloqueio por tentativas, que `User` já tem.
+  - **Não modelar como `SystemProfile`.** Um `SystemProfile` (`ADMIN`, `OPERADOR`, ...)
+    é definido pelo *sistema* (contrato de negócio de terceiro — regra herdada explicitamente
+    para os satélites, ver `CLAUDE.md` do `sistema_promissorias`: "autorização é por
+    permissão, nunca por perfil" e "o Auth Server entrega só `profiles`"). "Administrar
+    o tenant" é uma capacidade do **auth server sobre si mesmo**, não uma permissão de
+    negócio de terceiro — misturar os dois violaria o próprio princípio de design do
+    projeto (seção 2, linha 18 do plano: o auth server nunca decide "este usuário pode
+    executar esta ação", só "quem é e quais perfis tem").
+  - **JWT:** quando `user.isTenantAdmin == true`, `JwtTokenCustomizer` acrescenta a
+    autoridade `ROLE_TENANT_ADMIN` ao token do usuário (além de `profiles`), convivendo
+    com o `tenant_id` que o token de usuário já carrega.
+  - **Autorização nos controllers `/admin/api/v1/tenants/{tenantId}/...`:** trocar
+    `hasAuthority('ROLE_PLATFORM_ADMIN')` fixo por uma expressão que também aceita
+    `ROLE_TENANT_ADMIN` **desde que** `tenantId` do path bata com o `tenant_id` do token
+    — único ponto do sistema que passaria a precisar de checagem de tenant no controller
+    (hoje inexistente porque só platform admin acessa `/admin/api/**`, seção 8.1/8.2).
+    Ainda como parâmetro explícito (SpEL comparando path vs. claim), nunca `ThreadLocal`
+    — consistente com a decisão já tomada na seção 8.2 do plano.
+  - **Escopo do que o tenant admin pode fazer** (dentro do seu próprio `tenantId`):
+    - Permitido: CRUD de `User` do tenant; vínculos `UserSystem`/`UserSystemProfile`,
+      mas **só** para `System` já vinculado ao tenant (`SystemTenant` existente) e **só**
+      com códigos de `SystemProfile` já cadastrados — nunca criar/editar o catálogo de
+      perfis.
+    - Proibido: criar `Tenant`; criar/editar `System`; criar `SystemTenant` (vincular
+      sistema novo ao tenant); criar/editar `SystemProfile` (catálogo de perfis é
+      contrato do sistema, definido por quem integra o sistema, não pelo cliente do
+      tenant); gerenciar `PlatformAdmin`.
+    - Em aberto, decisão do usuário quando chegar a hora: se um tenant admin pode
+      promover outro usuário do mesmo tenant a tenant admin (self-service) ou se isso
+      fica só com platform admin (mais seguro contra escalação dentro do próprio
+      tenant, mais fricção operacional).
+  - Sem migration nova além de uma coluna booleana em `user` (default `false`). Sem
+    tabela nova.
+
 ## Notas
 
 - **Access token TTL aumentado de 15 min para 60 min** (`SystemRegisteredClientRepository`,
