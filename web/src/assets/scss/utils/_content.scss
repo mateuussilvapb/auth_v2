@@ -10,6 +10,15 @@
   @media (max-width: 991px) {
     padding: 5rem 1.5rem 1.5rem 1.5rem;
   }
+
+  // Telas sem sidebar (ex: seleção de tenant) — sem coluna reservada à esquerda.
+  &--no-sidebar {
+    padding-left: 2rem;
+
+    @media (max-width: 991px) {
+      padding-left: 1.5rem;
+    }
+  }
 }
 
 .layout-main {

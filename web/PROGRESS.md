@@ -221,6 +221,11 @@ Espelha os checklists de `docs/PLANO-MODERNIZACAO.md`, fase por fase. Ver també
         sidebar**: não têm rota independente de um sistema/usuário/tela específicos ainda —
         entram junto da migração dos respectivos CRUDs (próximos itens desta fase).
       - 143 testes (34 novos/atualizados nesta rodada) cobrindo os itens acima.
+      - Sidebar oculta na tela `/console/selecionar-tenant` (pedido explícito do usuário,
+        2026-08-29): sem tenant selecionado nenhum item do menu tem contexto pra navegar.
+        `ConsoleLayout` lê `route.data['hideSidebar']` (mesmo padrão do `isCriticalScreen` do
+        `Topbar`) e alterna `<app-sidebar>` e a classe `.layout-main-container--no-sidebar`
+        (remove o `padding-left` reservado à sidebar). 2 testes novos.
 - [ ] Dashboard útil + corrigir bug de sessão expirada.
 - [ ] CRUDs com `p-table` + `FormBase`, paginação server-side, `StatusTag`, confirmação:
   - [ ] Tenants

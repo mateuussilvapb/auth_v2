@@ -59,6 +59,9 @@ export const routes: Routes = [
         // Fora do tenantContextGuard: é o próprio destino do guard quando não há tenant
         // selecionado (decisão de produto 2026-08-29) — aplicá-lo aqui criaria loop.
         path: 'selecionar-tenant',
+        // Sem tenant selecionado ainda não há contexto pra nenhum item do menu navegar
+        // (decisão de produto 2026-08-29) — o ConsoleLayout lê esse data para ocultar a sidebar.
+        data: { hideSidebar: true },
         loadComponent: () =>
           import('./pages/console/tenant-selection/components/tenant-selection/tenant-selection').then(
             (m) => m.TenantSelection,

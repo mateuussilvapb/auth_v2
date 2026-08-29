@@ -2,8 +2,10 @@
 <app-confirm-dialog />
 <app-loading-overlay />
 <app-topbar />
-<app-sidebar />
-<div class="layout-main-container">
+@if (showSidebar()) {
+  <app-sidebar />
+}
+<div class="layout-main-container" [class.layout-main-container--no-sidebar]="!showSidebar()">
   <div class="layout-main">
     <router-outlet></router-outlet>
   </div>
