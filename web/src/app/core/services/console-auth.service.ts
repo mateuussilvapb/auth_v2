@@ -1,7 +1,9 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { AuthConfig, OAuthService } from 'angular-oauth2-oidc';
+import { firstValueFrom } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
+import { AuthApiService } from './auth-api.service';
 
 /**
  * Cliente OAuth2 PKCE do console administrativo Angular (seção 2.2/D6 do plano, Fase 9) —
@@ -18,6 +20,7 @@ import { environment } from '../../../environments/environment';
 @Injectable({ providedIn: 'root' })
 export class ConsoleAuthService {
   private configured = false;
+  private readonly authApi = inject(AuthApiService);
 
   constructor(private readonly oauthService: OAuthService) {}
 
@@ -69,12 +72,21 @@ export class ConsoleAuthService {
     return this.oauthService.hasValidAccessToken();
   }
 
-  logout(): void {
-    // Logout local apenas (`true` = noRedirectToLogoutUrl): o client não usa "openid" no
-    // scope (comentário acima), então nunca há id_token. O `end_session_endpoint` do backend
-    // (RP-initiated logout) exige `id_token_hint` e responde 400 sem ele — redirecionar para
-    // lá quebraria o logout. Limpar os tokens localmente é suficiente; quem chama este método
-    // é responsável por navegar de volta a uma rota protegida para disparar novo login.
+  async logout(): Promise<void> {
+    // Sem isso, a sessão HTTP do backend continuaria válida e o próximo
+    // GET /oauth2/authorize reautenticaria silenciosamente (bug real, encontrado em
+    // 2026-08-29) — limpar só os tokens OAuth locais não desloga de verdade. Best-effort:
+    // segue limpando os tokens locais mesmo se a chamada falhar (rede fora, por exemplo).
+    try {
+      await firstValueFrom(this.authApi.logout());
+    } catch {
+      // Segue para limpar o estado local de qualquer forma — ver comentário acima.
+    }
+
+    // Logout local (`true` = noRedirectToLogoutUrl): o client não usa "openid" no scope
+    // (comentário da config acima), então nunca há id_token. O `end_session_endpoint` do
+    // backend (RP-initiated logout) exige `id_token_hint` e responde 400 sem ele —
+    // redirecionar para lá quebraria o logout.
     this.oauthService.logOut(true);
   }
 

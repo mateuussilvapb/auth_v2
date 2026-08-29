@@ -51,7 +51,7 @@ describe('Topbar', () => {
     fixture = TestBed.createComponent(Topbar);
     fixture.detectChanges();
 
-    fixture.componentInstance.logout();
+    await fixture.componentInstance.logout();
 
     expect(tenantContextStub.clear).toHaveBeenCalled();
     expect(consoleAuthStub.logout).toHaveBeenCalled();

@@ -307,6 +307,30 @@ Espelha os checklists de `docs/PLANO-MODERNIZACAO.md`, fase por fase. Ver també
   `Topbar.logout()` força `window.location.href = '/console'` depois, porque
   `router.navigate` não reavalia guards numa navegação para a mesma URL — sem isso o usuário
   ficaria "deslogado" mas ainda vendo a tela protegida até a próxima navegação manual.
+- **Causa raiz real do "Sair" corrigida (a correção acima só tratou o sintoma).** Mesmo com o
+  fix acima, o usuário relatou continuar caindo em `/console/selecionar-tenant` após clicar em
+  Sair. Motivo: limpar só os tokens OAuth no `localStorage` nunca invalidava a **sessão HTTP**
+  do backend (cookie `JSESSIONID`) — o backend não tinha nenhum `.logout(...)` configurado em
+  nenhum `SecurityFilterChain` (`SecurityConfig.java`, confirmado por busca — zero ocorrências
+  de "logout"). Com a sessão ainda viva, o próximo `GET /oauth2/authorize` reautenticava
+  **silenciosamente** (via `HttpSessionSecurityContextRepository`) e devolvia um novo
+  `authorization_code` sem pedir login — o usuário via o Sair "não fazer nada" porque era
+  deslogado e relogado no mesmo round-trip. Corrigido em duas pontas:
+  - Backend (`api/`): novo `POST /api/auth/logout` (`AuthController.java`) que invalida a
+    `HttpSession` via `session.invalidate()`. Teste de integração
+    (`AuthControllerIntegrationTest.deveInvalidarSessaoAoDeslogarImpedindoReautenticacaoSilenciosaNoAuthorize`)
+    reproduz o cenário completo: login → logout → `GET /oauth2/authorize` com a mesma sessão
+    agora redireciona para `/login` em vez de reautenticar. 499/499 testes do backend verdes.
+  - Frontend: `AuthApiService.logout()` chama o endpoint novo (`withCredentials: true`, mesmo
+    padrão dos outros métodos da classe); `ConsoleAuthService.logout()` aguarda essa chamada
+    (best-effort — segue limpando os tokens locais mesmo se a chamada falhar, ex. rede fora)
+    antes de `oauthService.logOut(true)`. `Topbar.logout()` agora é assíncrono e só recarrega
+    a página depois que o backend confirma.
+  - **Armadilha**: ao escrever o teste de `ConsoleAuthService.logout()`, sobrescrevi sem
+    querer um spec já existente (`console-auth.service.spec.ts` já tinha 3 testes cobrindo
+    `login()`/discovery/`isAuthenticated()`/`getAccessToken()`) em vez de editá-lo — perdi
+    cobertura por um instante (143→142 testes) até notar a divergência e mesclar os dois
+    conjuntos de testes no mesmo arquivo. 145/145 testes do frontend verdes no final.
 - **2026-08-29, smoke test do item "Shell (topbar + sidebar)" interrompido**: login com
   `admin`/`TrocarEssaSenha123` (credenciais registradas acima) retornou "Invalid credentials"
   no ambiente local atual — o volume do Postgres provavelmente foi recriado desde o seed

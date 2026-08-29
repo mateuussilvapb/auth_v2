@@ -1,8 +1,10 @@
 import { TestBed } from '@angular/core/testing';
 import { OAuthService } from 'angular-oauth2-oidc';
+import { of, throwError } from 'rxjs';
 import type { Mock } from 'vitest';
 
 import { ConsoleAuthService } from './console-auth.service';
+import { AuthApiService } from './auth-api.service';
 
 describe('ConsoleAuthService', () => {
   let service: ConsoleAuthService;
@@ -16,6 +18,7 @@ describe('ConsoleAuthService', () => {
     getAccessToken: Mock;
     discoveryDocumentLoaded: boolean;
   };
+  let authApiStub: { logout: Mock };
 
   beforeEach(() => {
     oauthServiceStub = {
@@ -28,9 +31,13 @@ describe('ConsoleAuthService', () => {
       getAccessToken: vi.fn().mockReturnValue('token'),
       discoveryDocumentLoaded: false,
     };
+    authApiStub = { logout: vi.fn().mockReturnValue(of(undefined)) };
 
     TestBed.configureTestingModule({
-      providers: [{ provide: OAuthService, useValue: oauthServiceStub }],
+      providers: [
+        { provide: OAuthService, useValue: oauthServiceStub },
+        { provide: AuthApiService, useValue: authApiStub },
+      ],
     });
 
     service = TestBed.inject(ConsoleAuthService);
@@ -49,13 +56,26 @@ describe('ConsoleAuthService', () => {
     expect(oauthServiceStub.loadDiscoveryDocument).toHaveBeenCalled();
   });
 
-  it('deve delegar isAuthenticated/logout/getAccessToken ao OAuthService', () => {
-    service.logout();
+  it('deve delegar isAuthenticated/getAccessToken ao OAuthService', () => {
     service.getAccessToken();
     service.isAuthenticated();
 
-    expect(oauthServiceStub.logOut).toHaveBeenCalled();
     expect(oauthServiceStub.getAccessToken).toHaveBeenCalled();
     expect(oauthServiceStub.hasValidAccessToken).toHaveBeenCalled();
+  });
+
+  it('logout invalida a sessão no backend e limpa os tokens locais sem redirecionar ao end_session_endpoint', async () => {
+    await service.logout();
+
+    expect(authApiStub.logout).toHaveBeenCalled();
+    expect(oauthServiceStub.logOut).toHaveBeenCalledWith(true);
+  });
+
+  it('logout limpa os tokens locais mesmo se a chamada ao backend falhar', async () => {
+    authApiStub.logout.mockReturnValue(throwError(() => new Error('rede fora')));
+
+    await service.logout();
+
+    expect(oauthServiceStub.logOut).toHaveBeenCalledWith(true);
   });
 });

@@ -78,9 +78,12 @@ export class Topbar {
     this.router.navigate(['/console/selecionar-tenant']);
   }
 
-  logout(): void {
+  async logout(): Promise<void> {
     this.tenantContext.clear();
-    this.consoleAuth.logout();
+    // Aguarda a invalidação da sessão no backend antes de recarregar — sem esperar, o
+    // próximo GET /oauth2/authorize poderia correr antes do POST /api/auth/logout terminar
+    // e reautenticar silenciosamente com a sessão ainda viva.
+    await this.consoleAuth.logout();
     // Navegação de página inteira (não `router.navigate`) — o app já está em `/console`, e o
     // router não reavalia guards numa navegação para a mesma URL. Recarregar do zero também
     // garante que nenhum estado de componente em memória sobreviva ao logout.

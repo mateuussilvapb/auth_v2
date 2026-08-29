@@ -46,4 +46,13 @@ export class AuthApiService {
   consent(request: ConsentRequest): Observable<void> {
     return this.http.post<void>(`${this.baseUrl}/consent`, request, { withCredentials: true });
   }
+
+  /**
+   * Invalida a sessão HTTP no backend — sem isso, limpar só os tokens OAuth localmente
+   * (client sem `openid`/`id_token`, seção 7.2) deixa a sessão viva, e o próximo
+   * `GET /oauth2/authorize` reautentica silenciosamente sem pedir login.
+   */
+  logout(): Observable<void> {
+    return this.http.post<void>(`${this.baseUrl}/logout`, {}, { withCredentials: true });
+  }
 }
