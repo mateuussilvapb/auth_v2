@@ -1,36 +1,76 @@
-<div class="console-page">
-  <h1>Sistemas</h1>
-  <a [routerLink]="['/console/tenants', tenantId, 'systems', 'novo']">Novo sistema</a>
-
+<app-layout-base-pages title="Sistemas" buttonActionLabel="Novo sistema" (actionButtonClick)="goToCreate()">
   @if (errorMessage()) {
-    <p class="error" role="alert">{{ errorMessage() }}</p>
-  }
-
-  @if (loading()) {
-    <p>Carregando...</p>
+    <div class="flex flex-column align-items-start gap-3 p-4 border-1 surface-border border-round">
+      <span class="text-body" role="alert">{{ errorMessage() }}</span>
+      <p-button label="Tentar novamente" severity="secondary" (onClick)="load(page())" />
+    </div>
   } @else {
-    @for (system of systems(); track system.id) {
-      <div class="system-card">
-        <h2>{{ system.name }} ({{ system.clientId }})</h2>
-        <p>
-          Status: {{ system.status }} · {{ system.publicClient ? 'Público' : 'Confidencial' }}
-          @if (system.thirdParty) {
-            · Terceiro (exige consentimento)
-          }
-        </p>
-        <p>Redirect URIs:</p>
-        <ul>
-          @for (uri of system.redirectUris; track uri) {
-            <li>{{ uri }}</li>
-          }
-        </ul>
-        <input type="text" [(ngModel)]="newRedirectUri[system.id]" placeholder="https://..." name="uri-{{ system.id }}" />
-        <button type="button" (click)="addRedirectUri(system)">Adicionar redirect URI</button>
-        <button type="button" (click)="toggleStatus(system)">
-          {{ system.status === 'ACTIVE' ? 'Desativar' : 'Ativar' }}
-        </button>
-        <a [routerLink]="['/console/systems', system.id, 'profiles']">Perfis</a>
-      </div>
-    }
+    <p-table
+      [value]="systems()"
+      [lazy]="true"
+      [paginator]="true"
+      [rows]="pageSize"
+      [totalRecords]="totalRecords()"
+      [loading]="loading()"
+      (onPage)="onPage($event)"
+      dataKey="id"
+    >
+      <ng-template #header>
+        <tr>
+          <th scope="col">Client ID</th>
+          <th scope="col">Nome</th>
+          <th scope="col">Tipo</th>
+          <th scope="col">Status</th>
+          <th scope="col"></th>
+        </tr>
+      </ng-template>
+      <ng-template #body let-system>
+        <tr>
+          <td class="font-mono">{{ system.clientId }}</td>
+          <td>{{ system.name }}</td>
+          <td>
+            {{ system.publicClient ? 'Público' : 'Confidencial' }}
+            @if (system.thirdParty) {
+              · Terceiro
+            }
+          </td>
+          <td><app-status-tag [status]="system.status" /></td>
+          <td>
+            <div class="flex gap-2 justify-content-end flex-wrap">
+              <p-button label="Editar" size="small" [text]="true" (onClick)="edit(system)" />
+              <p-button label="Perfis" size="small" [text]="true" (onClick)="goToProfiles(system)" />
+              <p-button
+                [label]="system.status === 'ACTIVE' ? 'Desativar' : 'Ativar'"
+                size="small"
+                [text]="true"
+                [severity]="system.status === 'ACTIVE' ? 'danger' : 'secondary'"
+                (onClick)="toggleStatus(system)"
+              />
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+      <ng-template #loadingbody>
+        @for (row of skeletonRows; track row) {
+          <tr>
+            <td><p-skeleton width="8rem" /></td>
+            <td><p-skeleton width="10rem" /></td>
+            <td><p-skeleton width="6rem" /></td>
+            <td><p-skeleton width="5rem" /></td>
+            <td><p-skeleton width="10rem" /></td>
+          </tr>
+        }
+      </ng-template>
+      <ng-template #emptymessage>
+        <tr>
+          <td colspan="5">
+            <div class="flex flex-column align-items-center gap-3 py-5">
+              <span class="text-body text-color-secondary">Nenhum sistema cadastrado para este tenant.</span>
+              <p-button label="Criar o primeiro" severity="primary" (onClick)="goToCreate()" />
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
   }
-</div>
+</app-layout-base-pages>

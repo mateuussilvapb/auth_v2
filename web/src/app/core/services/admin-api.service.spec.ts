@@ -83,6 +83,41 @@ describe('AdminApiService', () => {
     });
   });
 
+  it('deve remover redirect URI de um sistema existente via query param', () => {
+    service.removeRedirectUri('1', 'https://crm.acme.com/dev-callback').subscribe();
+
+    const req = httpMock.expectOne(
+      (r) => r.url.endsWith('/admin/api/v1/systems/1/redirect-uris') && r.method === 'DELETE',
+    );
+    expect(req.request.params.get('uri')).toBe('https://crm.acme.com/dev-callback');
+    req.flush({
+      id: '1',
+      clientId: 'CRM_ACME',
+      name: 'CRM',
+      status: 'ACTIVE',
+      publicClient: true,
+      redirectUris: ['https://crm.acme.com/callback'],
+      thirdParty: false,
+    });
+  });
+
+  it('deve rotacionar o secret de um sistema', () => {
+    service.rotateSecret('1', { newSecret: 'novo-secret-forte' }).subscribe();
+
+    const req = httpMock.expectOne((r) => r.url.endsWith('/admin/api/v1/systems/1/rotate-secret'));
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({ newSecret: 'novo-secret-forte' });
+    req.flush({
+      id: '1',
+      clientId: 'CRM_ACME',
+      name: 'CRM',
+      status: 'ACTIVE',
+      publicClient: false,
+      redirectUris: ['https://crm.acme.com/callback'],
+      thirdParty: false,
+    });
+  });
+
   it('deve listar perfis de um sistema sem paginação', () => {
     service.listProfiles('1').subscribe();
 

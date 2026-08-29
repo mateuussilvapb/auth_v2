@@ -290,7 +290,47 @@ Espelha os checklists de `docs/PLANO-MODERNIZACAO.md`, fase por fase. Ver també
         ideal seria essa janela de ~10 min não existir. Não mexi no `clockSkewInSec` porque
         afeta `consoleAuthGuard` e todo o app, não só esta tela — decisão de produto fora do
         escopo deste item.
-  - [ ] Sistemas (redirect URIs, rotação de secret com `CopyField`)
+  - [x] Sistemas (redirect URIs, rotação de secret com `CopyField`). `SystemList` (mesmo
+        padrão de `TenantList`: `p-table` lazy, paginação server-side, `StatusTag`, três
+        estados). `SystemForm` cobre criação (rota, `/console/tenants/:tenantId/systems/novo`)
+        **e** edição (diálogo, aberto por `SystemList.edit()` via `DialogService.open(...)`
+        passando `dialogData.valoresIniciais`).
+        **Decisão de arquitetura — edição por diálogo, não por rota**: a admin-api **não tem**
+        `GET /admin/api/v1/systems/{id}`, só `GET .../tenants/{tenantId}/systems` (lista) —
+        confirmado lendo `SystemController.java`. Existe até `ManageSystemUseCase.getSystem`
+        no backend, só não está exposto no controller. Como `SystemList` já tem o
+        `SystemResponse` completo em memória ao clicar "Editar", abrir como diálogo
+        (`FormBase` já suporta esse modo desde a Fase 5) evita depender de um endpoint que não
+        existe, sem tocar no backend. Só `name` é editável depois da criação
+        (`UpdateSystemRequest` do backend só aceita isso) — `clientId`/`publicClient`/
+        `thirdParty` ficam desabilitados (visíveis, guia 5.2) no diálogo.
+        **`clientSecret` nunca digitado pelo admin** (guia 5.5): novo util
+        `core/util/secret.ts#generateClientSecret()` gera 32 bytes aleatórios
+        (`crypto.getRandomValues`) client-side, tanto na criação (client confidencial) quanto
+        na rotação — exibido uma única vez via `CopyField` com o aviso "Guarde-o agora",
+        nunca persistido em storage. `AdminApiService` ganhou `rotateSecret`/
+        `removeRedirectUri` (só existia `addRedirectUri`). Remover redirect URI e rotacionar
+        secret pedem confirmação (guia 5.1 lista "rotacionar secret" como ação destrutiva).
+        27 testes novos (`SystemList`, `SystemForm`, `generateClientSecret`,
+        `AdminApiService`). `npm run build` e `npm test` verdes (165/165).
+        Smoke test manual: criação de sistema confidencial com secret gerado e exibido
+        (`CopyField`, botão copiar funcional — confirmado via toast "Valor copiado", embora o
+        ícone `pi-copy` não renderize visualmente, bug cosmético pré-existente do `CopyField`
+        da Fase 5, fora do escopo deste item), listagem com `Tipo`/`Status` corretos, diálogo
+        de edição abrindo com campos certos desabilitados, confirmação de rotação de secret e
+        de remoção de redirect URI nomeando o sistema/valor certos.
+        **Bug real encontrado no backend, fora do escopo desta skill**: **todo** `save()` em
+        um `System` **já existente** falha com 500 genérico — reproduzido com `updateSystem`
+        (só o nome), `addRedirectUri`, `rotateSecret` e `updateSystemStatus`, todos via
+        `curl`/`fetch` direto (não é bug do frontend). Só a criação inicial
+        (`createSystem`, primeiro insert) funciona. Suspeita, sem confirmar: `SystemEntity`
+        (`api/.../adapter/out/persistence/entity/SystemEntity.java`) mapeia `redirectUris`
+        como `@OneToMany(cascade = ALL, orphanRemoval = true)` — padrão clássico de
+        `TransientPropertyValueException`/violação de constraint no Hibernate quando o mapper
+        substitui a coleção inteira em vez de mutar in-place num update. Tenants (mesma
+        sessão, item anterior) não tem esse problema — o bug parece específico de `System`.
+        Vale abrir como item no `PROGRESS.md`/backlog do backend; não investiguei mais fundo
+        nem tentei corrigir (fora do escopo desta skill, que é só frontend).
   - [ ] Perfis
   - [ ] Usuários (reset de senha administrativo)
   - [ ] Vínculos

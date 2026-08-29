@@ -63,6 +63,10 @@ export interface RedirectUriRequest {
   uri: string;
 }
 
+export interface RotateSecretRequest {
+  newSecret: string;
+}
+
 export interface SystemProfileResponse {
   id: string;
   systemId: string;

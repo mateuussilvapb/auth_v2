@@ -1,44 +1,122 @@
-<div class="console-page">
-  <h1>Novo sistema</h1>
+<div class="flex flex-column gap-4" style="max-width: 560px">
+  @if (!isEditMode()) {
+    <h1 class="text-h1 m-0">Novo sistema</h1>
+  }
 
-  <form (ngSubmit)="submit()" #systemForm="ngForm">
-    <label for="clientId">Client ID</label>
-    <input id="clientId" name="clientId" type="text" [(ngModel)]="clientId" required />
+  <form [formGroup]="form" (ngSubmit)="submit()" class="flex flex-column gap-3">
+    <app-form-label for="clientId" label="Client ID" [control]="form.controls['clientId']">
+      <input id="clientId" type="text" pInputText formControlName="clientId" class="w-full font-mono" />
+    </app-form-label>
 
-    <label for="name">Nome</label>
-    <input id="name" name="name" type="text" [(ngModel)]="name" required />
+    <app-form-label for="name" label="Nome" [control]="form.controls['name']">
+      <input id="name" type="text" pInputText formControlName="name" class="w-full" />
+    </app-form-label>
 
-    <label>
-      <input type="checkbox" name="publicClient" [(ngModel)]="publicClient" />
-      Client público (PKCE, sem secret)
-    </label>
+    <div class="flex align-items-center gap-2">
+      <p-checkbox
+        inputId="publicClient"
+        formControlName="publicClient"
+        [binary]="true"
+        (onChange)="onPublicClientChange()"
+      />
+      <label for="publicClient">Client público (PKCE, sem secret)</label>
+    </div>
 
-    @if (!publicClient) {
-      <label for="clientSecret">Client secret</label>
-      <input id="clientSecret" name="clientSecret" type="text" [(ngModel)]="clientSecret" required />
-    }
+    <div class="flex align-items-center gap-2">
+      <p-checkbox inputId="thirdParty" formControlName="thirdParty" [binary]="true" />
+      <label for="thirdParty">Cliente de terceiro (exige tela de consentimento)</label>
+    </div>
 
-    <label>
-      <input type="checkbox" name="thirdParty" [(ngModel)]="thirdParty" />
-      Cliente de terceiro (exige tela de consentimento)
-    </label>
-
-    <p>Redirect URIs</p>
-    @for (uri of redirectUris; track $index) {
-      <div>
-        <input type="text" [(ngModel)]="redirectUris[$index]" name="uri-{{ $index }}" placeholder="https://..." required />
-        <button type="button" (click)="removeRedirectUriField($index)" [disabled]="redirectUris.length === 1">Remover</button>
+    @if (!isEditMode() && !form.controls['publicClient'].value && generatedSecret(); as secret) {
+      <div class="flex flex-column gap-2 p-3 border-round surface-100">
+        <span class="text-small text-color-secondary">
+          Este é o único momento em que o secret é exibido. Guarde-o agora.
+        </span>
+        <app-copy-field [value]="secret" label="Client secret" />
       </div>
     }
-    <button type="button" (click)="addRedirectUriField()">Adicionar redirect URI</button>
 
-    @if (errorMessage()) {
-      <p class="error" role="alert">{{ errorMessage() }}</p>
+    @if (!isEditMode()) {
+      <div class="flex flex-column gap-2">
+        <span class="text-h3">Redirect URIs</span>
+        @for (uri of redirectUris(); track $index) {
+          <div class="flex gap-2">
+            <input
+              type="text"
+              pInputText
+              class="w-full"
+              [value]="uri"
+              (input)="updateRedirectUriField($index, $any($event.target).value)"
+              placeholder="https://..."
+            />
+            <p-button
+              type="button"
+              icon="pi pi-trash"
+              severity="secondary"
+              [text]="true"
+              [disabled]="redirectUris().length === 1"
+              (onClick)="removeRedirectUriField($index)"
+            />
+          </div>
+        }
+        <p-button
+          type="button"
+          label="Adicionar redirect URI"
+          severity="secondary"
+          [outlined]="true"
+          (onClick)="addRedirectUriField()"
+        />
+      </div>
     }
 
-    <button type="submit" [disabled]="systemForm.invalid || submitting()">
-      {{ submitting() ? 'Salvando...' : 'Salvar' }}
-    </button>
-    <a [routerLink]="['/console/tenants', tenantId, 'systems']">Cancelar</a>
+    <div class="flex gap-2 mt-2">
+      <p-button
+        type="submit"
+        label="Salvar"
+        severity="primary"
+        [disabled]="form.invalid || submitting()"
+        [loading]="submitting()"
+      />
+      <p-button type="button" label="Cancelar" severity="secondary" [outlined]="true" (onClick)="cancel()" />
+    </div>
   </form>
+
+  @if (isEditMode()) {
+    <div class="flex flex-column gap-3 pt-3 border-top-1 surface-border">
+      <span class="text-h3">Redirect URIs</span>
+      @for (uri of redirectUris(); track uri) {
+        <div class="flex align-items-center justify-content-between gap-2">
+          <span class="font-mono text-small">{{ uri }}</span>
+          <p-button icon="pi pi-trash" severity="danger" [text]="true" size="small" (onClick)="removeRedirectUri(uri)" />
+        </div>
+      }
+      <div class="flex gap-2">
+        <input
+          type="text"
+          pInputText
+          class="w-full"
+          [value]="newRedirectUri()"
+          (input)="newRedirectUri.set($any($event.target).value)"
+          placeholder="https://..."
+        />
+        <p-button label="Adicionar" severity="secondary" (onClick)="addRedirectUri()" />
+      </div>
+
+      @if (!form.controls['publicClient'].value) {
+        <div class="flex flex-column gap-2 pt-2">
+          <span class="text-h3">Secret</span>
+          @if (rotatedSecret(); as secret) {
+            <div class="flex flex-column gap-2 p-3 border-round surface-100">
+              <span class="text-small text-color-secondary">
+                Este é o único momento em que o secret é exibido. Guarde-o agora.
+              </span>
+              <app-copy-field [value]="secret" label="Novo client secret" />
+            </div>
+          } @else {
+            <p-button label="Rotacionar secret" severity="danger" [outlined]="true" (onClick)="rotateSecret()" />
+          }
+        </div>
+      }
+    </div>
+  }
 </div>

@@ -13,6 +13,7 @@ import {
   CreateUserRequest,
   Page,
   RedirectUriRequest,
+  RotateSecretRequest,
   SystemProfileResponse,
   SystemResponse,
   TenantResponse,
@@ -100,6 +101,19 @@ export class AdminApiService {
 
   addRedirectUri(id: string, request: RedirectUriRequest): Observable<SystemResponse> {
     return this.http.post<SystemResponse>(`${this.baseUrl}/systems/${id}/redirect-uris`, request, {
+      headers: this.authHeaders(),
+    });
+  }
+
+  removeRedirectUri(id: string, uri: string): Observable<SystemResponse> {
+    return this.http.delete<SystemResponse>(`${this.baseUrl}/systems/${id}/redirect-uris`, {
+      headers: this.authHeaders(),
+      params: { uri },
+    });
+  }
+
+  rotateSecret(id: string, request: RotateSecretRequest): Observable<SystemResponse> {
+    return this.http.post<SystemResponse>(`${this.baseUrl}/systems/${id}/rotate-secret`, request, {
       headers: this.authHeaders(),
     });
   }

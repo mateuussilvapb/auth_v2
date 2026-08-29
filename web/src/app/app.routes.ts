@@ -95,7 +95,7 @@ export const routes: Routes = [
       {
         path: 'tenants/:tenantId/systems/novo',
         canActivate: [tenantContextGuard],
-        data: { critical: true },
+        data: { critical: true, formMode: 'cadastro' },
         loadComponent: () =>
           import('./pages/console/systems/components/system-form/system-form').then((m) => m.SystemForm),
       },
