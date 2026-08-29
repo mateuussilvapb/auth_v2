@@ -227,7 +227,35 @@ Espelha os checklists de `docs/PLANO-MODERNIZACAO.md`, fase por fase. Ver també
         `ConsoleLayout` lê `route.data['hideSidebar']` (mesmo padrão do `isCriticalScreen` do
         `Topbar`) e alterna `<app-sidebar>` e a classe `.layout-main-container--no-sidebar`
         (remove o `padding-left` reservado à sidebar). 2 testes novos.
-- [ ] Dashboard útil + corrigir bug de sessão expirada.
+- [x] Dashboard útil + corrigir bug de sessão expirada. Substituído o placeholder de claims
+      cruas por três contadores (tenants totais, sistemas e usuários do tenant selecionado —
+      `Page.totalElements` de uma página `size=1`, cada contador com seu próprio estado de
+      erro independente) e atalhos para `/console/tenants`, `.../systems` e `.../users` do
+      tenant corrente. Bug de sessão expirada (guia 6.5, `api/PROGRESS.md` 2026-08-29)
+      corrigido: `ConsoleDashboard` deriva o estado de autenticação de
+      `ConsoleAuthService.isAuthenticated()` (que internamente compara `expires_at`), checado
+      ao entrar na tela e reavaliado a cada 30s via `setInterval` (não é hack de change
+      detection — grava em signal, que o zoneless já reage sozinho) enquanto o admin fica
+      parado nela sem navegar. Sessão expirada → tela dedicada ("Sessão expirada" + botão
+      "Entrar novamente" que chama `consoleAuth.login()`) em vez de continuar mostrando
+      "Logado como X" com claims obsoletas. 3 testes novos (autenticado com contagens, sessão
+      expirada em vez de claims, erro isolado por contador). `npm run build` e `npm test`
+      verdes (147/147).
+      **Nota de comportamento**: `angular-oauth2-oidc` tem `clockSkewInSec` default de 600s
+      (10 min) — `hasValidAccessToken()` só retorna `false` uns 10 minutos depois do
+      `expires_at` real, não no instante exato da expiração. Confirmado manualmente no
+      navegador (`sessionStorage.expires_at` forçado para o passado): com token expirado há 1
+      minuto o dashboard ainda se considerava autenticado; só com expiração de ~20 minutos a
+      tela de sessão expirada apareceu. Esse skew já valia antes desta rodada para o
+      `consoleAuthGuard` (mesmo método) — não é regressão, mas vale saber que "sessão
+      expirada" na prática significa "expirada há mais de ~10 minutos", não "expirada agora".
+      Smoke test manual completo: dashboard com contagens reais (1 tenant, 0
+      sistemas/usuários) → atalho "Sistemas" navegou para
+      `/console/tenants/<id>/systems` corretamente → sessão expirada simulada via
+      `sessionStorage` mostrou a tela dedicada sem navegação → "Entrar novamente" disparou
+      `initCodeFlow` de verdade (sessão HTTP do backend ainda viva, reautenticou e voltou
+      para `/console/selecionar-tenant`, já que `ConsoleCallback` limpa o contexto de tenant
+      em todo login, comportamento existente).
 - [ ] CRUDs com `p-table` + `FormBase`, paginação server-side, `StatusTag`, confirmação:
   - [ ] Tenants
   - [ ] Sistemas (redirect URIs, rotação de secret com `CopyField`)

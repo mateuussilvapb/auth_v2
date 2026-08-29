@@ -1,8 +1,53 @@
-<div class="console-page">
-  <h1>Console administrativo</h1>
-  <p>Logado como <strong>{{ name() ?? username() }}</strong> ({{ username() }}).</p>
-  <nav>
-    <a [routerLink]="['/console/tenants']">Tenants</a>
-  </nav>
-  <button type="button" (click)="logout()">Sair</button>
-</div>
+@if (sessionExpired()) {
+  <div class="flex flex-column align-items-start gap-3">
+    <h1 class="text-h1 m-0">Sessão expirada</h1>
+    <p class="text-body text-color-secondary m-0">Sua sessão expirou. Entre novamente para continuar.</p>
+    <p-button label="Entrar novamente" severity="primary" (onClick)="reauthenticate()" />
+  </div>
+} @else {
+  <app-layout-base-pages
+    title="Console administrativo"
+    [subtitle]="'Logado como ' + (name() ?? username()) + ' (' + username() + ')'"
+  >
+    <div class="grid">
+      <div class="col-12 md:col-4">
+        <div class="border-1 surface-border border-round p-3 flex flex-column gap-1">
+          <span class="text-small text-color-secondary">Tenants</span>
+          @if (tenantsError()) {
+            <span class="text-body" role="alert">Não foi possível carregar.</span>
+          } @else {
+            <span class="text-display">{{ tenantsTotal() ?? '—' }}</span>
+          }
+        </div>
+      </div>
+      <div class="col-12 md:col-4">
+        <div class="border-1 surface-border border-round p-3 flex flex-column gap-1">
+          <span class="text-small text-color-secondary">Sistemas neste tenant</span>
+          @if (systemsError()) {
+            <span class="text-body" role="alert">Não foi possível carregar.</span>
+          } @else {
+            <span class="text-display">{{ systemsTotal() ?? '—' }}</span>
+          }
+        </div>
+      </div>
+      <div class="col-12 md:col-4">
+        <div class="border-1 surface-border border-round p-3 flex flex-column gap-1">
+          <span class="text-small text-color-secondary">Usuários neste tenant</span>
+          @if (usersError()) {
+            <span class="text-body" role="alert">Não foi possível carregar.</span>
+          } @else {
+            <span class="text-display">{{ usersTotal() ?? '—' }}</span>
+          }
+        </div>
+      </div>
+    </div>
+
+    @if (selectedTenant(); as tenant) {
+      <div class="flex flex-wrap gap-2 mt-4">
+        <p-button label="Tenants" severity="secondary" (onClick)="goToTenants()" />
+        <p-button label="Sistemas" severity="secondary" (onClick)="goToSystems(tenant.id)" />
+        <p-button label="Usuários" severity="secondary" (onClick)="goToUsers(tenant.id)" />
+      </div>
+    }
+  </app-layout-base-pages>
+}
