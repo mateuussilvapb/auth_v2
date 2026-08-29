@@ -189,9 +189,10 @@ Espelha os checklists de `docs/PLANO-MODERNIZACAO.md`, fase por fase. Ver també
 
 ## Fase 7 — Console
 
-- [ ] Shell (topbar + sidebar). **Implementado, aguardando confirmação manual** (ver nota
-      abaixo — smoke test no navegador foi interrompido por credencial inválida no ambiente
-      local, não por um problema no código; `npm run build` e `npm test` estão verdes).
+- [x] Shell (topbar + sidebar). Smoke test manual confirmado em 2026-08-29 (ver nota abaixo)
+      — login como platform admin, seleção de tenant obrigatória, sidebar reagindo ao tenant
+      selecionado, troca de tenant pelo header e logout, tudo funcionando no navegador real
+      contra o backend local. `npm run build` e `npm test` verdes.
       Escopo entregue, além do item original do plano (decisão de produto 2026-08-29, pedida
       explicitamente pelo usuário fora da ordem do plano):
       - `TenantContextService` (`core/services/tenant-context.service.ts`) — contexto de
@@ -336,15 +337,22 @@ Espelha os checklists de `docs/PLANO-MODERNIZACAO.md`, fase por fase. Ver també
     `login()`/discovery/`isAuthenticated()`/`getAccessToken()`) em vez de editá-lo — perdi
     cobertura por um instante (143→142 testes) até notar a divergência e mesclar os dois
     conjuntos de testes no mesmo arquivo. 145/145 testes do frontend verdes no final.
-- **2026-08-29, smoke test do item "Shell (topbar + sidebar)" interrompido**: login com
-  `admin`/`TrocarEssaSenha123` (credenciais registradas acima) retornou "Invalid credentials"
-  no ambiente local atual — o volume do Postgres provavelmente foi recriado desde o seed
-  original (containers com poucas horas de uptime nesta rodada). `npm run build` e
-  `npm test` (143/143) confirmam que a implementação em si está correta; falta só validar no
-  navegador o fluxo completo (login → seleção de tenant obrigatória → sidebar reagindo ao
-  tenant selecionado → troca de tenant pelo header, com confirmação em tela crítica → logout
-  limpando o contexto). Reseedar o platform admin (ou confirmar a senha atual) antes da
-  próxima verificação manual.
+- **2026-08-29, smoke test do item "Shell (topbar + sidebar)" concluído**: o seed antigo
+  (`admin`/`admin@example.com`) tinha sumido do volume do Postgres (só restava um platform
+  admin real, `mssousa`, sem senha conhecida). Reseedado via SQL direto (mesmo procedimento
+  do passo 4 de `api/docs/03-subir-ambiente-local.md`), `admin`/`TrocarEssaSenha123`.
+  **Armadilha nova**: ao montar o `INSERT`/`UPDATE` do hash BCrypt via PowerShell com string
+  **entre aspas duplas**, o `$` do hash (`$2a$12$...`) é interpretado como início de variável
+  do PowerShell e expandido para vazio, corrompendo o hash silenciosamente (o `INSERT`/
+  `UPDATE` não dá erro nenhum — só o login falha depois com "Invalid credentials"). Corrigido
+  usando aspas simples no PowerShell (`'...'`, literal, sem interpolação) tanto para o
+  comando quanto para o valor SQL. Vale para qualquer valor com `$` inserido via `docker exec
+  psql -c` a partir do PowerShell. Fluxo completo confirmado no navegador (extensão Claude in
+  Chrome): login → `/console/selecionar-tenant` (sidebar oculta) → seleção → sidebar com
+  Tenants/Sistemas/Usuários reagindo ao tenant → clique no código do tenant na topbar troca o
+  contexto e volta para seleção (rota não crítica, sem diálogo de confirmação, como esperado)
+  → Sair limpa a sessão e volta para `/login` com um novo desafio PKCE (sem reautenticação
+  silenciosa). Sem erros no console do navegador.
 
 - **Reunificado em `sistemas/auth_v2` em 2026-08-29**, no mesmo monorepo do backend (pastas
   `api/` e `web/`, seguindo o padrão de `sistema_promissorias`). Histórico deste repositório
