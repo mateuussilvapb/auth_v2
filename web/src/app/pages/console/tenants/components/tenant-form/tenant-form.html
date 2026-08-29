@@ -1,0 +1,26 @@
+<div class="console-page">
+  <h1>{{ isEditing ? 'Editar tenant' : 'Novo tenant' }}</h1>
+
+  @if (loading()) {
+    <p>Carregando...</p>
+  } @else {
+    <form (ngSubmit)="submit()" #tenantForm="ngForm">
+      @if (!isEditing) {
+        <label for="code">Código</label>
+        <input id="code" name="code" type="text" [(ngModel)]="code" required />
+      }
+
+      <label for="name">Nome</label>
+      <input id="name" name="name" type="text" [(ngModel)]="name" required />
+
+      @if (errorMessage()) {
+        <p class="error" role="alert">{{ errorMessage() }}</p>
+      }
+
+      <button type="submit" [disabled]="tenantForm.invalid || submitting()">
+        {{ submitting() ? 'Salvando...' : 'Salvar' }}
+      </button>
+      <a [routerLink]="['/console/tenants']">Cancelar</a>
+    </form>
+  }
+</div>

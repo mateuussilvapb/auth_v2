@@ -1,0 +1,37 @@
+<h1 class="text-display mb-4">Autorização necessária</h1>
+
+@if (denied()) {
+  <p class="text-body">Consentimento negado. Você pode fechar esta janela.</p>
+} @else if (clientId) {
+  <p class="text-body">
+    O sistema <strong class="text-mono">{{ clientId }}</strong> está solicitando acesso a:
+  </p>
+  <ul class="pl-4">
+    @for (scope of scopes; track scope) {
+      <li class="text-mono">{{ scope }}</li>
+    }
+  </ul>
+
+  @if (errorMessage()) {
+    <p class="error-color text-small mt-3" role="alert">{{ errorMessage() }}</p>
+  }
+
+  <div class="flex gap-2 mt-4">
+    <p-button
+      label="Negar"
+      severity="secondary"
+      [outlined]="true"
+      styleClass="flex-1"
+      [disabled]="submitting()"
+      (onClick)="deny()"
+    />
+    <p-button
+      label="Autorizar"
+      styleClass="flex-1"
+      [loading]="submitting()"
+      (onClick)="authorize()"
+    />
+  </div>
+} @else {
+  <p class="error-color" role="alert">{{ errorMessage() }}</p>
+}

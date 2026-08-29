@@ -1,0 +1,44 @@
+<div class="console-page">
+  <h1>Novo sistema</h1>
+
+  <form (ngSubmit)="submit()" #systemForm="ngForm">
+    <label for="clientId">Client ID</label>
+    <input id="clientId" name="clientId" type="text" [(ngModel)]="clientId" required />
+
+    <label for="name">Nome</label>
+    <input id="name" name="name" type="text" [(ngModel)]="name" required />
+
+    <label>
+      <input type="checkbox" name="publicClient" [(ngModel)]="publicClient" />
+      Client público (PKCE, sem secret)
+    </label>
+
+    @if (!publicClient) {
+      <label for="clientSecret">Client secret</label>
+      <input id="clientSecret" name="clientSecret" type="text" [(ngModel)]="clientSecret" required />
+    }
+
+    <label>
+      <input type="checkbox" name="thirdParty" [(ngModel)]="thirdParty" />
+      Cliente de terceiro (exige tela de consentimento)
+    </label>
+
+    <p>Redirect URIs</p>
+    @for (uri of redirectUris; track $index) {
+      <div>
+        <input type="text" [(ngModel)]="redirectUris[$index]" name="uri-{{ $index }}" placeholder="https://..." required />
+        <button type="button" (click)="removeRedirectUriField($index)" [disabled]="redirectUris.length === 1">Remover</button>
+      </div>
+    }
+    <button type="button" (click)="addRedirectUriField()">Adicionar redirect URI</button>
+
+    @if (errorMessage()) {
+      <p class="error" role="alert">{{ errorMessage() }}</p>
+    }
+
+    <button type="submit" [disabled]="systemForm.invalid || submitting()">
+      {{ submitting() ? 'Salvando...' : 'Salvar' }}
+    </button>
+    <a [routerLink]="['/console/tenants', tenantId, 'systems']">Cancelar</a>
+  </form>
+</div>

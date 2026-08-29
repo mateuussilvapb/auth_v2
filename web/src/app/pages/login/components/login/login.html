@@ -1,0 +1,58 @@
+@if (branding(); as brand) {
+  <div class="text-center mb-4">
+    @if (brand.logoUrl) {
+      <img [src]="brand.logoUrl" [alt]="brand.tenantName" class="tenant-logo" />
+    }
+    <h1 class="text-display m-0">{{ brand.tenantName }}</h1>
+  </div>
+} @else {
+  <h1 class="text-display mb-4">Entrar</h1>
+}
+
+@if (clientId) {
+  <form [formGroup]="form" (ngSubmit)="submit()">
+    <app-form-label for="usernameOrEmail" label="Usuário ou e-mail" [control]="form.controls.usernameOrEmail">
+      <input
+        pInputText
+        id="usernameOrEmail"
+        formControlName="usernameOrEmail"
+        autocomplete="username"
+        class="w-full"
+      />
+    </app-form-label>
+
+    <div class="mt-3">
+      <app-form-label for="password" label="Senha" [control]="form.controls.password">
+        <p-password
+          inputId="password"
+          formControlName="password"
+          [feedback]="false"
+          [toggleMask]="true"
+          autocomplete="current-password"
+          styleClass="w-full"
+          inputStyleClass="w-full"
+        />
+      </app-form-label>
+    </div>
+
+    @if (errorMessage()) {
+      <p class="error-color text-small mt-3" role="alert">{{ errorMessage() }}</p>
+    }
+
+    <p-button
+      type="submit"
+      label="Entrar"
+      styleClass="w-full mt-4"
+      [loading]="submitting()"
+      [disabled]="form.invalid"
+    />
+  </form>
+
+  <div class="text-center mt-3">
+    <a [routerLink]="['/esqueci-senha']" [queryParams]="{ client_id: clientId }" class="text-small"
+      >Esqueci minha senha</a
+    >
+  </div>
+} @else {
+  <p class="error-color" role="alert">{{ errorMessage() }}</p>
+}
