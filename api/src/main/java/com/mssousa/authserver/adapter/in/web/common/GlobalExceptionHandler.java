@@ -24,7 +24,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(DomainException.class)
     public ResponseEntity<ApiErrorResponse> handleDomainException(DomainException exception) {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiErrorResponse.of(exception.getMessage()));
+        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(ApiErrorResponse.of(exception.getMessage()));
     }
 
     @ExceptionHandler(ResourceNotFoundException.class)

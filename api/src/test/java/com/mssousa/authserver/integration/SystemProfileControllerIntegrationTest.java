@@ -92,7 +92,7 @@ class SystemProfileControllerIntegrationTest extends AbstractRepositoryIntegrati
                         .content("""
                                 {"code":"FINANCEIRO"}
                                 """))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isUnprocessableEntity());
     }
 
     @Test

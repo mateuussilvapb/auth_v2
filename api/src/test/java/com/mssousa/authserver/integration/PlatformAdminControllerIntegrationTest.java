@@ -83,7 +83,7 @@ class PlatformAdminControllerIntegrationTest extends AbstractRepositoryIntegrati
                         .content("""
                                 {"status":"INACTIVE"}
                                 """))
-                .andExpect(status().isBadRequest())
+                .andExpect(status().isUnprocessableEntity())
                 .andExpect(jsonPath("$.message").value("Não é possível desativar o último platform admin ativo"));
     }
 
@@ -104,7 +104,7 @@ class PlatformAdminControllerIntegrationTest extends AbstractRepositoryIntegrati
                                 {"username":"admin_duplicado","email":"admin2@authserver.com",
                                  "password":"senhaSegura123","name":"Admin Dois"}
                                 """))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isUnprocessableEntity());
     }
 
     @Test

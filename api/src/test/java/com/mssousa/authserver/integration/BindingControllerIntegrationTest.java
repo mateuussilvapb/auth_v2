@@ -193,7 +193,7 @@ class BindingControllerIntegrationTest extends AbstractRepositoryIntegrationTest
         mockMvc.perform(post(path).with(platformAdmin()).contentType(MediaType.APPLICATION_JSON).content(body))
                 .andExpect(status().isCreated());
         mockMvc.perform(post(path).with(platformAdmin()).contentType(MediaType.APPLICATION_JSON).content(body))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isUnprocessableEntity());
     }
 
     @Test
@@ -210,6 +210,6 @@ class BindingControllerIntegrationTest extends AbstractRepositoryIntegrationTest
                         .with(platformAdmin())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"systemId\":" + systemB.getId().value() + "}"))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isUnprocessableEntity());
     }
 }

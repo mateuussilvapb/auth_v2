@@ -92,6 +92,8 @@ Cada fase deve estar verde nos testes antes da seguinte. Atualizado a cada item 
   - [x] Platform admins (`ManagePlatformAdminUseCase` novo — não existia desde a Fase 4, ver Notas)
 - [x] OpenAPI/Swagger (só `/admin/api/v1/**`, protegido por platform admin — ver Notas)
 - [x] CORS para o SPA Angular (`authserver.cors.allowed-origins`, vazio em produção)
+- [x] Corrigir `GlobalExceptionHandler`: `DomainException` deve responder 422, não 400
+      (seção 6.6 do plano) — achado da revisão de arquitetura de 2026-08-29, ver Notas
 
 ## Fase 9 — Frontend Angular (login, consentimento e console administrativo)
 - [x] Projeto Angular único: rotas públicas (`/login`, `/consent`, `/esqueci-senha`, `/reset-password`) consumindo a API da Fase 7, e rota `/console` protegida consumindo a API da Fase 8 (só o dashboard placeholder existe — CRUD é item à parte abaixo)
@@ -555,3 +557,44 @@ Cada fase deve estar verde nos testes antes da seguinte. Atualizado a cada item 
   `auth_frontend_v2` preservado do mesmo jeito em `web/`. `docs/03-subir-ambiente-local.md`
   e `README.md` atualizados para `cd ../web` em vez de `cd ../auth_frontend_v2`. Este arquivo
   (`PROGRESS.md`) e o de `web/` continuam separados — cada um documenta seu próprio lado.
+- **Revisão de arquitetura — auditoria geral, 2026-08-29** (agente `revisor-arquitetura`,
+  escopo: todo `api/`, não um diff específico). `mvn verify` verde (498 testes, 0 falhas),
+  `mvn test -Dtest=ArchitectureTest` verde (6/6). Achados:
+  - 🔴 BLOQUEANTE — `GlobalExceptionHandler` (`adapter/in/web/common`) mapeia
+    `DomainException` para `HttpStatus.BAD_REQUEST` (400); a seção 6.6 do plano exige 422
+    para `DomainException` e 400 só para erro de validação. Divergência sistemática, não
+    documentada como decisão consciente: replicada em todos os controllers administrativos
+    e "fixada" pelos próprios testes de integração, que esperam `isBadRequest()` onde
+    deveria ser 422 (`TenantControllerIntegrationTest`, `SystemControllerIntegrationTest`).
+    Item de correção adicionado à Fase 8 acima.
+  - 🟡 `mvn jacoco:report` falha — `No plugin found for prefix 'jacoco'`, plugin nunca foi
+    adicionado ao `pom.xml`. Consistente com a Fase 10 já estar desmarcada; sem ele não há
+    como verificar objetivamente o critério de cobertura ≥ 80%.
+  - 🟡 `ClientSecret` (`domain/model/system`) usa `BCryptPasswordEncoder` no domínio, mesma
+    exceção que a seção 5.1 do plano nomeia textualmente só para o VO `Password`. Não quebra
+    `ArchitectureTest` (que tolera qualquer classe de `org.springframework.security.crypto..`),
+    mas é uma extensão não escrita da regra — formalizar no plano que a exceção cobre todo
+    VO de segredo/senha, não só `Password`, antes que vire precedente informal.
+  - 🟡 `ArchitectureTest` ainda não verifica via ArchUnit que nenhuma entidade JPA cruza a
+    fronteira de `adapter.out.persistence` nem que nenhum DTO web entra em `application`
+    (item já rastreado na Fase 10). Verificado manualmente nesta auditoria via grep — sem
+    violação real hoje —, mas sem o teste automatizado uma violação futura só seria pega em
+    code review manual.
+  - 🟡 Enums persistidos (`status`) são mapeados como `String` puro nas entidades JPA, com
+    conversão manual via `valueOf(...)`/`.name()` em `AuthMapper`, em vez de
+    `@Enumerated(EnumType.STRING)` como a seção 6.4 descreve literalmente. Funcionalmente
+    equivalente (nunca grava ordinal) — divergência de estilo, não de risco.
+  - Veredito da revisão: REPROVADO só pelo item bloqueante acima; o restante do código está
+    arquiteturalmente saudável.
+- **Item bloqueante da revisão de 2026-08-29 corrigido**: `GlobalExceptionHandler.handleDomainException`
+  passou a responder `422 UNPROCESSABLE_ENTITY`, não mais 400. Os 400 que continuavam sendo apenas
+  `MethodArgumentNotValidException` (Bean Validation, ex: `@NotBlank`/`@NotEmpty`) ficaram como
+  estavam; só os `andExpect(status().isBadRequest())` cujo caminho de teste efetivamente lançava
+  `DomainException` (código/username/clientId duplicado, última redirect URI, vínculo duplicado ou
+  cross-tenant, desativar o último platform admin) foram trocados para
+  `status().isUnprocessableEntity()`, em `TenantControllerIntegrationTest`,
+  `UserControllerIntegrationTest`, `SystemControllerIntegrationTest`,
+  `SystemProfileControllerIntegrationTest`, `PlatformAdminControllerIntegrationTest` e
+  `BindingControllerIntegrationTest`. `AuthControllerIntegrationTest` não foi tocado — `adapter/in/web/auth`
+  mantém seus próprios `@ExceptionHandler` locais, fora do escopo do `GlobalExceptionHandler`
+  (`basePackages = "...adapter.in.web.admin"`). `mvn verify` verde na suíte inteira depois da mudança.

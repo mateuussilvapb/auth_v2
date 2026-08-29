@@ -121,7 +121,7 @@ class UserControllerIntegrationTest extends AbstractRepositoryIntegrationTest {
                                 {"username":"bill_lumbergh","email":"outro@umbrella.com",
                                  "password":"senhaSegura123","name":"Outro Bill"}
                                 """))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isUnprocessableEntity());
     }
 
     @Test

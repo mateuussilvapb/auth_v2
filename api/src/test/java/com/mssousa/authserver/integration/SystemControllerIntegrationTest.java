@@ -102,7 +102,7 @@ class SystemControllerIntegrationTest extends AbstractRepositoryIntegrationTest 
         mockMvc.perform(delete("/admin/api/v1/systems/" + systemId + "/redirect-uris")
                         .with(platformAdmin())
                         .param("uri", "https://crm.initech.com/callback"))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isUnprocessableEntity());
     }
 
     @Test
@@ -141,7 +141,7 @@ class SystemControllerIntegrationTest extends AbstractRepositoryIntegrationTest 
                                 {"clientId":"CRM_INITECH","name":"Outro sistema","publicClient":true,
                                  "initialRedirectUris":["https://outro.example.com/callback"],"thirdParty":false}
                                 """))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isUnprocessableEntity());
     }
 
     @Test

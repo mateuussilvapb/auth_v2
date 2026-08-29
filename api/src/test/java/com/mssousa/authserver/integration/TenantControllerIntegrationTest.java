@@ -110,7 +110,7 @@ class TenantControllerIntegrationTest extends AbstractRepositoryIntegrationTest 
                         .content("""
                                 {"code":"acme-dup","name":"Acme outra vez"}
                                 """))
-                .andExpect(status().isBadRequest())
+                .andExpect(status().isUnprocessableEntity())
                 .andExpect(jsonPath("$.message").value("Já existe um tenant com o código 'acme-dup'"));
     }
 
