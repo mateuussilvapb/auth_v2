@@ -266,3 +266,8 @@ Espelha os checklists de `docs/PLANO-MODERNIZACAO.md`, fase por fase. Ver també
 - Platform admin de teste seedado manualmente em `auth_api_v2` (ambiente local): usuário
   `admin`, e-mail `admin@example.com`, senha `TrocarEssaSenha123`. Fica registrado aqui para
   reuso nas próximas rodadas de smoke test (Fases 2, 6, 7, 8) — não recriar do zero toda vez.
+
+- **Reunificado em `sistemas/auth_v2` em 2026-08-29**, no mesmo monorepo do backend (pastas
+  `api/` e `web/`, seguindo o padrão de `sistema_promissorias`). Histórico deste repositório
+  (`auth_frontend_v2`) preservado via `git subtree add --prefix=web`. Referência ao backend
+  na skill `modernize-auth-frontend-v2` atualizada de `auth_api_v2` para `../api`.

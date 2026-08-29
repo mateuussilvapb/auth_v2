@@ -60,8 +60,8 @@ e não acumule vários itens não validados antes de rodar build e testes:
 5. **Verificação manual quando o item toca autenticação ou aparência** — o plano (seção 2) é
    explícito: os bugs mais graves deste projeto não foram pegos por teste automatizado.
    Obrigatória ao fim das Fases 2, 6, 7 e 8, e sempre que o item alterar fluxo PKCE, login,
-   consent ou reset de senha. Rode `ng serve` com o backend de pé (`mvn spring-boot:run` no
-   `auth_api_v2`), execute o fluxo no navegador, e **peça ao usuário que confirme** quando não for
+   consent ou reset de senha. Rode `ng serve` com o backend de pé (`mvn spring-boot:run` em
+   `../api`), execute o fluxo no navegador, e **peça ao usuário que confirme** quando não for
    possível verificar sozinho. Não marque o item como concluído com base só em `ng build`.
 6. Só depois de tudo verde: **marque o item em `PROGRESS.md`** e faça o commit (formato abaixo).
 7. Passe para o próximo item. Repita.

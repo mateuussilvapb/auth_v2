@@ -549,3 +549,9 @@ Cada fase deve estar verde nos testes antes da seguinte. Atualizado a cada item 
     layout (`cd ../auth_frontend_v2` em vez de `cd frontend`). O restante das menções a
     "frontend Angular" no plano e neste arquivo é conceitual (não referencia caminho de
     arquivo) e continua válido sem alteração.
+- **Reunificado em `sistemas/auth_v2` em 2026-08-29**, seguindo o padrão de monorepo já usado
+  em `sistema_promissorias` (pastas `api/` e `web/`, docs comuns na raiz). Histórico deste
+  repositório (`auth_api_v2`) preservado via `git subtree add --prefix=api`; o de
+  `auth_frontend_v2` preservado do mesmo jeito em `web/`. `docs/03-subir-ambiente-local.md`
+  e `README.md` atualizados para `cd ../web` em vez de `cd ../auth_frontend_v2`. Este arquivo
+  (`PROGRESS.md`) e o de `web/` continuam separados — cada um documenta seu próprio lado.

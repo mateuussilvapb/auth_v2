@@ -3,16 +3,14 @@
 Passo a passo completo, do zero, para rodar o backend + banco + e-mail local. Para depois
 subir o frontend Angular junto, ver a seção 6.
 
-> **Frontend em repositório separado.** O frontend Angular não vive mais dentro deste repo
-> — foi extraído para `java_projects/auth_frontend_v2` (sibling deste diretório, próprio
-> `.git`). A seção 6 assume esse layout.
+> **Frontend em `../web`.** O frontend Angular vive em [`web/`](../../web), pasta irmã de
+> `api/` dentro do mesmo repositório `auth_v2`. A seção 6 assume esse layout.
 
 ## Pré-requisitos
 
 - Java 25 e Maven instalados
 - Docker (para Postgres + MailHog via `docker-compose.yml`)
-- Node.js + npm (só se for rodar o frontend Angular também — clone de
-  `auth_frontend_v2`)
+- Node.js + npm (só se for rodar o frontend Angular também — pasta `web/`)
 
 ## 1. Subir a infraestrutura (Postgres + MailHog)
 
@@ -139,10 +137,10 @@ mvn verify    # unitários + integração (Testcontainers) + ArchUnit
 
 ## 6. Subir o frontend Angular (opcional, para testar o fluxo completo)
 
-Projeto separado — clone/abra `auth_frontend_v2` ao lado deste repo:
+Pasta irmã dentro do mesmo repo:
 
 ```bash
-cd ../auth_frontend_v2
+cd ../web
 npm install
 ng serve
 ```
@@ -199,8 +197,8 @@ mvn spring-boot:run
 # se o volume do Postgres foi resetado (down -v) e o platform admin/tenant/usuário de
 # teste sumiram, rodar de novo (não commitado, ver seção 7):
 node scripts/dev-seed.js
-# em outro terminal, se quiser o frontend (repo separado, auth_frontend_v2):
-cd ../auth_frontend_v2 && ng serve
+# em outro terminal, se quiser o frontend (pasta irmã web/):
+cd ../web && ng serve
 ```
 
 ## Problemas comuns
