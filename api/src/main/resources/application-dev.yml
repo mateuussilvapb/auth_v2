@@ -1,0 +1,88 @@
+# ==========================================
+# OVERRIDES DE DESENVOLVIMENTO (sobrescreve application.yml)
+# ==========================================
+# Defaults deste arquivo valem apenas para o ambiente local (docker-compose.yml usa as
+# mesmas credenciais não-sensíveis). Este perfil nunca é usado em produção — lá, o
+# profile ativo é outro e as credenciais reais vêm sempre de variável de ambiente,
+# sem default (ver application.yml e seção 12 do plano).
+
+spring:
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/authserver}
+    username: ${DB_USERNAME:authserver}
+    password: ${DB_PASSWORD:authserver}
+
+  security:
+    oauth2:
+      authorizationserver:
+        # Precisa bater com o issuer real e alcançável em dev (localhost:8080) — sem este
+        # override, o discovery document OIDC (/.well-known/openid-configuration) declara
+        # o issuer de produção (application.yml), e clients que validam o campo `issuer`
+        # do documento contra a própria configuração (angular-oauth2-oidc do console
+        # administrativo, seção 2.2/D6) rejeitam silenciosamente o documento.
+        issuer: ${AUTH_ISSUER:http://localhost:8080}
+
+  jpa:
+    show-sql: true
+    properties:
+      hibernate:
+        use_sql_comments: true
+
+  flyway:
+    validate-on-migrate: true
+
+  mail:
+    host: ${SMTP_HOST:localhost}
+    port: ${SMTP_PORT:1025}
+    username: ${SMTP_USERNAME:}
+    password: ${SMTP_PASSWORD:}
+    # Mailhog (usado em dev/e2e) não suporta AUTH nem STARTTLS — sem este override, o
+    # `auth: true`/`starttls.enable: true` do application.yml (necessários para SMTP real
+    # em produção) faz o JavaMailSender tentar autenticar com credenciais vazias e falhar
+    # com AuthenticationFailedException, derrubando toda a criação de usuário (a chamada a
+    # EmailSenderPort acontece dentro da mesma transação, seção 6 do plano).
+    properties:
+      mail:
+        smtp:
+          auth: false
+          starttls:
+            enable: false
+
+authserver:
+  issuer: ${AUTH_ISSUER:http://localhost:8080}
+  email:
+    sender: ${EMAIL_SENDER:dev@localhost}
+  frontend:
+    reset-password-url: ${RESET_PASSWORD_URL:http://localhost:4200/reset-password}
+  console-client:
+    redirect-uris: ${CONSOLE_REDIRECT_URIS:http://localhost:4200/console/callback}
+  cors:
+    # ng serve roda em localhost:4200, origem diferente da API — necessário só em dev,
+    # já que em produção o Angular é servido pelo mesmo nginx/domínio (seção 11).
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:4200}
+  # Limites de produção (10/30/60 por minuto, ver application.yml) atrapalhariam tanto o
+  # desenvolvimento local quanto a suíte de testes de integração, que roda sob este
+  # profile e compartilha o mesmo bean singleton de RateLimitFilter entre todas as classes
+  # de teste na mesma execução do Maven.
+  rate-limit:
+    login: 100000
+    token: 100000
+    admin-api: 100000
+
+server:
+  error:
+    include-message: always
+    include-binding-errors: always
+    include-stacktrace: on_param
+    include-exception: true
+
+management:
+  endpoint:
+    health:
+      show-details: always
+
+logging:
+  level:
+    com.mssousa.authserver: DEBUG
+    org.springframework.security: DEBUG
+    org.hibernate.SQL: DEBUG

@@ -1,0 +1,52 @@
+HELP.md
+target/
+.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+### STS ###
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+
+### IntelliJ IDEA ###
+.idea
+*.iws
+*.iml
+*.ipr
+
+### NetBeans ###
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+build/
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+### VS Code ###
+.vscode/
+
+# Estado interno de sessão do Claude Code — não é parte do projeto
+.claude/scheduled_tasks.lock
+
+# Segredos e credenciais — nunca versionar (ver seção 12 do plano)
+*.pem
+*.key
+.env
+.env.*
+application-local.yml
+application-local.yaml
+
+# Script de seed de dados de dev (tenant/system/perfis/usuário de teste) —
+# só local, nunca commitado (ver docs/03-subir-ambiente-local.md §7)
+scripts/dev-seed.js
+cp.txt
+
+# Override local de porta (evitar conflito com outro Postgres na máquina) — pessoal, não commitado
+docker-compose.override.yml

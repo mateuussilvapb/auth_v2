@@ -1,0 +1,92 @@
+# ==========================================
+# CONFIGURAÇÃO BASE (COMUM A TODOS OS PROFILES)
+# ==========================================
+# Nenhuma credencial fica neste arquivo. Tudo vem de variáveis de ambiente,
+# com application-local.yml (gitignored) para overrides de desenvolvimento local.
+
+spring:
+  application:
+    name: authserver
+
+  profiles:
+    active: dev
+
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+      connection-timeout: 30000
+
+  jpa:
+    open-in-view: false
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        format_sql: true
+
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+
+  mail:
+    host: ${SMTP_HOST}
+    port: ${SMTP_PORT}
+    username: ${SMTP_USERNAME}
+    password: ${SMTP_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+  security:
+    oauth2:
+      authorizationserver:
+        issuer: ${AUTH_ISSUER:https://auth.seudominio.com}
+
+server:
+  port: 8080
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+
+springdoc:
+  # Só documenta a API administrativa (seção 9) — /api/auth/** é consumido pelo SPA
+  # Angular, não por integradores externos, e não precisa de OpenAPI.
+  paths-to-match: /admin/api/v1/**
+
+authserver:
+  issuer: ${AUTH_ISSUER:https://auth.seudominio.com}
+  email:
+    sender: ${EMAIL_SENDER}
+  frontend:
+    # Rota pública do SPA Angular que recebe o token de redefinição de senha (seção 2.2)
+    reset-password-url: ${RESET_PASSWORD_URL:${authserver.issuer}/reset-password}
+    # Destino do redirect não autenticado de GET /oauth2/authorize (seção 2.2) e da tela de
+    # consentimento (authorizationEndpoint.consentPage). Relativo por padrão — correto em
+    # produção, onde nginx serve o Angular na mesma origem do backend (seção 11). Só faz
+    # sentido apontar para uma origem absoluta (ex: http://localhost:4200) ao rodar backend
+    # e `ng serve` em portas separadas manualmente — nunca via profile, para não mudar o
+    # comportamento validado pela suíte de testes (SpaLoginAuthenticationEntryPointIntegrationTest).
+    login-url: ${LOGIN_URL:/login}
+    consent-url: ${CONSENT_URL:/consent}
+  console-client:
+    # RegisteredClient estático do console administrativo Angular (seção 2.2/D6, Fase 9)
+    # — não vinculado a nenhum tenant, diferente dos clients baseados em `system`. Ver
+    # RegisteredClientRepositoryConfig.
+    client-id: ${CONSOLE_CLIENT_ID:console}
+    redirect-uris: ${CONSOLE_REDIRECT_URIS:${authserver.issuer}/console/callback}
+
+logging:
+  level:
+    root: INFO
+    com.mssousa.authserver: INFO
