@@ -3,6 +3,7 @@ import { Component, OnInit, signal } from '@angular/core';
 import { Router } from '@angular/router';
 
 import { ConsoleAuthService } from '../../../../../core/services/console-auth.service';
+import { TenantContextService } from '../../../../../core/services/tenant-context.service';
 
 /**
  * Rota {@code /console/callback} — destino do redirect_uri do client PKCE estático do
@@ -26,6 +27,7 @@ export class ConsoleCallback implements OnInit {
 
   constructor(
     private readonly consoleAuth: ConsoleAuthService,
+    private readonly tenantContext: TenantContextService,
     private readonly router: Router,
   ) {}
 
@@ -33,6 +35,9 @@ export class ConsoleCallback implements OnInit {
     try {
       await this.consoleAuth.completeLoginFlow();
       if (this.consoleAuth.isAuthenticated()) {
+        // Todo login exige nova seleção de tenant (decisão de produto 2026-08-29), mesmo que
+        // já exista um contexto persistido de uma sessão anterior.
+        this.tenantContext.clear();
         await this.router.navigate(['/console']);
       } else {
         this.errorMessage.set('Não foi possível concluir o login do console.');

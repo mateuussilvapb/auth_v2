@@ -189,7 +189,38 @@ Espelha os checklists de `docs/PLANO-MODERNIZACAO.md`, fase por fase. Ver també
 
 ## Fase 7 — Console
 
-- [ ] Shell (topbar + sidebar).
+- [ ] Shell (topbar + sidebar). **Implementado, aguardando confirmação manual** (ver nota
+      abaixo — smoke test no navegador foi interrompido por credencial inválida no ambiente
+      local, não por um problema no código; `npm run build` e `npm test` estão verdes).
+      Escopo entregue, além do item original do plano (decisão de produto 2026-08-29, pedida
+      explicitamente pelo usuário fora da ordem do plano):
+      - `TenantContextService` (`core/services/tenant-context.service.ts`) — contexto de
+        tenant selecionado, persistido em `localStorage` cifrado com AES-GCM
+        (`core/util/crypto.ts`), chave derivada (SHA-256) do access token corrente. Grava só
+        `{ id, code }`, nunca o objeto completo.
+      - `tenantContextGuard` (`core/guards/tenant-context.guard.ts`) — aplica-se só a platform
+        admin (claim `platform_admin` do JWT). Sem tenant algum cadastrado, redireciona para
+        `/console/tenants/novo`; com tenants existentes e nenhum selecionado, redireciona
+        para `/console/selecionar-tenant`. Gestão de tenants (`tenants`, `tenants/novo`,
+        `tenants/:id/editar`) fica fora do guard de propósito — é a única área navegável
+        antes do primeiro tenant existir.
+      - Tela nova `/console/selecionar-tenant` (`pages/console/tenant-selection`) — lista
+        paginada (`p-table` lazy) de tenants, seleciona e retoma a navegação original
+        (`returnUrl`) ou vai ao dashboard.
+      - Todo login (`ConsoleCallback`) limpa o contexto de tenant persistido — seleção é
+        exigida a cada sessão nova, mesmo com um valor válido já em `localStorage`.
+      - Logout (`Topbar.logout`) limpa o contexto de tenant.
+      - Topbar exibe o tenant selecionado (código, fonte mono), clicável — troca limpa o
+        contexto e navega para `/console/selecionar-tenant`; em rotas marcadas
+        `data: { critical: true }` (formulários de criação/edição), pede confirmação via
+        `ConfirmationService` antes de trocar. Novo componente compartilhado `ConfirmDialog`
+        (`shared/components/confirm-dialog`) registrado no `ConsoleLayout`.
+      - Sidebar usa o tenant selecionado para montar os links de Sistemas/Usuários
+        (`/console/tenants/:id/systems`, `/console/tenants/:id/users`) — some quando nenhum
+        tenant está selecionado. **Perfis, Vínculos e Platform Admins ainda não entraram na
+        sidebar**: não têm rota independente de um sistema/usuário/tela específicos ainda —
+        entram junto da migração dos respectivos CRUDs (próximos itens desta fase).
+      - 143 testes (34 novos/atualizados nesta rodada) cobrindo os itens acima.
 - [ ] Dashboard útil + corrigir bug de sessão expirada.
 - [ ] CRUDs com `p-table` + `FormBase`, paginação server-side, `StatusTag`, confirmação:
   - [ ] Tenants
@@ -266,6 +297,15 @@ Espelha os checklists de `docs/PLANO-MODERNIZACAO.md`, fase por fase. Ver també
 - Platform admin de teste seedado manualmente em `auth_api_v2` (ambiente local): usuário
   `admin`, e-mail `admin@example.com`, senha `TrocarEssaSenha123`. Fica registrado aqui para
   reuso nas próximas rodadas de smoke test (Fases 2, 6, 7, 8) — não recriar do zero toda vez.
+- **2026-08-29, smoke test do item "Shell (topbar + sidebar)" interrompido**: login com
+  `admin`/`TrocarEssaSenha123` (credenciais registradas acima) retornou "Invalid credentials"
+  no ambiente local atual — o volume do Postgres provavelmente foi recriado desde o seed
+  original (containers com poucas horas de uptime nesta rodada). `npm run build` e
+  `npm test` (143/143) confirmam que a implementação em si está correta; falta só validar no
+  navegador o fluxo completo (login → seleção de tenant obrigatória → sidebar reagindo ao
+  tenant selecionado → troca de tenant pelo header, com confirmação em tela crítica → logout
+  limpando o contexto). Reseedar o platform admin (ou confirmar a senha atual) antes da
+  próxima verificação manual.
 
 - **Reunificado em `sistemas/auth_v2` em 2026-08-29**, no mesmo monorepo do backend (pastas
   `api/` e `web/`, seguindo o padrão de `sistema_promissorias`). Histórico deste repositório

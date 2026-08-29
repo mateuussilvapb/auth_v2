@@ -34,4 +34,28 @@
     align-items: center;
     gap: 0.5rem;
   }
+
+  .layout-topbar-tenant {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    border: 1px solid var(--p-content-border-color);
+    border-radius: $borderRadius;
+    background: transparent;
+    color: var(--p-text-color);
+    font: inherit;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    padding: 0.35rem 0.75rem;
+    cursor: pointer;
+    transition: background-color 0.2s;
+
+    &:hover {
+      background-color: var(--p-content-hover-background);
+    }
+
+    &:focus-visible {
+      @include focused();
+    }
+  }
 }

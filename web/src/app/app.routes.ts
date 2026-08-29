@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 
 import { consoleAuthGuard } from './core/guards/console-auth.guard';
+import { tenantContextGuard } from './core/guards/tenant-context.guard';
 
 /**
  * Duas árvores (guia de estilo, seção 1.1/7.1; plano, Fase 5): pública — shell
@@ -48,58 +49,82 @@ export const routes: Routes = [
     children: [
       {
         path: '',
+        canActivate: [tenantContextGuard],
         loadComponent: () =>
           import('./pages/console/dashboard/components/console-dashboard/console-dashboard').then(
             (m) => m.ConsoleDashboard,
           ),
       },
       {
+        // Fora do tenantContextGuard: é o próprio destino do guard quando não há tenant
+        // selecionado (decisão de produto 2026-08-29) — aplicá-lo aqui criaria loop.
+        path: 'selecionar-tenant',
+        loadComponent: () =>
+          import('./pages/console/tenant-selection/components/tenant-selection/tenant-selection').then(
+            (m) => m.TenantSelection,
+          ),
+      },
+      {
+        // Gestão de tenants fica fora do tenantContextGuard de propósito: é a única área
+        // navegável antes de existir o primeiro tenant (guard redireciona pra cá nesse caso).
         path: 'tenants',
         loadComponent: () =>
           import('./pages/console/tenants/components/tenant-list/tenant-list').then((m) => m.TenantList),
       },
       {
         path: 'tenants/novo',
+        data: { critical: true },
         loadComponent: () =>
           import('./pages/console/tenants/components/tenant-form/tenant-form').then((m) => m.TenantForm),
       },
       {
         path: 'tenants/:id/editar',
+        data: { critical: true },
         loadComponent: () =>
           import('./pages/console/tenants/components/tenant-form/tenant-form').then((m) => m.TenantForm),
       },
       {
         path: 'tenants/:tenantId/systems',
+        canActivate: [tenantContextGuard],
         loadComponent: () =>
           import('./pages/console/systems/components/system-list/system-list').then((m) => m.SystemList),
       },
       {
         path: 'tenants/:tenantId/systems/novo',
+        canActivate: [tenantContextGuard],
+        data: { critical: true },
         loadComponent: () =>
           import('./pages/console/systems/components/system-form/system-form').then((m) => m.SystemForm),
       },
       {
         path: 'systems/:systemId/profiles',
+        canActivate: [tenantContextGuard],
         loadComponent: () =>
           import('./pages/console/profiles/components/profile-list/profile-list').then((m) => m.ProfileList),
       },
       {
         path: 'tenants/:tenantId/users',
+        canActivate: [tenantContextGuard],
         loadComponent: () =>
           import('./pages/console/users/components/user-list/user-list').then((m) => m.UserList),
       },
       {
         path: 'tenants/:tenantId/users/novo',
+        canActivate: [tenantContextGuard],
+        data: { critical: true },
         loadComponent: () =>
           import('./pages/console/users/components/user-form/user-form').then((m) => m.UserForm),
       },
       {
         path: 'tenants/:tenantId/users/:id/editar',
+        canActivate: [tenantContextGuard],
+        data: { critical: true },
         loadComponent: () =>
           import('./pages/console/users/components/user-form/user-form').then((m) => m.UserForm),
       },
       {
         path: 'tenants/:tenantId/users/:userId/bindings',
+        canActivate: [tenantContextGuard],
         loadComponent: () =>
           import('./pages/console/bindings/components/user-bindings/user-bindings').then((m) => m.UserBindings),
       },

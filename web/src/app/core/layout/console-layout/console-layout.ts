@@ -6,6 +6,7 @@ import { Component } from '@angular/core';
 import { Topbar } from '../../components/topbar/topbar';
 import { Sidebar } from '../../components/sidebar/sidebar';
 import { Toast } from '../../../shared/components/toast/toast';
+import { ConfirmDialog } from '../../../shared/components/confirm-dialog/confirm-dialog';
 import { LoadingOverlay } from '../../../shared/components/loading-overlay/loading-overlay';
 
 /**
@@ -14,7 +15,7 @@ import { LoadingOverlay } from '../../../shared/components/loading-overlay/loadi
  */
 @Component({
   selector: 'app-console-layout',
-  imports: [RouterOutlet, Topbar, Sidebar, Toast, LoadingOverlay],
+  imports: [RouterOutlet, Topbar, Sidebar, Toast, ConfirmDialog, LoadingOverlay],
   templateUrl: './console-layout.html',
 })
 export class ConsoleLayout {}

@@ -6,5 +6,19 @@
         <span>Tenants</span>
       </a>
     </li>
+    @if (selectedTenant(); as tenant) {
+      <li>
+        <a [routerLink]="['/console/tenants', tenant.id, 'systems']" routerLinkActive="active">
+          <i class="pi pi-th-large layout-menuitem-icon"></i>
+          <span>Sistemas</span>
+        </a>
+      </li>
+      <li>
+        <a [routerLink]="['/console/tenants', tenant.id, 'users']" routerLinkActive="active">
+          <i class="pi pi-users layout-menuitem-icon"></i>
+          <span>Usuários</span>
+        </a>
+      </li>
+    }
   </ul>
 </aside>

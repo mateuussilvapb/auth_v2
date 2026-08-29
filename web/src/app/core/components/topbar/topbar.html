@@ -1,6 +1,12 @@
 <div class="layout-topbar">
   <a class="layout-topbar-logo" [routerLink]="['/console']">Auth Server Console</a>
   <div class="layout-topbar-actions">
+    @if (selectedTenant(); as tenant) {
+      <button type="button" class="layout-topbar-tenant" (click)="changeTenant()">
+        <i class="pi pi-building"></i>
+        <span>{{ tenant.code }}</span>
+      </button>
+    }
     <p-button label="Sair" icon="pi pi-sign-out" severity="secondary" [text]="true" (onClick)="logout()" />
   </div>
 </div>
