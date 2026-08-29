@@ -297,6 +297,16 @@ Espelha os checklists de `docs/PLANO-MODERNIZACAO.md`, fase por fase. Ver també
 - Platform admin de teste seedado manualmente em `auth_api_v2` (ambiente local): usuário
   `admin`, e-mail `admin@example.com`, senha `TrocarEssaSenha123`. Fica registrado aqui para
   reuso nas próximas rodadas de smoke test (Fases 2, 6, 7, 8) — não recriar do zero toda vez.
+- **Bug corrigido: "Sair" não fazia nada visível.** O client do console usa `scope: 'profile'`
+  sem `openid` (decisão de design documentada em `ConsoleAuthService` — sem `id_token`), mas
+  `oauthService.logOut()` sempre tentava RP-initiated logout no `end_session_endpoint` do
+  backend (`/connect/logout`), que **responde 400 Bad Request sem `id_token_hint`**
+  (confirmado com `curl` contra o backend local) — o usuário via a página quebrar em
+  silêncio, sem nenhum feedback. Corrigido: `ConsoleAuthService.logout()` agora chama
+  `oauthService.logOut(true)` (só limpa tokens localmente, sem tentar o endpoint quebrado); o
+  `Topbar.logout()` força `window.location.href = '/console'` depois, porque
+  `router.navigate` não reavalia guards numa navegação para a mesma URL — sem isso o usuário
+  ficaria "deslogado" mas ainda vendo a tela protegida até a próxima navegação manual.
 - **2026-08-29, smoke test do item "Shell (topbar + sidebar)" interrompido**: login com
   `admin`/`TrocarEssaSenha123` (credenciais registradas acima) retornou "Invalid credentials"
   no ambiente local atual — o volume do Postgres provavelmente foi recriado desde o seed

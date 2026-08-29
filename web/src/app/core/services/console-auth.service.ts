@@ -70,7 +70,12 @@ export class ConsoleAuthService {
   }
 
   logout(): void {
-    this.oauthService.logOut();
+    // Logout local apenas (`true` = noRedirectToLogoutUrl): o client não usa "openid" no
+    // scope (comentário acima), então nunca há id_token. O `end_session_endpoint` do backend
+    // (RP-initiated logout) exige `id_token_hint` e responde 400 sem ele — redirecionar para
+    // lá quebraria o logout. Limpar os tokens localmente é suficiente; quem chama este método
+    // é responsável por navegar de volta a uma rota protegida para disparar novo login.
+    this.oauthService.logOut(true);
   }
 
   getAccessToken(): string {

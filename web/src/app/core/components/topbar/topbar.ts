@@ -81,5 +81,9 @@ export class Topbar {
   logout(): void {
     this.tenantContext.clear();
     this.consoleAuth.logout();
+    // Navegação de página inteira (não `router.navigate`) — o app já está em `/console`, e o
+    // router não reavalia guards numa navegação para a mesma URL. Recarregar do zero também
+    // garante que nenhum estado de componente em memória sobreviva ao logout.
+    window.location.href = '/console';
   }
 }
