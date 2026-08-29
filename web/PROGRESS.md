@@ -257,7 +257,39 @@ Espelha os checklists de `docs/PLANO-MODERNIZACAO.md`, fase por fase. Ver també
       para `/console/selecionar-tenant`, já que `ConsoleCallback` limpa o contexto de tenant
       em todo login, comportamento existente).
 - [ ] CRUDs com `p-table` + `FormBase`, paginação server-side, `StatusTag`, confirmação:
-  - [ ] Tenants
+  - [x] Tenants. `TenantList` (`p-table` lazy, paginação server-side, `StatusTag`,
+        skeleton de carregamento via `#loadingbody` + `p-skeleton`, estado vazio com ação
+        primária, estado de erro com "Tentar novamente" — os três estados obrigatórios da
+        seção 5.3 do guia) e `TenantForm` (primeiro consumidor real de `FormBase`/
+        `FormLabel`/Reactive Forms no console). Ativar/desativar: só desativar pede
+        confirmação via `ConfirmationService` nomeando o tenant e a consequência (guia 5.1);
+        ativar é direto (não é destrutivo). `code` fica desabilitado (não escondido, guia
+        5.2) em modo edição — é imutável após a criação.
+        **Extensão em `FormBase`** (`shared/components/form-base/form-base.ts`): a nota de
+        compatibilidade da Fase 5 apontava duas saídas — renomear rotas para
+        `cadastro`/`edicao` ou passar o modo explicitamente. Rotas (`novo`/`editar`) não
+        foram renomeadas para não quebrar `tenant-context.guard`, os testes existentes do
+        `Topbar` e as demais telas do console ainda não migradas — em vez disso,
+        `isEditMode`/`isCreateMode`/`isViewMode` agora também leem `route.data['formMode']`
+        (prioridade entre dialogData/data/URL), declarado em `app.routes.ts` nas rotas
+        `tenants/novo` (`formMode: 'cadastro'`) e `tenants/:id/editar`
+        (`formMode: 'edicao'`). Sistemas/Perfis/Usuários/Vínculos podem reusar o mesmo padrão
+        quando forem migrados.
+        16 testes novos (`TenantList`, `TenantForm`, `FormBase`). `npm run build` e
+        `npm test` verdes (151/151).
+        Smoke test manual completo: listagem com dado real (`StatusTag` "Ativo"/"Inativo"),
+        confirmação de desativação nomeando o tenant certo, criação de um tenant de teste
+        (toast de sucesso), edição com `código` visivelmente desabilitado e valor carregado,
+        ativar/desativar de verdade sem confirmação/com confirmação respectivamente. Sem
+        erros no console.
+        **Achado à parte, não é bug desta rodada**: com o `access_token` expirado há mais de
+        ~9 minutos mas menos de 10 (dentro do `clockSkewInSec` default da
+        `angular-oauth2-oidc`, ver nota do item "Dashboard" acima), `consoleAuthGuard` deixa
+        passar mas a API já rejeita com 401 de verdade — a tela (`TenantList`) tratou isso
+        corretamente como o estado de erro com "Tentar novamente" (não um crash), mas o
+        ideal seria essa janela de ~10 min não existir. Não mexi no `clockSkewInSec` porque
+        afeta `consoleAuthGuard` e todo o app, não só esta tela — decisão de produto fora do
+        escopo deste item.
   - [ ] Sistemas (redirect URIs, rotação de secret com `CopyField`)
   - [ ] Perfis
   - [ ] Usuários (reset de senha administrativo)

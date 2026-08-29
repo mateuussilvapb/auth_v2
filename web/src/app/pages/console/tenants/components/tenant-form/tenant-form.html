@@ -1,26 +1,24 @@
-<div class="console-page">
-  <h1>{{ isEditing ? 'Editar tenant' : 'Novo tenant' }}</h1>
+<div class="flex flex-column gap-4" style="max-width: 480px">
+  <h1 class="text-h1 m-0">{{ isEditMode() ? 'Editar tenant' : 'Novo tenant' }}</h1>
 
-  @if (loading()) {
-    <p>Carregando...</p>
-  } @else {
-    <form (ngSubmit)="submit()" #tenantForm="ngForm">
-      @if (!isEditing) {
-        <label for="code">Código</label>
-        <input id="code" name="code" type="text" [(ngModel)]="code" required />
-      }
+  <form [formGroup]="form" (ngSubmit)="submit()" class="flex flex-column gap-3">
+    <app-form-label for="code" label="Código" [control]="form.controls['code']">
+      <input id="code" type="text" pInputText formControlName="code" class="w-full" />
+    </app-form-label>
 
-      <label for="name">Nome</label>
-      <input id="name" name="name" type="text" [(ngModel)]="name" required />
+    <app-form-label for="name" label="Nome" [control]="form.controls['name']">
+      <input id="name" type="text" pInputText formControlName="name" class="w-full" />
+    </app-form-label>
 
-      @if (errorMessage()) {
-        <p class="error" role="alert">{{ errorMessage() }}</p>
-      }
-
-      <button type="submit" [disabled]="tenantForm.invalid || submitting()">
-        {{ submitting() ? 'Salvando...' : 'Salvar' }}
-      </button>
-      <a [routerLink]="['/console/tenants']">Cancelar</a>
-    </form>
-  }
+    <div class="flex gap-2 mt-2">
+      <p-button
+        type="submit"
+        label="Salvar"
+        severity="primary"
+        [disabled]="form.invalid || submitting()"
+        [loading]="submitting()"
+      />
+      <p-button type="button" label="Cancelar" severity="secondary" [outlined]="true" (onClick)="cancel()" />
+    </div>
+  </form>
 </div>

@@ -1,46 +1,69 @@
-<div class="console-page">
-  <h1>Tenants</h1>
-  <a [routerLink]="['/console/tenants/novo']">Novo tenant</a>
-
+<app-layout-base-pages title="Tenants" buttonActionLabel="Novo tenant" (actionButtonClick)="goToCreate()">
   @if (errorMessage()) {
-    <p class="error" role="alert">{{ errorMessage() }}</p>
-  }
-
-  @if (loading()) {
-    <p>Carregando...</p>
+    <div class="flex flex-column align-items-start gap-3 p-4 border-1 surface-border border-round">
+      <span class="text-body" role="alert">{{ errorMessage() }}</span>
+      <p-button label="Tentar novamente" severity="secondary" (onClick)="load(page())" />
+    </div>
   } @else {
-    <table>
-      <thead>
+    <p-table
+      [value]="tenants()"
+      [lazy]="true"
+      [paginator]="true"
+      [rows]="pageSize"
+      [totalRecords]="totalRecords()"
+      [loading]="loading()"
+      (onPage)="onPage($event)"
+      dataKey="id"
+    >
+      <ng-template #header>
         <tr>
-          <th>Código</th>
-          <th>Nome</th>
-          <th>Status</th>
-          <th></th>
+          <th scope="col">Código</th>
+          <th scope="col">Nome</th>
+          <th scope="col">Status</th>
+          <th scope="col"></th>
         </tr>
-      </thead>
-      <tbody>
-        @for (tenant of tenants(); track tenant.id) {
+      </ng-template>
+      <ng-template #body let-tenant>
+        <tr>
+          <td class="font-mono">{{ tenant.code }}</td>
+          <td>{{ tenant.name }}</td>
+          <td><app-status-tag [status]="tenant.status" /></td>
+          <td>
+            <div class="flex gap-2 justify-content-end flex-wrap">
+              <p-button label="Editar" size="small" [text]="true" (onClick)="goToEdit(tenant)" />
+              <p-button label="Sistemas" size="small" [text]="true" (onClick)="goToSystems(tenant)" />
+              <p-button label="Usuários" size="small" [text]="true" (onClick)="goToUsers(tenant)" />
+              <p-button
+                [label]="tenant.status === 'ACTIVE' ? 'Desativar' : 'Ativar'"
+                size="small"
+                [text]="true"
+                [severity]="tenant.status === 'ACTIVE' ? 'danger' : 'secondary'"
+                (onClick)="toggleStatus(tenant)"
+              />
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+      <ng-template #loadingbody>
+        @for (row of skeletonRows; track row) {
           <tr>
-            <td>{{ tenant.code }}</td>
-            <td>{{ tenant.name }}</td>
-            <td>{{ tenant.status }}</td>
-            <td>
-              <a [routerLink]="['/console/tenants', tenant.id, 'editar']">Editar</a>
-              <a [routerLink]="['/console/tenants', tenant.id, 'systems']">Sistemas</a>
-              <a [routerLink]="['/console/tenants', tenant.id, 'users']">Usuários</a>
-              <button type="button" (click)="toggleStatus(tenant)">
-                {{ tenant.status === 'ACTIVE' ? 'Desativar' : 'Ativar' }}
-              </button>
-            </td>
+            <td><p-skeleton width="6rem" /></td>
+            <td><p-skeleton width="10rem" /></td>
+            <td><p-skeleton width="5rem" /></td>
+            <td><p-skeleton width="10rem" /></td>
           </tr>
         }
-      </tbody>
-    </table>
-
-    <div class="pagination">
-      <button type="button" [disabled]="page() === 0" (click)="previousPage()">Anterior</button>
-      <span>Página {{ page() + 1 }} de {{ totalPages() || 1 }}</span>
-      <button type="button" [disabled]="page() + 1 >= totalPages()" (click)="nextPage()">Próxima</button>
-    </div>
+      </ng-template>
+      <ng-template #emptymessage>
+        <tr>
+          <td colspan="4">
+            <div class="flex flex-column align-items-center gap-3 py-5">
+              <span class="text-body text-color-secondary">Nenhum tenant cadastrado.</span>
+              <p-button label="Criar o primeiro" severity="primary" (onClick)="goToCreate()" />
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
   }
-</div>
+</app-layout-base-pages>

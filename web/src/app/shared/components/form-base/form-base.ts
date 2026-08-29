@@ -30,18 +30,32 @@ export class FormBase extends ListBase {
 
   isDialogMode = computed<boolean>(() => this.dialogRef !== null);
 
+  // Rotas cujo segmento não bate com cadastro/edicao (ex: tenants/novo, tenants/:id/editar —
+  // nota de compatibilidade da Fase 5 do PROGRESS.md) declaram `data: { formMode: ... }` em
+  // vez de depender do substring da URL.
+  private readonly routeMode = computed<FormDialogData['mode'] | undefined>(
+    () => this.route.snapshot.data['formMode'] as FormDialogData['mode'] | undefined,
+  );
+
   isEditMode = computed<boolean>(
-    () => this.dialogData()?.mode === 'edicao' || (!this.dialogData() && this.router.url.includes('edicao')),
+    () =>
+      this.dialogData()?.mode === 'edicao' ||
+      this.routeMode() === 'edicao' ||
+      (!this.dialogData() && !this.routeMode() && this.router.url.includes('edicao')),
   );
 
   isCreateMode = computed<boolean>(
-    () => this.dialogData()?.mode === 'cadastro' || (!this.dialogData() && this.router.url.includes('cadastro')),
+    () =>
+      this.dialogData()?.mode === 'cadastro' ||
+      this.routeMode() === 'cadastro' ||
+      (!this.dialogData() && !this.routeMode() && this.router.url.includes('cadastro')),
   );
 
   isViewMode = computed<boolean>(
     () =>
       this.dialogData()?.mode === 'visualizacao' ||
-      (!this.dialogData() && this.router.url.includes('visualizacao')),
+      this.routeMode() === 'visualizacao' ||
+      (!this.dialogData() && !this.routeMode() && this.router.url.includes('visualizacao')),
   );
 
   pageId = computed<string>(() => this.dialogData()?.id ?? this.route.snapshot.paramMap.get('id') ?? '');

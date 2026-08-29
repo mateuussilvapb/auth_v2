@@ -76,13 +76,13 @@ export const routes: Routes = [
       },
       {
         path: 'tenants/novo',
-        data: { critical: true },
+        data: { critical: true, formMode: 'cadastro' },
         loadComponent: () =>
           import('./pages/console/tenants/components/tenant-form/tenant-form').then((m) => m.TenantForm),
       },
       {
         path: 'tenants/:id/editar',
-        data: { critical: true },
+        data: { critical: true, formMode: 'edicao' },
         loadComponent: () =>
           import('./pages/console/tenants/components/tenant-form/tenant-form').then((m) => m.TenantForm),
       },

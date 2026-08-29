@@ -22,7 +22,7 @@ describe('FormBase (sem diálogo, modo via URL)', () => {
         ConfirmationService,
         MessageServicePG,
         DialogService,
-        { provide: ActivatedRoute, useValue: { snapshot: { paramMap: new Map() } } },
+        { provide: ActivatedRoute, useValue: { snapshot: { paramMap: new Map(), data: {} } } },
       ],
     });
     router = TestBed.inject(Router);
@@ -72,6 +72,28 @@ describe('FormBase (sem diálogo, modo via URL)', () => {
   });
 });
 
+describe('FormBase (modo via data.formMode da rota)', () => {
+  it('detecta o modo por data.formMode quando o segmento da URL não é cadastro/edicao', async () => {
+    TestBed.configureTestingModule({
+      providers: [
+        provideRouter([{ path: '**', component: TestBlankComponent }]),
+        ConfirmationService,
+        MessageServicePG,
+        DialogService,
+        { provide: ActivatedRoute, useValue: { snapshot: { paramMap: new Map([['id', '9']]), data: { formMode: 'edicao' } } } },
+      ],
+    });
+    const router = TestBed.inject(Router);
+    await router.navigateByUrl('/tenants/9/editar');
+
+    const base = TestBed.runInInjectionContext(() => new TestFormBase());
+
+    expect(base.isEditMode()).toBe(true);
+    expect(base.isCreateMode()).toBe(false);
+    expect(base.pageId()).toBe('9');
+  });
+});
+
 describe('FormBase (modo diálogo)', () => {
   it('lê o modo/id dos dados do diálogo em vez da URL', () => {
     const dialogRefStub = {} as DynamicDialogRef;
@@ -86,7 +108,7 @@ describe('FormBase (modo diálogo)', () => {
         MessageServicePG,
         { provide: DialogService, useValue: dialogServiceStub },
         { provide: DynamicDialogRef, useValue: dialogRefStub },
-        { provide: ActivatedRoute, useValue: { snapshot: { paramMap: new Map() } } },
+        { provide: ActivatedRoute, useValue: { snapshot: { paramMap: new Map(), data: {} } } },
       ],
     });
 
@@ -109,7 +131,7 @@ describe('FormBase (modo diálogo)', () => {
         MessageServicePG,
         { provide: DialogService, useValue: dialogServiceStub },
         { provide: DynamicDialogRef, useValue: dialogRefStub },
-        { provide: ActivatedRoute, useValue: { snapshot: { paramMap: new Map() } } },
+        { provide: ActivatedRoute, useValue: { snapshot: { paramMap: new Map(), data: {} } } },
       ],
     });
 
