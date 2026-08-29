@@ -1,3 +1,5 @@
+name: auth-server-v2
+
 services:
   postgres:
     image: postgres:16-alpine
