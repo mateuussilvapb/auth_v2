@@ -145,6 +145,23 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./pages/console/bindings/components/user-bindings/user-bindings').then((m) => m.UserBindings),
       },
+      {
+        // Fora do tenantContextGuard, mesmo racional de 'tenants': gestão de platform admins
+        // não é escopada a nenhum tenant.
+        path: 'platform-admins',
+        loadComponent: () =>
+          import('./pages/console/platform-admins/components/platform-admin-list/platform-admin-list').then(
+            (m) => m.PlatformAdminList,
+          ),
+      },
+      {
+        path: 'platform-admins/novo',
+        data: { critical: true, formMode: 'cadastro' },
+        loadComponent: () =>
+          import('./pages/console/platform-admins/components/platform-admin-form/platform-admin-form').then(
+            (m) => m.PlatformAdminForm,
+          ),
+      },
     ],
   },
 ];

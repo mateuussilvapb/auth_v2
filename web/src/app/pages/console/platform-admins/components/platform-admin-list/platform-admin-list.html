@@ -1,0 +1,69 @@
+<app-layout-base-pages title="Platform Admins" buttonActionLabel="Novo platform admin" (actionButtonClick)="goToCreate()">
+  @if (errorMessage()) {
+    <div class="flex flex-column align-items-start gap-3 p-4 border-1 surface-border border-round">
+      <span class="text-body" role="alert">{{ errorMessage() }}</span>
+      <p-button label="Tentar novamente" severity="secondary" (onClick)="load(page())" />
+    </div>
+  } @else {
+    <p-table
+      [value]="admins()"
+      [lazy]="true"
+      [paginator]="true"
+      [rows]="pageSize"
+      [totalRecords]="totalRecords()"
+      [loading]="loading()"
+      (onPage)="onPage($event)"
+      dataKey="id"
+    >
+      <ng-template #header>
+        <tr>
+          <th scope="col">Usuário</th>
+          <th scope="col">Nome</th>
+          <th scope="col">E-mail</th>
+          <th scope="col">Status</th>
+          <th scope="col"></th>
+        </tr>
+      </ng-template>
+      <ng-template #body let-admin>
+        <tr>
+          <td class="font-mono">{{ admin.username }}</td>
+          <td>{{ admin.name }}</td>
+          <td>{{ admin.email }}</td>
+          <td><app-status-tag [status]="admin.status" /></td>
+          <td>
+            <div class="flex gap-2 justify-content-end flex-wrap">
+              <p-button
+                [label]="admin.status === 'ACTIVE' ? 'Desativar' : 'Ativar'"
+                size="small"
+                [text]="true"
+                [severity]="admin.status === 'ACTIVE' ? 'danger' : 'secondary'"
+                (onClick)="toggleStatus(admin)"
+              />
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+      <ng-template #loadingbody>
+        @for (row of skeletonRows; track row) {
+          <tr>
+            <td><p-skeleton width="8rem" /></td>
+            <td><p-skeleton width="8rem" /></td>
+            <td><p-skeleton width="10rem" /></td>
+            <td><p-skeleton width="5rem" /></td>
+            <td><p-skeleton width="8rem" /></td>
+          </tr>
+        }
+      </ng-template>
+      <ng-template #emptymessage>
+        <tr>
+          <td colspan="5">
+            <div class="flex flex-column align-items-center gap-3 py-5">
+              <span class="text-body text-color-secondary">Nenhum platform admin cadastrado.</span>
+              <p-button label="Criar o primeiro" severity="primary" (onClick)="goToCreate()" />
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  }
+</app-layout-base-pages>

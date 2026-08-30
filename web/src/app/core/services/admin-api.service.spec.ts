@@ -184,6 +184,24 @@ describe('AdminApiService', () => {
     req.flush({ id: '10', userId: '2', systemId: '3', tenantId: '1', status: 'BLOCKED' });
   });
 
+  it('deve criar platform admin', () => {
+    service
+      .createPlatformAdmin({ username: 'novo_admin', email: 'novo@example.com', password: 'senhaForte123', name: 'Novo Admin' })
+      .subscribe();
+
+    const req = httpMock.expectOne((r) => r.url.endsWith('/admin/api/v1/platform-admins'));
+    expect(req.request.method).toBe('POST');
+    req.flush({ id: '1', username: 'novo_admin', email: 'novo@example.com', name: 'Novo Admin', status: 'ACTIVE' });
+  });
+
+  it('deve chamar PATCH .../platform-admins/:id/status', () => {
+    service.updatePlatformAdminStatus('1', { status: 'INACTIVE' }).subscribe();
+
+    const req = httpMock.expectOne((r) => r.url.endsWith('/admin/api/v1/platform-admins/1/status'));
+    expect(req.request.method).toBe('PATCH');
+    req.flush({ id: '1', username: 'novo_admin', email: 'novo@example.com', name: 'Novo Admin', status: 'INACTIVE' });
+  });
+
   it('deve vincular perfil a um vínculo usuário-sistema existente', () => {
     service.bindProfileToUserSystem('1', '10', { profileId: '5' }).subscribe();
 

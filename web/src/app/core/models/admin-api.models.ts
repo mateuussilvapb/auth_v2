@@ -67,6 +67,21 @@ export interface RotateSecretRequest {
   newSecret: string;
 }
 
+export interface PlatformAdminResponse {
+  id: string;
+  username: string;
+  email: string;
+  name: string;
+  status: string;
+}
+
+export interface CreatePlatformAdminRequest {
+  username: string;
+  email: string;
+  password: string;
+  name: string;
+}
+
 export interface SystemProfileResponse {
   id: string;
   systemId: string;

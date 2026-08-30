@@ -35,6 +35,14 @@ describe('Sidebar', () => {
     expect((link.textContent as string)).toContain('Tenants');
   });
 
+  it('exibe o link para Platform Admins independente de tenant selecionado', async () => {
+    await setup();
+
+    const link = fixture.nativeElement.querySelector('a[href="/console/platform-admins"]');
+    expect(link).not.toBeNull();
+    expect((link.textContent as string)).toContain('Platform Admins');
+  });
+
   it('sem tenant selecionado, não exibe Sistemas nem Usuários', async () => {
     await setup();
 

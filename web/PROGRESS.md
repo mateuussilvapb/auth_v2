@@ -384,7 +384,33 @@ Espelha os checklists de `docs/PLANO-MODERNIZACAO.md`, fase por fase. Ver també
         (aparece na sublista com `StatusTag`), confirmação de bloqueio nomeando o perfil
         certo. Sem erros de aplicação no console (só ruído de uma extensão do Chrome, não
         relacionado).
-  - [ ] Platform Admins (tela nova)
+  - [x] Platform Admins (tela nova). Fecha a lacuna do plano (seção 5, Fase 7) — a
+        admin-api expõe `POST`/`GET`/`PATCH .../status` para platform admin desde a Fase 8
+        do backend, mas nenhuma tela do console o consumia. Mesmo padrão de `TenantList`
+        (única entidade com item de sidebar tenant-independente até então): `PlatformAdminList`
+        (`p-table`, `StatusTag`, três estados, `Ativar`/`Desativar` binário — `PlatformAdminStatus`
+        só tem ACTIVE/INACTIVE) + `PlatformAdminForm` **só criação** — a admin-api não tem
+        `PUT`/`GET :id` para platform admin, então não há tela de edição (nem faria sentido:
+        nada além do status é editável). Sidebar ganhou o item "Platform Admins", fora do
+        `@if (selectedTenant())`, junto de Tenants.
+        21 testes novos. `npm run build` e `npm test` verdes (197/197).
+        **Achado no smoke test, não é bug de código**: o `ng serve` (Vite dev server) que
+        vinha rodando desde o início desta sessão (múltiplas rodadas de build/test em
+        paralelo) parou de refletir mudanças de arquivo — a rota nova retornava
+        `NG04002: Cannot match any routes` mesmo com `npm run build` passando limpo e a rota
+        presente no `app.routes.ts`. Reiniciar o processo (`Stop-Process` + `npm run start`)
+        resolveu; provavelmente o watcher do Vite travou depois de rodar por muito tempo com
+        muita atividade de arquivo. Vale reiniciar o dev server se uma rota/tela nova não
+        aparecer mesmo com o build passando.
+        Smoke test manual completo: listagem com os dois platform admins reais, criação de
+        um platform admin de teste, confirmação de desativação nomeando a conta certa,
+        desativar/ativar de verdade. Sem erros no console.
+        **Risco identificado, não é bug**: desativar o único (ou último) platform admin
+        ativo travaria o acesso a todo o console — a admin-api não expõe nenhuma checagem de
+        "não desativar o último admin". A confirmação já nomeia a consequência
+        ("não conseguirá mais acessar o console"), mas não impede o caso extremo. Fora do
+        escopo desta skill (regra de negócio do backend); vale registrar como item de
+        backlog do backend.
 - [ ] Dark mode com persistência de preferência.
 
 ---

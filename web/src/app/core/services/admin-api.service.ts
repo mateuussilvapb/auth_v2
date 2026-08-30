@@ -9,9 +9,11 @@ import {
   BindSystemRequest,
   CreateSystemProfileRequest,
   CreateSystemRequest,
+  CreatePlatformAdminRequest,
   CreateTenantRequest,
   CreateUserRequest,
   Page,
+  PlatformAdminResponse,
   RedirectUriRequest,
   RotateSecretRequest,
   SystemProfileResponse,
@@ -244,5 +246,24 @@ export class AdminApiService {
       request,
       { headers: this.authHeaders() },
     );
+  }
+
+  listPlatformAdmins(page: number, size: number): Observable<Page<PlatformAdminResponse>> {
+    return this.http.get<Page<PlatformAdminResponse>>(`${this.baseUrl}/platform-admins`, {
+      headers: this.authHeaders(),
+      params: { page, size },
+    });
+  }
+
+  createPlatformAdmin(request: CreatePlatformAdminRequest): Observable<PlatformAdminResponse> {
+    return this.http.post<PlatformAdminResponse>(`${this.baseUrl}/platform-admins`, request, {
+      headers: this.authHeaders(),
+    });
+  }
+
+  updatePlatformAdminStatus(id: string, request: UpdateStatusRequest): Observable<PlatformAdminResponse> {
+    return this.http.patch<PlatformAdminResponse>(`${this.baseUrl}/platform-admins/${id}/status`, request, {
+      headers: this.authHeaders(),
+    });
   }
 }
