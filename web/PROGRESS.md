@@ -364,7 +364,26 @@ Espelha os checklists de `docs/PLANO-MODERNIZACAO.md`, fase por fase. Ver també
         `StatusTag` "Bloqueado" em vermelho, só ação "Desbloquear" visível → desbloquear sem
         confirmação → edição com `usuário` desabilitado e sem campo de senha → redefinir
         senha disparando o e-mail com toast de confirmação. Sem erros no console.
-  - [ ] Vínculos
+  - [x] Vínculos (usuário → sistemas → perfis). Tela master-detail: `p-table` com row
+        expansion nativo do PrimeNG (`[expandedRowKeys]` + `[pRowToggler]` + template
+        `#expandedrow`) para os vínculos usuário↔sistema, cada linha expande mostrando os
+        vínculos de perfil daquele sistema aninhados dentro. Sem paginação server-side (mesmo
+        racional de `ProfileList`/`SystemForm`: poucos sistemas por tenant, poucos perfis por
+        sistema — os dados já vinham carregados via `forkJoin` desde antes da Fase 7).
+        `BindingStatus` (`api/.../domain/model/binding/BindingStatus.java`) tem os mesmos 3
+        valores de `UserStatus`, só com `INACTIVE` em vez de `DISABLED` — reusa o mesmo
+        padrão de transições por status de `UserList` (ACTIVE oferece Bloquear/Desativar com
+        confirmação nomeando o sistema ou o perfil; BLOCKED/INACTIVE só a reativação, sem
+        confirmação), tanto para o vínculo usuário↔sistema quanto para vínculo↔perfil.
+        `p-select` (não Reactive Forms — não é um formulário de entidade, é uma tela de
+        ações) para escolher o próximo sistema/perfil a vincular; `availableSystemsToBind()`/
+        `availableProfilesToBind()` escondem da lista o que já está vinculado.
+        11 testes novos/reescritos. `npm run build` e `npm test` verdes (185/185).
+        Smoke test manual: vincular a um novo sistema (toast, some da lista de "vincular"),
+        expandir a linha revelando "Nenhum perfil vinculado." + seletor, vincular um perfil
+        (aparece na sublista com `StatusTag`), confirmação de bloqueio nomeando o perfil
+        certo. Sem erros de aplicação no console (só ruído de uma extensão do Chrome, não
+        relacionado).
   - [ ] Platform Admins (tela nova)
 - [ ] Dark mode com persistência de preferência.
 

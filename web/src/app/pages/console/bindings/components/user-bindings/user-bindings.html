@@ -1,62 +1,140 @@
-<div class="console-page">
-  <h1>Vínculos do usuário</h1>
-
+<app-layout-base-pages title="Vínculos do usuário">
   @if (errorMessage()) {
-    <p class="error" role="alert">{{ errorMessage() }}</p>
-  }
-
-  @if (loading()) {
-    <p>Carregando...</p>
+    <div class="flex flex-column align-items-start gap-3 p-4 border-1 surface-border border-round">
+      <span class="text-body" role="alert">{{ errorMessage() }}</span>
+      <p-button label="Tentar novamente" severity="secondary" (onClick)="load()" />
+    </div>
+  } @else if (loading()) {
+    <div class="flex flex-column gap-2">
+      <p-skeleton height="2.5rem" />
+      <p-skeleton height="2.5rem" />
+      <p-skeleton height="2.5rem" />
+    </div>
   } @else {
-    <h2>Vincular a um novo sistema</h2>
-    <select [(ngModel)]="newSystemId" name="newSystemId">
-      <option [ngValue]="null">Selecione um sistema...</option>
-      @for (system of availableSystems(); track system.id) {
-        <option [ngValue]="system.id">{{ system.name }} ({{ system.clientId }})</option>
-      }
-    </select>
-    <button type="button" (click)="bindToSystem()" [disabled]="newSystemId === null">Vincular</button>
-
-    <h2>Sistemas vinculados</h2>
-    @for (binding of bindings(); track binding.id) {
-      <div class="binding-card">
-        <h3>{{ systemName(binding.systemId) }}</h3>
-        <select
-          [value]="binding.status"
-          (change)="changeSystemBindingStatus(binding, $any($event.target).value)"
-        >
-          @for (status of systemStatuses; track status) {
-            <option [value]="status">{{ status }}</option>
-          }
-        </select>
-
-        <h4>Perfis</h4>
-        <ul>
-          @for (profileBinding of profileBindingsByUserSystem[binding.id]; track profileBinding.id) {
-            <li>
-              {{ profileCode(binding.systemId, profileBinding.systemProfileId) }}
-              <select
-                [value]="profileBinding.status"
-                (change)="changeProfileBindingStatus(binding, profileBinding, $any($event.target).value)"
-              >
-                @for (status of profileStatuses; track status) {
-                  <option [value]="status">{{ status }}</option>
-                }
-              </select>
-            </li>
-          }
-        </ul>
-
-        <select [(ngModel)]="newProfileId[binding.id]" name="newProfileId-{{ binding.id }}">
-          <option [ngValue]="null">Selecione um perfil...</option>
-          @for (profile of profilesBySystem[binding.systemId]; track profile.id) {
-            <option [ngValue]="profile.id">{{ profile.code }}</option>
-          }
-        </select>
-        <button type="button" (click)="bindProfile(binding)" [disabled]="!newProfileId[binding.id]">
-          Vincular perfil
-        </button>
+    <div class="flex align-items-end gap-2 mb-4">
+      <div class="flex flex-column gap-1">
+        <span class="text-small text-color-secondary">Vincular a um novo sistema</span>
+        <p-select
+          [options]="availableSystemsToBind()"
+          optionLabel="name"
+          optionValue="id"
+          placeholder="Selecione um sistema..."
+          [ngModel]="newSystemId"
+          (ngModelChange)="newSystemId = $event"
+          styleClass="w-20rem"
+        />
       </div>
-    }
+      <p-button label="Vincular" severity="primary" [disabled]="newSystemId === null" (onClick)="bindToSystem()" />
+    </div>
+
+    <p-table
+      [value]="bindings()"
+      dataKey="id"
+      [expandedRowKeys]="expandedRowKeys()"
+      (onRowExpand)="onRowExpand($event)"
+      (onRowCollapse)="onRowCollapse($event)"
+    >
+      <ng-template #header>
+        <tr>
+          <th scope="col" style="width: 3rem"></th>
+          <th scope="col">Sistema</th>
+          <th scope="col">Status</th>
+          <th scope="col"></th>
+        </tr>
+      </ng-template>
+      <ng-template #body let-binding>
+        <tr>
+          <td>
+            <p-button
+              type="button"
+              [pRowToggler]="binding"
+              [text]="true"
+              [icon]="expandedRowKeys()[binding.id] ? 'pi pi-chevron-down' : 'pi pi-chevron-right'"
+            />
+          </td>
+          <td>{{ systemName(binding.systemId) }}</td>
+          <td><app-status-tag [status]="binding.status" /></td>
+          <td>
+            <div class="flex gap-2 justify-content-end flex-wrap">
+              @for (action of systemStatusActions(binding); track action.target) {
+                <p-button
+                  [label]="action.label"
+                  size="small"
+                  [text]="true"
+                  [severity]="action.severity"
+                  (onClick)="changeSystemBindingStatus(binding, action)"
+                />
+              }
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+      <ng-template #expandedrow let-binding>
+        <tr>
+          <td></td>
+          <td colspan="3">
+            <div class="flex flex-column gap-3 py-2">
+              <span class="text-h3 m-0">Perfis</span>
+
+              @if (!profileBindingsByUserSystem[binding.id]?.length) {
+                <span class="text-body text-color-secondary">Nenhum perfil vinculado.</span>
+              } @else {
+                <table class="w-full">
+                  <tbody>
+                    @for (profileBinding of profileBindingsByUserSystem[binding.id]; track profileBinding.id) {
+                      <tr>
+                        <td class="font-mono py-1">{{ profileCode(binding.systemId, profileBinding.systemProfileId) }}</td>
+                        <td class="py-1"><app-status-tag [status]="profileBinding.status" /></td>
+                        <td class="py-1">
+                          <div class="flex gap-2 justify-content-end flex-wrap">
+                            @for (action of profileStatusActions(profileBinding); track action.target) {
+                              <p-button
+                                [label]="action.label"
+                                size="small"
+                                [text]="true"
+                                [severity]="action.severity"
+                                (onClick)="changeProfileBindingStatus(binding, profileBinding, action)"
+                              />
+                            }
+                          </div>
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              }
+
+              <div class="flex align-items-end gap-2">
+                <div class="flex flex-column gap-1">
+                  <span class="text-small text-color-secondary">Vincular perfil</span>
+                  <p-select
+                    [options]="availableProfilesToBind(binding)"
+                    optionLabel="code"
+                    optionValue="id"
+                    placeholder="Selecione um perfil..."
+                    [ngModel]="newProfileId[binding.id] ?? null"
+                    (ngModelChange)="newProfileId[binding.id] = $event"
+                    styleClass="w-16rem"
+                  />
+                </div>
+                <p-button
+                  label="Vincular perfil"
+                  severity="secondary"
+                  [disabled]="!newProfileId[binding.id]"
+                  (onClick)="bindProfile(binding)"
+                />
+              </div>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+      <ng-template #emptymessage>
+        <tr>
+          <td colspan="4">
+            <span class="text-body text-color-secondary">Este usuário ainda não está vinculado a nenhum sistema.</span>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
   }
-</div>
+</app-layout-base-pages>
