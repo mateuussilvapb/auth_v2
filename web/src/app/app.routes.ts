@@ -128,14 +128,14 @@ export const routes: Routes = [
       {
         path: 'tenants/:tenantId/users/novo',
         canActivate: [tenantContextGuard],
-        data: { critical: true },
+        data: { critical: true, formMode: 'cadastro' },
         loadComponent: () =>
           import('./pages/console/users/components/user-form/user-form').then((m) => m.UserForm),
       },
       {
         path: 'tenants/:tenantId/users/:id/editar',
         canActivate: [tenantContextGuard],
-        data: { critical: true },
+        data: { critical: true, formMode: 'edicao' },
         loadComponent: () =>
           import('./pages/console/users/components/user-form/user-form').then((m) => m.UserForm),
       },

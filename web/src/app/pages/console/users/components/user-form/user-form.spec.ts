@@ -1,103 +1,156 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActivatedRoute, convertToParamMap, provideRouter, Router } from '@angular/router';
+import { ActivatedRoute, Router, provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
+import { ConfirmationService, MessageService as MessageServicePG } from 'primeng/api';
+import { DialogService } from 'primeng/dynamicdialog';
 import type { Mock } from 'vitest';
 
 import { UserForm } from './user-form';
 import { AdminApiService } from '../../../../../core/services/admin-api.service';
+import { MessageService } from '../../../../../shared/services/message.service';
 import { UserResponse } from '../../../../../core/models/admin-api.models';
 
-describe('UserForm (criação)', () => {
+describe('UserForm', () => {
   let fixture: ComponentFixture<UserForm>;
-  let adminApiStub: { createUser: Mock; getUser: Mock };
+  let adminApiStub: { getUser: Mock; createUser: Mock; updateUser: Mock };
+  let router: Router;
+  let messageService: MessageService;
 
-  beforeEach(async () => {
-    adminApiStub = { createUser: vi.fn(), getUser: vi.fn() };
+  const user: UserResponse = {
+    id: '1',
+    tenantId: 't1',
+    username: 'joao_silva',
+    email: 'joao@acme.com',
+    name: 'João Silva',
+    status: 'ACTIVE',
+  };
 
-    await TestBed.configureTestingModule({
-      imports: [UserForm],
-      providers: [
-        provideRouter([{ path: '**', component: UserForm }]),
-        { provide: AdminApiService, useValue: adminApiStub },
-        { provide: ActivatedRoute, useValue: { snapshot: { paramMap: convertToParamMap({ tenantId: '1' }) } } },
-      ],
-    }).compileComponents();
-
-    fixture = TestBed.createComponent(UserForm);
-    fixture.detectChanges();
-  });
-
-  it('não deve carregar usuário nenhum (sem :id na rota)', () => {
-    expect(fixture.componentInstance.isEditing).toBe(false);
-    expect(adminApiStub.getUser).not.toHaveBeenCalled();
-  });
-
-  it('deve chamar createUser e navegar para a lista ao salvar', async () => {
-    const router = TestBed.inject(Router);
-    const navigateSpy = vi.spyOn(router, 'navigate').mockResolvedValue(true);
-    adminApiStub.createUser.mockReturnValue(of({ id: '1' } as UserResponse));
-
-    fixture.componentInstance.username = 'joao_silva';
-    fixture.componentInstance.email = 'joao@acme.com';
-    fixture.componentInstance.password = 'senhaSegura123';
-    fixture.componentInstance.name = 'João';
-    fixture.componentInstance.submit();
-
-    expect(adminApiStub.createUser).toHaveBeenCalledWith('1', {
-      username: 'joao_silva',
-      email: 'joao@acme.com',
-      password: 'senhaSegura123',
-      name: 'João',
-    });
-    expect(navigateSpy).toHaveBeenCalledWith(['/console/tenants', '1', 'users']);
-  });
-
-  it('deve mostrar erro quando a criação falha', () => {
-    adminApiStub.createUser.mockReturnValue(throwError(() => ({ error: { message: 'usuário já existe' } })));
-    fixture.componentInstance.submit();
-    expect(fixture.componentInstance.errorMessage()).toBe('usuário já existe');
-  });
-});
-
-describe('UserForm (edição)', () => {
-  let fixture: ComponentFixture<UserForm>;
-  let adminApiStub: { updateUser: Mock; getUser: Mock };
-
-  beforeEach(async () => {
+  async function setup(routeData: Record<string, unknown>, paramMap: Record<string, string> = {}): Promise<void> {
     adminApiStub = {
-      updateUser: vi.fn(),
-      getUser: vi
-        .fn()
-        .mockReturnValue(
-          of({ id: '2', tenantId: '1', username: 'joao_silva', email: 'joao@acme.com', name: 'João', status: 'ACTIVE' } as UserResponse),
-        ),
+      getUser: vi.fn().mockReturnValue(of(user)),
+      createUser: vi.fn().mockReturnValue(of(user)),
+      updateUser: vi.fn().mockReturnValue(of(user)),
     };
 
     await TestBed.configureTestingModule({
       imports: [UserForm],
       providers: [
-        provideRouter([{ path: '**', component: UserForm }]),
+        provideRouter([]),
+        ConfirmationService,
+        DialogService,
+        MessageServicePG,
         { provide: AdminApiService, useValue: adminApiStub },
-        { provide: ActivatedRoute, useValue: { snapshot: { paramMap: convertToParamMap({ tenantId: '1', id: '2' }) } } },
+        {
+          provide: ActivatedRoute,
+          useValue: { snapshot: { paramMap: new Map(Object.entries(paramMap)), data: routeData } },
+        },
       ],
     }).compileComponents();
 
+    router = TestBed.inject(Router);
+    vi.spyOn(router, 'navigate').mockResolvedValue(true);
+    messageService = TestBed.inject(MessageService);
+
     fixture = TestBed.createComponent(UserForm);
     fixture.detectChanges();
+  }
+
+  it('modo criação: exige username/senha e cria o usuário', async () => {
+    await setup({ formMode: 'cadastro' }, { tenantId: 't1' });
+
+    expect(fixture.componentInstance.isCreateMode()).toBe(true);
+    expect(fixture.componentInstance.form.get('password')).not.toBeNull();
+
+    fixture.componentInstance.form.setValue({
+      username: 'maria',
+      name: 'Maria',
+      email: 'maria@acme.com',
+      password: 'senhaForte1',
+    });
+    await fixture.componentInstance.submit();
+
+    expect(adminApiStub.createUser).toHaveBeenCalledWith('t1', {
+      username: 'maria',
+      email: 'maria@acme.com',
+      password: 'senhaForte1',
+      name: 'Maria',
+    });
+    expect(router.navigate).toHaveBeenCalledWith(['/console/tenants', 't1', 'users']);
   });
 
-  it('deve carregar o usuário existente e preencher o formulário', () => {
-    expect(fixture.componentInstance.isEditing).toBe(true);
-    expect(fixture.componentInstance.username).toBe('joao_silva');
-    expect(fixture.componentInstance.email).toBe('joao@acme.com');
+  it('modo edição: carrega o usuário, desabilita username e não tem campo de senha', async () => {
+    await setup({ formMode: 'edicao' }, { tenantId: 't1', id: '1' });
+
+    expect(fixture.componentInstance.isEditMode()).toBe(true);
+    expect(adminApiStub.getUser).toHaveBeenCalledWith('t1', '1');
+    expect(fixture.componentInstance.form.get('username')?.disabled).toBe(true);
+    expect(fixture.componentInstance.form.get('password')).toBeNull();
+    expect(fixture.componentInstance.form.getRawValue()).toEqual({
+      username: 'joao_silva',
+      name: 'João Silva',
+      email: 'joao@acme.com',
+    });
+
+    fixture.componentInstance.form.patchValue({ name: 'João S. Silva' });
+    await fixture.componentInstance.submit();
+
+    expect(adminApiStub.updateUser).toHaveBeenCalledWith('t1', '1', { name: 'João S. Silva', email: 'joao@acme.com' });
+    expect(router.navigate).toHaveBeenCalledWith(['/console/tenants', 't1', 'users']);
   });
 
-  it('deve chamar updateUser (sem username/senha) ao salvar', () => {
-    adminApiStub.updateUser.mockReturnValue(of({ id: '2' } as UserResponse));
+  it('deve mostrar erro quando falha ao carregar o usuário em modo edição', async () => {
+    adminApiStub = {
+      getUser: vi.fn().mockReturnValue(throwError(() => new Error('falhou'))),
+      createUser: vi.fn(),
+      updateUser: vi.fn(),
+    };
 
-    fixture.componentInstance.name = 'João da Silva';
-    fixture.componentInstance.submit();
+    await TestBed.configureTestingModule({
+      imports: [UserForm],
+      providers: [
+        provideRouter([]),
+        ConfirmationService,
+        DialogService,
+        MessageServicePG,
+        { provide: AdminApiService, useValue: adminApiStub },
+        {
+          provide: ActivatedRoute,
+          useValue: { snapshot: { paramMap: new Map([['tenantId', 't1'], ['id', '1']]), data: { formMode: 'edicao' } } },
+        },
+      ],
+    }).compileComponents();
 
-    expect(adminApiStub.updateUser).toHaveBeenCalledWith('1', '2', { name: 'João da Silva', email: 'joao@acme.com' });
+    messageService = TestBed.inject(MessageService);
+    const errorSpy = vi.spyOn(messageService, 'showError');
+
+    fixture = TestBed.createComponent(UserForm);
+    fixture.detectChanges();
+    await new Promise((resolve) => setTimeout(resolve));
+
+    expect(errorSpy).toHaveBeenCalledWith('Não foi possível carregar o usuário.');
+  });
+
+  it('deve mostrar a mensagem de erro da API quando falha ao salvar', async () => {
+    await setup({ formMode: 'cadastro' }, { tenantId: 't1' });
+    adminApiStub.createUser.mockReturnValue(throwError(() => ({ error: { message: 'username já em uso.' } })));
+    const errorSpy = vi.spyOn(messageService, 'showError');
+
+    fixture.componentInstance.form.setValue({
+      username: 'joao_silva',
+      name: 'João',
+      email: 'joao@acme.com',
+      password: 'senhaForte1',
+    });
+    await fixture.componentInstance.submit();
+
+    expect(errorSpy).toHaveBeenCalledWith('username já em uso.');
+  });
+
+  it('não submete quando o formulário é inválido', async () => {
+    await setup({ formMode: 'cadastro' }, { tenantId: 't1' });
+
+    await fixture.componentInstance.submit();
+
+    expect(adminApiStub.createUser).not.toHaveBeenCalled();
   });
 });

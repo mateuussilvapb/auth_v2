@@ -1,54 +1,74 @@
-<div class="console-page">
-  <h1>Usuários</h1>
-  <a [routerLink]="['/console/tenants', tenantId, 'users', 'novo']">Novo usuário</a>
-
+<app-layout-base-pages title="Usuários" buttonActionLabel="Novo usuário" (actionButtonClick)="goToCreate()">
   @if (errorMessage()) {
-    <p class="error" role="alert">{{ errorMessage() }}</p>
-  }
-  @if (infoMessage()) {
-    <p role="status">{{ infoMessage() }}</p>
-  }
-
-  @if (loading()) {
-    <p>Carregando...</p>
+    <div class="flex flex-column align-items-start gap-3 p-4 border-1 surface-border border-round">
+      <span class="text-body" role="alert">{{ errorMessage() }}</span>
+      <p-button label="Tentar novamente" severity="secondary" (onClick)="load(page())" />
+    </div>
   } @else {
-    <table>
-      <thead>
+    <p-table
+      [value]="users()"
+      [lazy]="true"
+      [paginator]="true"
+      [rows]="pageSize"
+      [totalRecords]="totalRecords()"
+      [loading]="loading()"
+      (onPage)="onPage($event)"
+      dataKey="id"
+    >
+      <ng-template #header>
         <tr>
-          <th>Usuário</th>
-          <th>E-mail</th>
-          <th>Nome</th>
-          <th>Status</th>
-          <th></th>
+          <th scope="col">Usuário</th>
+          <th scope="col">Nome</th>
+          <th scope="col">E-mail</th>
+          <th scope="col">Status</th>
+          <th scope="col"></th>
         </tr>
-      </thead>
-      <tbody>
-        @for (user of users(); track user.id) {
+      </ng-template>
+      <ng-template #body let-user>
+        <tr>
+          <td class="font-mono">{{ user.username }}</td>
+          <td>{{ user.name }}</td>
+          <td>{{ user.email }}</td>
+          <td><app-status-tag [status]="user.status" /></td>
+          <td>
+            <div class="flex gap-2 justify-content-end flex-wrap">
+              <p-button label="Editar" size="small" [text]="true" (onClick)="goToEdit(user)" />
+              <p-button label="Vínculos" size="small" [text]="true" (onClick)="goToBindings(user)" />
+              <p-button label="Redefinir senha" size="small" [text]="true" (onClick)="resetPassword(user)" />
+              @for (action of statusActionsFor(user); track action.target) {
+                <p-button
+                  [label]="action.label"
+                  size="small"
+                  [text]="true"
+                  [severity]="action.severity"
+                  (onClick)="changeStatus(user, action)"
+                />
+              }
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+      <ng-template #loadingbody>
+        @for (row of skeletonRows; track row) {
           <tr>
-            <td>{{ user.username }}</td>
-            <td>{{ user.email }}</td>
-            <td>{{ user.name }}</td>
-            <td>
-              <select [value]="user.status" (change)="changeStatus(user, $any($event.target).value)">
-                @for (status of statuses; track status) {
-                  <option [value]="status">{{ status }}</option>
-                }
-              </select>
-            </td>
-            <td>
-              <a [routerLink]="['/console/tenants', tenantId, 'users', user.id, 'editar']">Editar</a>
-              <a [routerLink]="['/console/tenants', tenantId, 'users', user.id, 'bindings']">Vínculos</a>
-              <button type="button" (click)="resetPassword(user)">Redefinir senha</button>
-            </td>
+            <td><p-skeleton width="8rem" /></td>
+            <td><p-skeleton width="8rem" /></td>
+            <td><p-skeleton width="10rem" /></td>
+            <td><p-skeleton width="5rem" /></td>
+            <td><p-skeleton width="10rem" /></td>
           </tr>
         }
-      </tbody>
-    </table>
-
-    <div class="pagination">
-      <button type="button" [disabled]="page() === 0" (click)="previousPage()">Anterior</button>
-      <span>Página {{ page() + 1 }} de {{ totalPages() || 1 }}</span>
-      <button type="button" [disabled]="page() + 1 >= totalPages()" (click)="nextPage()">Próxima</button>
-    </div>
+      </ng-template>
+      <ng-template #emptymessage>
+        <tr>
+          <td colspan="5">
+            <div class="flex flex-column align-items-center gap-3 py-5">
+              <span class="text-body text-color-secondary">Nenhum usuário cadastrado para este tenant.</span>
+              <p-button label="Criar o primeiro" severity="primary" (onClick)="goToCreate()" />
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
   }
-</div>
+</app-layout-base-pages>

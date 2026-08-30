@@ -346,7 +346,24 @@ Espelha os checklists de `docs/PLANO-MODERNIZACAO.md`, fase por fase. Ver també
         `código` desabilitado, **update funcionando** (diferente do bug de `System` do item
         anterior — confirma que o bug de `save()` é específico da entidade `System`, não
         sistêmico), confirmação de desativação nomeando o perfil certo. Sem erros no console.
-  - [ ] Usuários (reset de senha administrativo)
+  - [x] Usuários (reset de senha administrativo). Mesmo padrão de Perfis (`UserForm` usa
+        rota, com `GET .../users/{id}` de verdade). Diferença: `UserStatus` tem 3 valores
+        (ACTIVE/BLOCKED/DISABLED, seção 3.4 do plano), não um toggle binário — `UserList`
+        calcula, por linha, só as transições relevantes ao status atual
+        (`statusActionsFor()`): ACTIVE → oferece "Bloquear" e "Desativar" (ambos com
+        confirmação nomeando o usuário, guia 5.1); BLOCKED → só "Desbloquear"; DISABLED → só
+        "Ativar" (essas duas sem confirmação, por serem reativação). `StatusTag` já cobria os
+        3 valores desde a Fase 5 (guia 2.3: `BLOCKED` vermelho, `DISABLED` cinza). "Redefinir
+        senha" chama o endpoint existente direto (sem confirmação — não é destrutivo, só
+        dispara o fluxo de e-mail) e mostra toast com o e-mail de destino em vez do
+        `infoMessage` local anterior. `username` imutável — desabilitado em modo edição, sem
+        campo de senha (senha nunca é editada aqui).
+        24 testes novos (`UserList`, `UserForm`). `npm run build` e `npm test` verdes
+        (179/179).
+        Smoke test manual: criação de usuário, bloquear com confirmação nomeando o usuário →
+        `StatusTag` "Bloqueado" em vermelho, só ação "Desbloquear" visível → desbloquear sem
+        confirmação → edição com `usuário` desabilitado e sem campo de senha → redefinir
+        senha disparando o e-mail com toast de confirmação. Sem erros no console.
   - [ ] Vínculos
   - [ ] Platform Admins (tela nova)
 - [ ] Dark mode com persistência de preferência.

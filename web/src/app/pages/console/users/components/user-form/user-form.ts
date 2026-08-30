@@ -1,86 +1,105 @@
+//Angular
+import { Component, OnInit, inject } from '@angular/core';
+import { ReactiveFormsModule, Validators } from '@angular/forms';
+import { firstValueFrom } from 'rxjs';
 
-import { Component, OnInit, signal } from '@angular/core';
-import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-
+//Aplicação
+import { FormBase } from '../../../../../shared/components/form-base/form-base';
+import { FormLabel } from '../../../../../shared/components/form-label/form-label';
+import { LoadingOverlayService } from '../../../../../shared/services/loading-overlay.service';
 import { AdminApiService } from '../../../../../core/services/admin-api.service';
 import { ApiErrorResponse } from '../../../../../core/models/auth-api.models';
 
+//Externos
+import { ButtonModule } from 'primeng/button';
+import { InputTextModule } from 'primeng/inputtext';
+import { PasswordModule } from 'primeng/password';
+
 /**
  * Rotas {@code /console/tenants/:tenantId/users/novo} e
- * {@code /console/tenants/:tenantId/users/:id/editar}. {@code username} é imutável após a
- * criação (só {@code name}/{@code email} entram em {@code UpdateUserRequest}) — a senha
- * nunca é editada por aqui, só via "Redefinir senha" (fluxo de e-mail, seção 7.4).
+ * {@code /console/tenants/:tenantId/users/:id/editar} (guia de estilo, seção 5.2/7.2).
+ * {@code username} é imutável após a criação (só {@code name}/{@code email} entram em
+ * {@code UpdateUserRequest}) — fica desabilitado (não escondido, guia 5.2) em modo edição.
+ * A senha nunca é editada por aqui, só via "Redefinir senha" em {@code UserList} (fluxo de
+ * e-mail, seção 7.4) — o campo de senha inicial só existe em modo criação.
  */
 @Component({
   selector: 'app-user-form',
-  imports: [FormsModule, RouterLink],
+  imports: [ReactiveFormsModule, ButtonModule, InputTextModule, PasswordModule, FormLabel],
   templateUrl: './user-form.html',
 })
-export class UserForm implements OnInit {
+export class UserForm extends FormBase implements OnInit {
+  private readonly adminApi = inject(AdminApiService);
+  private readonly loadingOverlay = inject(LoadingOverlayService);
+
   tenantId = '';
-  userId: string | null = null;
-  username = '';
-  email = '';
-  password = '';
-  name = '';
-
-  loading = signal(false);
-  submitting = signal(false);
-  errorMessage = signal<string | null>(null);
-
-  constructor(
-    private readonly route: ActivatedRoute,
-    private readonly router: Router,
-    private readonly adminApi: AdminApiService,
-  ) {}
-
-  get isEditing(): boolean {
-    return this.userId !== null;
-  }
 
   ngOnInit(): void {
     this.tenantId = this.route.snapshot.paramMap.get('tenantId') ?? '';
-    const idParam = this.route.snapshot.paramMap.get('id');
-    if (!idParam) {
+
+    if (this.isEditMode()) {
+      this.form = this.fb.group({
+        username: this.fb.control({ value: '', disabled: true }),
+        name: this.fb.control('', { validators: [Validators.required] }),
+        email: this.fb.control('', { validators: [Validators.required, Validators.email] }),
+      });
+      this.load();
       return;
     }
 
-    this.userId = idParam;
-    this.loading.set(true);
-    this.adminApi.getUser(this.tenantId, this.userId).subscribe({
-      next: (user) => {
-        this.username = user.username;
-        this.email = user.email;
-        this.name = user.name;
-        this.loading.set(false);
-      },
-      error: () => {
-        this.errorMessage.set('Não foi possível carregar o usuário.');
-        this.loading.set(false);
-      },
+    this.form = this.fb.group({
+      username: this.fb.control('', { validators: [Validators.required] }),
+      name: this.fb.control('', { validators: [Validators.required] }),
+      email: this.fb.control('', { validators: [Validators.required, Validators.email] }),
+      password: this.fb.control('', { validators: [Validators.required, Validators.minLength(8)] }),
     });
   }
 
-  submit(): void {
-    this.errorMessage.set(null);
+  private async load(): Promise<void> {
+    try {
+      await this.loadingOverlay.wrap(async () => {
+        const user = await firstValueFrom(this.adminApi.getUser(this.tenantId, this.pageId()));
+        this.form.patchValue({ username: user.username, name: user.name, email: user.email });
+      });
+    } catch {
+      this.messageService.showError('Não foi possível carregar o usuário.');
+    }
+  }
+
+  async submit(): Promise<void> {
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      return;
+    }
+
     this.submitting.set(true);
+    const raw = this.form.getRawValue();
 
-    const request$ = this.isEditing
-      ? this.adminApi.updateUser(this.tenantId, this.userId!, { name: this.name, email: this.email })
-      : this.adminApi.createUser(this.tenantId, {
-          username: this.username,
-          email: this.email,
-          password: this.password,
-          name: this.name,
-        });
+    try {
+      if (this.isEditMode()) {
+        await firstValueFrom(this.adminApi.updateUser(this.tenantId, this.pageId(), { name: raw.name!, email: raw.email! }));
+        this.messageService.showSuccess('Usuário atualizado.');
+      } else {
+        await firstValueFrom(
+          this.adminApi.createUser(this.tenantId, {
+            username: raw.username!,
+            email: raw.email!,
+            password: raw.password!,
+            name: raw.name!,
+          }),
+        );
+        this.messageService.showSuccess('Usuário criado.');
+      }
+      this.finalizar(undefined, ['/console/tenants', this.tenantId, 'users']);
+    } catch (error) {
+      const apiError = error as { error?: ApiErrorResponse };
+      this.messageService.showError(apiError.error?.message ?? 'Não foi possível salvar o usuário.');
+    } finally {
+      this.submitting.set(false);
+    }
+  }
 
-    request$.subscribe({
-      next: () => this.router.navigate(['/console/tenants', this.tenantId, 'users']),
-      error: (error: { error?: ApiErrorResponse }) => {
-        this.submitting.set(false);
-        this.errorMessage.set(error.error?.message ?? 'Não foi possível salvar o usuário.');
-      },
-    });
+  cancel(): void {
+    this.finalizar(undefined, ['/console/tenants', this.tenantId, 'users']);
   }
 }
