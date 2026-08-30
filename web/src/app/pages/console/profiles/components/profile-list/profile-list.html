@@ -1,49 +1,58 @@
-<div class="console-page">
-  <h1>Perfis</h1>
-
+<app-layout-base-pages title="Perfis" buttonActionLabel="Novo perfil" (actionButtonClick)="goToCreate()">
   @if (errorMessage()) {
-    <p class="error" role="alert">{{ errorMessage() }}</p>
-  }
-
-  @if (loading()) {
-    <p>Carregando...</p>
+    <div class="flex flex-column align-items-start gap-3 p-4 border-1 surface-border border-round">
+      <span class="text-body" role="alert">{{ errorMessage() }}</span>
+      <p-button label="Tentar novamente" severity="secondary" (onClick)="load()" />
+    </div>
   } @else {
-    <table>
-      <thead>
+    <p-table [value]="profiles()" [loading]="loading()" dataKey="id">
+      <ng-template #header>
         <tr>
-          <th>Código</th>
-          <th>Descrição</th>
-          <th>Status</th>
-          <th></th>
+          <th scope="col">Código</th>
+          <th scope="col">Descrição</th>
+          <th scope="col">Status</th>
+          <th scope="col"></th>
         </tr>
-      </thead>
-      <tbody>
-        @for (profile of profiles(); track profile.id) {
+      </ng-template>
+      <ng-template #body let-profile>
+        <tr>
+          <td class="font-mono">{{ profile.code }}</td>
+          <td>{{ profile.description || '—' }}</td>
+          <td><app-status-tag [status]="profile.status" /></td>
+          <td>
+            <div class="flex gap-2 justify-content-end flex-wrap">
+              <p-button label="Editar" size="small" [text]="true" (onClick)="goToEdit(profile)" />
+              <p-button
+                [label]="profile.status === 'ACTIVE' ? 'Desativar' : 'Ativar'"
+                size="small"
+                [text]="true"
+                [severity]="profile.status === 'ACTIVE' ? 'danger' : 'secondary'"
+                (onClick)="toggleStatus(profile)"
+              />
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+      <ng-template #loadingbody>
+        @for (row of skeletonRows; track row) {
           <tr>
-            <td>{{ profile.code }}</td>
-            <td>{{ profile.description }}</td>
-            <td>{{ profile.status }}</td>
-            <td>
-              <button type="button" (click)="toggleStatus(profile)">
-                {{ profile.status === 'ACTIVE' ? 'Desativar' : 'Ativar' }}
-              </button>
-            </td>
+            <td><p-skeleton width="6rem" /></td>
+            <td><p-skeleton width="10rem" /></td>
+            <td><p-skeleton width="5rem" /></td>
+            <td><p-skeleton width="8rem" /></td>
           </tr>
         }
-      </tbody>
-    </table>
-
-    <h2>Novo perfil</h2>
-    <form (ngSubmit)="create()" #profileForm="ngForm">
-      <label for="code">Código</label>
-      <input id="code" name="code" type="text" [(ngModel)]="newCode" required />
-
-      <label for="description">Descrição</label>
-      <input id="description" name="description" type="text" [(ngModel)]="newDescription" />
-
-      <button type="submit" [disabled]="profileForm.invalid || submitting()">
-        {{ submitting() ? 'Salvando...' : 'Adicionar' }}
-      </button>
-    </form>
+      </ng-template>
+      <ng-template #emptymessage>
+        <tr>
+          <td colspan="4">
+            <div class="flex flex-column align-items-center gap-3 py-5">
+              <span class="text-body text-color-secondary">Nenhum perfil cadastrado para este sistema.</span>
+              <p-button label="Criar o primeiro" severity="primary" (onClick)="goToCreate()" />
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
   }
-</div>
+</app-layout-base-pages>

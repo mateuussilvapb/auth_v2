@@ -106,6 +106,20 @@ export const routes: Routes = [
           import('./pages/console/profiles/components/profile-list/profile-list').then((m) => m.ProfileList),
       },
       {
+        path: 'systems/:systemId/profiles/novo',
+        canActivate: [tenantContextGuard],
+        data: { critical: true, formMode: 'cadastro' },
+        loadComponent: () =>
+          import('./pages/console/profiles/components/profile-form/profile-form').then((m) => m.ProfileForm),
+      },
+      {
+        path: 'systems/:systemId/profiles/:id/editar',
+        canActivate: [tenantContextGuard],
+        data: { critical: true, formMode: 'edicao' },
+        loadComponent: () =>
+          import('./pages/console/profiles/components/profile-form/profile-form').then((m) => m.ProfileForm),
+      },
+      {
         path: 'tenants/:tenantId/users',
         canActivate: [tenantContextGuard],
         loadComponent: () =>

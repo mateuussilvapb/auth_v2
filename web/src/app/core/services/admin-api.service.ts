@@ -124,6 +124,12 @@ export class AdminApiService {
     });
   }
 
+  getProfile(systemId: string, id: string): Observable<SystemProfileResponse> {
+    return this.http.get<SystemProfileResponse>(`${this.baseUrl}/systems/${systemId}/profiles/${id}`, {
+      headers: this.authHeaders(),
+    });
+  }
+
   createProfile(systemId: string, request: CreateSystemProfileRequest): Observable<SystemProfileResponse> {
     return this.http.post<SystemProfileResponse>(`${this.baseUrl}/systems/${systemId}/profiles`, request, {
       headers: this.authHeaders(),

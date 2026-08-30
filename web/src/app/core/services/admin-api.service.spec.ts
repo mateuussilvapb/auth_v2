@@ -118,6 +118,14 @@ describe('AdminApiService', () => {
     });
   });
 
+  it('deve buscar um perfil por id', () => {
+    service.getProfile('1', '2').subscribe();
+
+    const req = httpMock.expectOne((r) => r.url.endsWith('/admin/api/v1/systems/1/profiles/2'));
+    expect(req.request.method).toBe('GET');
+    req.flush({ id: '2', systemId: '1', code: 'ADMIN', description: 'Administrador', status: 'ACTIVE' });
+  });
+
   it('deve listar perfis de um sistema sem paginação', () => {
     service.listProfiles('1').subscribe();
 

@@ -331,7 +331,21 @@ Espelha os checklists de `docs/PLANO-MODERNIZACAO.md`, fase por fase. Ver també
         sessão, item anterior) não tem esse problema — o bug parece específico de `System`.
         Vale abrir como item no `PROGRESS.md`/backlog do backend; não investiguei mais fundo
         nem tentei corrigir (fora do escopo desta skill, que é só frontend).
-  - [ ] Perfis
+  - [x] Perfis. Mesmo padrão de Tenants/Sistemas (`p-table`, `StatusTag`, `LayoutBasePages`,
+        confirmação ao desativar), mas sem paginação — `GET .../profiles` não pagina no
+        backend (poucos perfis por sistema na prática). `ProfileForm` usa **rota** (não
+        diálogo) para criação e edição, diferente de `SystemForm`: aqui existe
+        `GET /admin/api/v1/systems/{systemId}/profiles/{id}` de verdade
+        (`SystemProfileController.get`), então `AdminApiService` ganhou `getProfile` e a
+        edição carrega fresco por id, igual a `TenantForm`. `code` é único por sistema
+        (`UNIQUE (systemId, code)`) e imutável — desabilitado (não escondido) em modo edição,
+        só `description` é aceito por `UpdateSystemProfileRequest`.
+        22 testes novos (`ProfileList`, `ProfileForm`, `AdminApiService.getProfile`).
+        `npm run build` e `npm test` verdes (173/173).
+        Smoke test manual: criação de perfil, edição carregando `GET .../profiles/:id` com
+        `código` desabilitado, **update funcionando** (diferente do bug de `System` do item
+        anterior — confirma que o bug de `save()` é específico da entidade `System`, não
+        sistêmico), confirmação de desativação nomeando o perfil certo. Sem erros no console.
   - [ ] Usuários (reset de senha administrativo)
   - [ ] Vínculos
   - [ ] Platform Admins (tela nova)
