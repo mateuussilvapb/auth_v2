@@ -7,19 +7,21 @@ import { filter } from 'rxjs';
 //Aplicação
 import { ConsoleAuthService } from '../../services/console-auth.service';
 import { TenantContextService } from '../../services/tenant-context.service';
+import { ThemeService } from '../../services/theme.service';
 
 //Externos
 import { ButtonModule } from 'primeng/button';
+import { TooltipModule } from 'primeng/tooltip';
 import { ConfirmationService } from 'primeng/api';
 
 /**
  * Topbar do console (guia de estilo, seção 7.1) — marca, tenant selecionado (clicável, leva
- * à troca — decisão de produto 2026-08-29) e sair. Alternador de tema entra junto do dark
- * mode (Fase 7, item pendente).
+ * à troca — decisão de produto 2026-08-29), alternador de tema ({@link ThemeService}) e
+ * sair.
  */
 @Component({
   selector: 'app-topbar',
-  imports: [RouterLink, ButtonModule],
+  imports: [RouterLink, ButtonModule, TooltipModule],
   templateUrl: './topbar.html',
 })
 export class Topbar {
@@ -27,8 +29,10 @@ export class Topbar {
   private readonly tenantContext = inject(TenantContextService);
   private readonly confirmationService = inject(ConfirmationService);
   private readonly router = inject(Router);
+  private readonly themeService = inject(ThemeService);
 
   readonly selectedTenant = this.tenantContext.selectedTenant;
+  readonly dark = this.themeService.dark;
   private readonly isCriticalScreen = signal(false);
 
   constructor() {
@@ -69,6 +73,10 @@ export class Topbar {
     }
 
     this.doChangeTenant();
+  }
+
+  toggleTheme(): void {
+    this.themeService.toggle();
   }
 
   private doChangeTenant(): void {

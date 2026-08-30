@@ -411,7 +411,39 @@ Espelha os checklists de `docs/PLANO-MODERNIZACAO.md`, fase por fase. Ver també
         ("não conseguirá mais acessar o console"), mas não impede o caso extremo. Fora do
         escopo desta skill (regra de negócio do backend); vale registrar como item de
         backlog do backend.
-- [ ] Dark mode com persistência de preferência.
+- [x] Dark mode com persistência de preferência. Resolve o ponto em aberto do plano (seção
+      5) com a decisão sugerida lá, confirmada com o usuário 2026-08-30: **console** persiste
+      a escolha explícita em `localStorage` (chave `console.theme`, alternador na topbar);
+      **telas públicas** (login, consent, esqueci-senha, reset-password) seguem só
+      `prefers-color-scheme`, sem alternador nem persistência — evita que a preferência de um
+      usuário vaze para os próximos que abrirem uma tela pública no mesmo navegador (tenants
+      distintos compartilham o mesmo domínio).
+      Novo `core/services/theme.service.ts` (`ThemeService`) — signal `dark`, resolve o
+      valor inicial de `localStorage` e cai para `matchMedia('(prefers-color-scheme:
+      dark)')` se não houver nada salvo. A classe `.app-dark`/`.app-light`
+      (`darkModeSelector: '.app-dark'` do preset PrimeNG) só existe em `<html>` **enquanto o
+      `ConsoleLayout` está montado** — aplicada no construtor via `effect()`, removida no
+      `DestroyRef.onDestroy()` — para as telas públicas nunca herdarem a escolha do console.
+      **Achado corrigido durante o smoke test manual, não estava coberto pelos testes
+      unitários**: a primeira versão só aplicava `.app-dark` (nunca `.app-light`), então
+      escolher "claro" enquanto o `.app-dark` some caía no fallback de
+      `@media (prefers-color-scheme: dark)` do `base.scss` — com o sistema operacional em
+      modo escuro, a topbar/sidebar ficavam claras (tokens do PrimeNG, que usam só a classe)
+      mas o `body` continuava escuro (minha regra de fallback não distinguia "escolhi claro"
+      de "nunca fui tocado"). Corrigido adicionando uma classe `.app-light` explícita,
+      espelhando `.app-dark` — `<html>` sempre tem exatamente uma das duas enquanto o console
+      está montado, nunca nenhuma. Registrado porque é o tipo de bug de composição CSS que só
+      aparece testando de verdade no navegador com o SO em modo escuro, não em testes
+      unitários (que não renderizam CSS real).
+      9 testes novos (`ThemeService`, mais cobertura em `Topbar`/`ConsoleLayout`).
+      `npm run build` e `npm test` verdes (204/204).
+      Smoke test manual completo (SO em modo escuro): console abriu em dark automaticamente
+      no primeiro login (sem preferência salva, seguindo o sistema); alternador trocou para
+      claro corretamente em toda a tela (topbar, sidebar, cards, botões — incluindo o bug
+      acima, encontrado e corrigido nesta mesma rodada); preferência sobreviveu a um reload
+      completo (`localStorage`); tela pública (`/esqueci-senha`) permaneceu escura
+      (`prefers-color-scheme`) mesmo com "claro" salvo para o console, confirmando o
+      isolamento. Sem erros no console do navegador.
 
 ---
 

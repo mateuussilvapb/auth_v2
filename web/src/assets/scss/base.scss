@@ -8,14 +8,30 @@
 
 body {
   transition: background 0.25s;
-}
-
-html:not(.app-dark) body {
   background: #f8fafc;
 }
 
+// Console (guia de estilo — decisão de produto 2026-08-30): `<html>` sempre ganha
+// `.app-dark` OU `.app-light` (nunca nenhuma) enquanto o `ConsoleLayout` está montado (ver
+// seu javadoc) — controle explícito do ThemeService, sobrepõe `prefers-color-scheme`. O par
+// de classes existe para que "escolhi claro" (`.app-light`) se distinga de "nunca fui
+// tocado" (nenhuma classe, telas públicas) — sem ele, escolher claro com o sistema em modo
+// escuro cairia de volta no médium query abaixo e o body continuaria escuro.
 html.app-dark body {
   background: #0b1020;
+}
+
+html.app-light body {
+  background: #f8fafc;
+}
+
+// Telas públicas (login, consent, esqueci-senha, reset-password): nunca ganham `.app-dark`
+// nem `.app-light` — seguem só a preferência do sistema, sem alternador nem persistência
+// (plano, seção 5), porque são visitadas por usuários de tenants distintos no mesmo domínio.
+@media (prefers-color-scheme: dark) {
+  html:not(.app-dark):not(.app-light) body {
+    background: #0b1020;
+  }
 }
 
 .error-color {

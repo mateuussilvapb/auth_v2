@@ -7,6 +7,15 @@
         <span>{{ tenant.code }}</span>
       </button>
     }
+    <p-button
+      [icon]="dark() ? 'pi pi-sun' : 'pi pi-moon'"
+      [text]="true"
+      severity="secondary"
+      [attr.aria-label]="dark() ? 'Mudar para tema claro' : 'Mudar para tema escuro'"
+      pTooltip="Alternar tema"
+      tooltipPosition="bottom"
+      (onClick)="toggleTheme()"
+    />
     <p-button label="Sair" icon="pi pi-sign-out" severity="secondary" [text]="true" (onClick)="logout()" />
   </div>
 </div>

@@ -7,6 +7,7 @@ import type { Mock } from 'vitest';
 import { Topbar } from './topbar';
 import { ConsoleAuthService } from '../../services/console-auth.service';
 import { TenantContextService, SelectedTenant } from '../../services/tenant-context.service';
+import { ThemeService } from '../../services/theme.service';
 
 @Component({ selector: 'app-blank', template: '' })
 class Blank {}
@@ -15,11 +16,13 @@ describe('Topbar', () => {
   let fixture: ComponentFixture<Topbar>;
   let consoleAuthStub: { logout: Mock };
   let tenantContextStub: { selectedTenant: ReturnType<typeof signal<SelectedTenant | null>>; clear: Mock };
+  let themeServiceStub: { dark: ReturnType<typeof signal<boolean>>; toggle: Mock };
   let router: Router;
 
   async function setup(): Promise<void> {
     consoleAuthStub = { logout: vi.fn() };
     tenantContextStub = { selectedTenant: signal<SelectedTenant | null>(null), clear: vi.fn() };
+    themeServiceStub = { dark: signal(false), toggle: vi.fn() };
 
     await TestBed.configureTestingModule({
       imports: [Topbar],
@@ -32,6 +35,7 @@ describe('Topbar', () => {
         ConfirmationService,
         { provide: ConsoleAuthService, useValue: consoleAuthStub },
         { provide: TenantContextService, useValue: tenantContextStub },
+        { provide: ThemeService, useValue: themeServiceStub },
       ],
     }).compileComponents();
 
@@ -105,5 +109,28 @@ describe('Topbar', () => {
 
     expect(tenantContextStub.clear).toHaveBeenCalled();
     expect(navigateSpy).toHaveBeenCalledWith(['/console/selecionar-tenant']);
+  });
+
+  it('chama ThemeService.toggle() ao clicar no alternador de tema', async () => {
+    await setup();
+    fixture = TestBed.createComponent(Topbar);
+    fixture.detectChanges();
+
+    fixture.componentInstance.toggleTheme();
+
+    expect(themeServiceStub.toggle).toHaveBeenCalled();
+  });
+
+  it('exibe o ícone de lua no tema claro e de sol no tema escuro', async () => {
+    await setup();
+    fixture = TestBed.createComponent(Topbar);
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.dark()).toBe(false);
+
+    themeServiceStub.dark.set(true);
+    fixture.detectChanges();
+
+    expect(fixture.componentInstance.dark()).toBe(true);
   });
 });
