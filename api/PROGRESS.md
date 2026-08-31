@@ -136,7 +136,22 @@ Cada fase deve estar verde nos testes antes da seguinte. Atualizado a cada item 
       domain+application): **92,52%** (1200/1297 linhas) — folga confortável acima do gate de
       80%, nenhum teste novo precisou ser escrito para fechar este item. `mvn verify` verde
       (suíte completa + ArchUnit + gate JaCoCo).
-- [ ] Teste end-to-end: criar tenant → sistema → perfis → usuário → vincular → login → validar claims
+- [x] Teste end-to-end: criar tenant → sistema → perfis → usuário → vincular → login →
+      validar claims. `EndToEndFlowIntegrationTest` (novo) automatiza o roteiro manual da
+      seção 14 (passos 3–10, já validado à mão na nota "Roteiro manual da seção 14
+      concluído" acima) — usa a **API administrativa real** (`/admin/api/v1/**`, a mesma
+      que o console Angular consome), não repositórios diretos: cria tenant, sistema,
+      perfil, usuário, vincula usuário↔sistema e usuário↔perfil, autentica
+      (`POST /api/auth/login`), completa Authorization Code + PKCE
+      (`/oauth2/authorize` → `/oauth2/token`) e decodifica o JWT emitido, validando
+      `tenant_id`/`tenant_code`/`client_id`/`username`/`email`/`sub`/`profiles` — a
+      assinatura é validada implicitamente por `jwtDecoder.decode()` (mesmo `JWKSource` de
+      `/oauth2/jwks`, que também é chamado só para confirmar que o endpoint responde 200).
+      Dois testes adicionais no mesmo arquivo, reproduzindo os passos 8 e 11 do roteiro
+      (isolamento multi-tenant é a prioridade #1 do projeto, seção 1.2): vínculo
+      usuário↔sistema cross-tenant rejeitado (422) e login rejeitado (401) com o tenant
+      desativado. 3/3 testes verdes; `mvn verify` (suíte completa + ArchUnit + gate JaCoCo)
+      verde.
 - [ ] Seed inicial: primeiro platform admin via migration com senha temporária forçando troca
 
 ## Fase 11 — Deploy AWS
