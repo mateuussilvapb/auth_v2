@@ -256,7 +256,7 @@ Espelha os checklists de `docs/PLANO-MODERNIZACAO.md`, fase por fase. Ver també
       `initCodeFlow` de verdade (sessão HTTP do backend ainda viva, reautenticou e voltou
       para `/console/selecionar-tenant`, já que `ConsoleCallback` limpa o contexto de tenant
       em todo login, comportamento existente).
-- [ ] CRUDs com `p-table` + `FormBase`, paginação server-side, `StatusTag`, confirmação:
+- [x] CRUDs com `p-table` + `FormBase`, paginação server-side, `StatusTag`, confirmação:
   - [x] Tenants. `TenantList` (`p-table` lazy, paginação server-side, `StatusTag`,
         skeleton de carregamento via `#loadingbody` + `p-skeleton`, estado vazio com ação
         primária, estado de erro com "Tentar novamente" — os três estados obrigatórios da
@@ -571,7 +571,13 @@ Espelha os checklists de `docs/PLANO-MODERNIZACAO.md`, fase por fase. Ver també
       em `PROGRESS.md`), e um mapa curto de `pages/`/`core/`/`shared/`/`assets/scss`. Links
       para `docs/GUIA-DE-ESTILO.md` e `docs/PLANO-MODERNIZACAO.md` em vez de duplicar
       conteúdo normativo já documentado lá.
-- [ ] Atualizar backend: `03-subir-ambiente-local.md` e `PROGRESS.md`.
+- [x] Atualizar backend: `03-subir-ambiente-local.md` e `PROGRESS.md`. Node ≥20/Angular 21
+      no pré-requisito e no passo 6 (`03-subir-ambiente-local.md`); nota na Fase 9 do
+      `api/PROGRESS.md` linkando para este arquivo, com os achados de backend descobertos
+      durante a modernização (bug de logout já corrigido, bug de `save()` em `System`
+      existente e `LOGIN_URL` sem override no `dev`, ambos ainda em aberto).
+
+Fase 8 completa — modernização do frontend encerrada.
 
 ---
 
