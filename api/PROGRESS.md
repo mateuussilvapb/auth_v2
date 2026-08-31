@@ -123,7 +123,19 @@ Cada fase deve estar verde nos testes antes da seguinte. Atualizado a cada item 
       necessário, todo pacote (`domain`/`application`/`adapter`) já tem código real desde a
       Fase 1; as regras agora falham de verdade se violadas. `mvn test -Dtest=ArchitectureTest`
       verde (8/8 regras).
-- [ ] Cobertura ≥ 80% no domínio e na aplicação (JaCoCo)
+- [x] Cobertura ≥ 80% no domínio e na aplicação (JaCoCo). Plugin `jacoco-maven-plugin`
+      adicionado ao `pom.xml`: `prepare-agent` (instrumentação), `report` (fase `test`) e
+      `check` (fase `verify`, gate `LINE` `COVEREDRATIO ≥ 0.80`, escopado via `<includes>`
+      a `com/mssousa/authserver/domain/**` e `com/mssousa/authserver/application/**` —
+      `adapter`/`config` ficam fora do gate desta fase, cobertos por integração/MockMvc, não
+      pelo critério de unidade de 80%). **Achado**: versão inicial `0.8.12` (a mesma travada
+      na auditoria de 2026-08-29, ver nota acima) falha com
+      `Unsupported class file major version 69` — JaCoCo 0.8.12 não suporta bytecode do
+      Java 25. Corrigido usando `0.8.15` (última disponível no Maven Central), que instrumenta
+      e analisa Java 25 sem erro. Cobertura real medida (`target/site/jacoco/jacoco.csv`,
+      domain+application): **92,52%** (1200/1297 linhas) — folga confortável acima do gate de
+      80%, nenhum teste novo precisou ser escrito para fechar este item. `mvn verify` verde
+      (suíte completa + ArchUnit + gate JaCoCo).
 - [ ] Teste end-to-end: criar tenant → sistema → perfis → usuário → vincular → login → validar claims
 - [ ] Seed inicial: primeiro platform admin via migration com senha temporária forçando troca
 
