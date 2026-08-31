@@ -478,7 +478,41 @@ Espelha os checklists de `docs/PLANO-MODERNIZACAO.md`, fase por fase. Ver també
       estado normal de dev (incluindo `LOGIN_URL=http://localhost:4200/login`, workaround já
       documentado abaixo para o bug conhecido de `authserver.frontend.login-url` sem
       override no profile `dev`).
-- [ ] Roteiro E2E manual completo.
+- [x] Roteiro E2E manual completo. Fluxo ponta a ponta contra o backend real (dev,
+      `localhost:4200`/`:8080`), tudo criado do zero pelo console: tenant `e2eroteiro`
+      ("E2E Roteiro"), sistema público `E2E_ROTEIRO_SYS`, perfil `E2E_PROFILE`, usuário
+      `e2e_user` vinculado ao sistema e ao perfil. PKCE completo como `e2e_user`
+      (`code_verifier`/`code_challenge` S256 gerados via `crypto.subtle` no console do
+      navegador) contra `/oauth2/authorize` → login com a marca do tenant correta →
+      `/oauth2/token` → claims do JWT validadas: `tenant_id`/`tenant_code` batendo com o
+      tenant criado, `sub` com o id do usuário, `profiles: ["E2E_PROFILE"]`, `client_id`/
+      `aud` com o sistema, `username`/`email`/`name` corretos.
+      **Achado de mecânica de teste, não é bug do produto**: usei
+      `redirect_uri=http://localhost:4200/e2e-callback`, uma rota que não existe no
+      `app.routes.ts` (não há wildcard `**`) — o Angular Router lança `NG04002: Cannot
+      match any routes` e **reverte `location.href` para `/`**, destruindo o `code` da
+      query string antes de conseguir lê-lo via `location.href`/`location.search`. Não tem
+      relação com o backend nem com o fluxo OAuth2 em si (o redirect chegou certinho, com o
+      `code` na URL). Contornado sem tocar em nada: o `code` já aparece intacto na própria
+      requisição de navegação, então bastou ler a URL de
+      `mcp__claude-in-chrome__read_network_requests` (filtro `urlPattern`) em vez de
+      `location.href` depois que o Router já tinha revertido a página.
+      **Achado real, backend, mais um caso do bug de `System.save()` da Fase 7 (item
+      Sistemas)**: tentei inicialmente resolver o problema acima registrando
+      `http://localhost:4200/favicon.ico` como segundo redirect URI do sistema (rota
+      estática, não passa pelo Router) — `addRedirectUri` (`POST
+      /admin/api/v1/systems/{id}/redirect-uris`) também devolve 500 genérico. Confirma que
+      o bug de mutação em `System` já existente cobre qualquer sub-recurso da entidade, não
+      só `updateSystem`/`rotateSecret`/`updateSystemStatus` (já registrados na Fase 7);
+      mesma causa suspeita (`@OneToMany(cascade = ALL, orphanRemoval = true)` de
+      `redirectUris`), mesma decisão de não corrigir (fora do escopo desta skill).
+      **Armadilha própria**: o primeiro logout de admin via UI ("Sair") não invalidou a
+      sessão HTTP a tempo — o `/oauth2/authorize` seguinte reautenticou silenciosamente
+      como `admin` (sessão ainda viva no backend), e só percebi ao decodificar o JWT
+      trocado e ver `username: admin` em vez de `e2e_user`. Corrigido chamando
+      `POST /api/auth/logout` diretamente via `fetch` antes de repetir o fluxo — depois
+      disso o `/oauth2/authorize` exigiu login de verdade, com a marca do tenant certa.
+      Sem erros de aplicação no console do navegador durante todo o roteiro.
 - [ ] Revisar acessibilidade.
 - [ ] Atualizar `README.md` do frontend.
 - [ ] Atualizar backend: `03-subir-ambiente-local.md` e `PROGRESS.md`.
