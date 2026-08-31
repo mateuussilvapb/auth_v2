@@ -560,7 +560,17 @@ Espelha os checklists de `docs/PLANO-MODERNIZACAO.md`, fase por fase. Ver també
       aparecendo no `<input>` real após blur com erro, `aria-label="Remover redirect URI"`
       aparecendo no `<button>` real (não no host `<p-button>`), navegação por Tab
       funcionando (foco visível migrando de campo em campo).
-- [ ] Atualizar `README.md` do frontend.
+- [x] Atualizar `README.md` do frontend. Era boilerplate puro do Angular CLI (gerado na
+      criação do projeto, versão 19.2.27) — citava Karma e `ng e2e` (nenhum dos dois existe
+      mais no projeto desde a Fase 3). Reescrito com o que o projeto realmente é (console
+      admin + telas públicas PKCE, Angular 21 zoneless/PrimeNG 21), pré-requisitos (backend
+      `../api` rodando), `npm start`/`npm run build`/`npm test` reais, a diferença de
+      `apiBaseUrl` entre dev (`:8080`, CORS) e produção (mesma origem, atrás do
+      `nginx.conf`), o achado do watcher do Vite ficando obsoleto (Fase 7, referenciado em
+      vez de duplicado), ausência de suíte e2e automatizada (roteiros manuais documentados
+      em `PROGRESS.md`), e um mapa curto de `pages/`/`core/`/`shared/`/`assets/scss`. Links
+      para `docs/GUIA-DE-ESTILO.md` e `docs/PLANO-MODERNIZACAO.md` em vez de duplicar
+      conteúdo normativo já documentado lá.
 - [ ] Atualizar backend: `03-subir-ambiente-local.md` e `PROGRESS.md`.
 
 ---
