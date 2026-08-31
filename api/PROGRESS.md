@@ -113,7 +113,16 @@ Cada fase deve estar verde nos testes antes da seguinte. Atualizado a cada item 
       abaixo.
 
 ## Fase 10 — Qualidade
-- [ ] Testes ArchUnit das regras da seção 5.1
+- [x] Testes ArchUnit das regras da seção 5.1. Completadas as duas regras que faltavam
+      (achado da auditoria de 2026-08-29, ver nota acima): `application_nao_depende_de_dto_web`
+      (regra 5.1.5 — nenhum DTO de `adapter.in.web` entra em `application`, já coberta
+      transitivamente por `application_nao_depende_de_adapter` mas agora nomeada
+      explicitamente) e `entidade_jpa_nao_cruza_fronteira_de_persistence` (regra 5.1.4 —
+      nenhuma classe fora de `adapter.out.persistence` depende de `adapter.out.persistence.entity`).
+      Removido `allowEmptyShould(true)` de todas as 6 regras pré-existentes — não é mais
+      necessário, todo pacote (`domain`/`application`/`adapter`) já tem código real desde a
+      Fase 1; as regras agora falham de verdade se violadas. `mvn test -Dtest=ArchitectureTest`
+      verde (8/8 regras).
 - [ ] Cobertura ≥ 80% no domínio e na aplicação (JaCoCo)
 - [ ] Teste end-to-end: criar tenant → sistema → perfis → usuário → vincular → login → validar claims
 - [ ] Seed inicial: primeiro platform admin via migration com senha temporária forçando troca
