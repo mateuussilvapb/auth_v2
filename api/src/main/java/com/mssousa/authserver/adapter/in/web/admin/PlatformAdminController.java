@@ -10,6 +10,7 @@ import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -53,6 +54,22 @@ public class PlatformAdminController {
         PlatformAdmin admin = status == PlatformAdminStatus.ACTIVE
                 ? managePlatformAdminUseCase.activatePlatformAdmin(PlatformAdminId.of(id))
                 : managePlatformAdminUseCase.deactivatePlatformAdmin(PlatformAdminId.of(id));
+        return PlatformAdminResponse.from(admin);
+    }
+
+    /**
+     * Self-service — troca a própria senha. Único jeito de sair do estado
+     * {@code mustChangePassword=true} (seção 10, Fase 10 — seed inicial via migration com
+     * senha temporária), que {@code MustChangePasswordFilter} bloqueia em qualquer outro
+     * caminho de {@code /admin/api/**}. {@code authentication.getName()} é o próprio id do
+     * platform admin — {@code sub} do JWT (seção 7.2, {@code AuthenticatedPlatformAdmin}).
+     */
+    @PostMapping("/me/password")
+    public PlatformAdminResponse changeOwnPassword(Authentication authentication,
+                                                     @Valid @RequestBody ChangeOwnPasswordRequest request) {
+        PlatformAdminId id = PlatformAdminId.of(Long.valueOf(authentication.getName()));
+        PlatformAdmin admin = managePlatformAdminUseCase.changeOwnPassword(
+                id, request.currentPassword(), request.newPassword());
         return PlatformAdminResponse.from(admin);
     }
 

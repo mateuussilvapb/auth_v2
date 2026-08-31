@@ -9,13 +9,14 @@ import com.mssousa.authserver.application.model.AuthenticatedUser;
  * formato para usuário de tenant e platform admin (login do console administrativo,
  * seção 2.2/D6) — a SPA não precisa distinguir os dois para só exibir nome/username.
  */
-public record LoginResponse(String username, String name) {
+public record LoginResponse(String username, String name, boolean mustChangePassword) {
 
     public static LoginResponse from(AuthenticatedUser authenticatedUser) {
-        return new LoginResponse(authenticatedUser.username().value(), authenticatedUser.name());
+        return new LoginResponse(authenticatedUser.username().value(), authenticatedUser.name(), false);
     }
 
     public static LoginResponse from(AuthenticatedPlatformAdmin authenticatedPlatformAdmin) {
-        return new LoginResponse(authenticatedPlatformAdmin.username().value(), authenticatedPlatformAdmin.displayName());
+        return new LoginResponse(authenticatedPlatformAdmin.username().value(),
+                authenticatedPlatformAdmin.displayName(), authenticatedPlatformAdmin.mustChangePassword());
     }
 }

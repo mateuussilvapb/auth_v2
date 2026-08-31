@@ -22,7 +22,7 @@ class OAuth2AuthorizationJsonMapperFactoryTest {
     void deveSerializarEDesserializarAuthenticatedPlatformAdminPreservandoNomeDeExibicao() {
         JsonMapper mapper = OAuth2AuthorizationJsonMapperFactory.build();
         AuthenticatedPlatformAdmin admin = new AuthenticatedPlatformAdmin(
-                PlatformAdminId.of(1L), Username.of("root_admin"), Email.of("admin@seudominio.com"), "Administrador");
+                PlatformAdminId.of(1L), Username.of("root_admin"), Email.of("admin@seudominio.com"), "Administrador", true);
 
         String json = mapper.writeValueAsString(admin);
         AuthenticatedPlatformAdmin roundTripped = mapper.readValue(json, AuthenticatedPlatformAdmin.class);
@@ -36,5 +36,6 @@ class OAuth2AuthorizationJsonMapperFactoryTest {
         assertEquals("root_admin", roundTripped.username().value());
         assertEquals("admin@seudominio.com", roundTripped.email().value());
         assertEquals(PlatformAdminId.of(1L), roundTripped.platformAdminId());
+        assertEquals(true, roundTripped.mustChangePassword());
     }
 }

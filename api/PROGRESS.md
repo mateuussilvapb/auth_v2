@@ -152,7 +152,42 @@ Cada fase deve estar verde nos testes antes da seguinte. Atualizado a cada item 
       usuário↔sistema cross-tenant rejeitado (422) e login rejeitado (401) com o tenant
       desativado. 3/3 testes verdes; `mvn verify` (suíte completa + ArchUnit + gate JaCoCo)
       verde.
-- [ ] Seed inicial: primeiro platform admin via migration com senha temporária forçando troca
+- [x] Seed inicial: primeiro platform admin via migration com senha temporária forçando
+      troca. Migration `V15__seed_first_platform_admin.sql`: coluna nova
+      `must_change_password BOOLEAN NOT NULL DEFAULT FALSE` em `platform_admin` + `INSERT`
+      do primeiro admin (`admin`/`admin@example.com`, mesmas credenciais dos reseeds
+      manuais já registrados nas notas acima — hash BCrypt custo 12 de
+      `TrocarEssaSenha123` pré-computado, `must_change_password=TRUE`).
+      **"Forçando troca" tem dentes, não é só um flag decorativo**: novo
+      `MustChangePasswordFilter` (`config/security`, `@Component`, mesmo padrão de
+      registro global do `RateLimitFilter`) bloqueia com 403 qualquer chamada a
+      `/admin/api/**` de um platform admin com `mustChangePassword=true`, exceto a própria
+      rota nova `POST /admin/api/v1/platform-admins/me/password` (self-service,
+      `ManagePlatformAdminUseCase.changeOwnPassword`, exige a senha atual). **Decisão de
+      design**: o filtro consulta o banco a cada requisição em vez de confiar num claim
+      `must_change_password` do JWT (que também foi adicionado ao token, seção 7.2, para
+      uso futuro de UI) — um claim fixado na emissão do token ficaria obsoleto assim que a
+      senha fosse trocada, prendendo o admin até o token expirar (até 60 min, ver nota de
+      TTL acima) mesmo depois de já ter trocado a senha corretamente.
+      `PlatformAdmin.changePassword()` (domínio) limpa `mustChangePassword` automaticamente
+      — nenhum outro caminho de código precisa lembrar de fazer isso.
+      **Achado durante a implementação**: a migration de seed insere um platform admin
+      ativo em **toda** base nova, inclusive a do Testcontainers usada pelos testes de
+      integração — quebrava duas asserções de contagem absoluta
+      (`PlatformAdminRepositoryIntegrationTest.deveContarAdminsAtivos`/
+      `desativarNaoDeveContarComoAtivo`) e a premissa de "último admin ativo" de
+      `PlatformAdminControllerIntegrationTest.deveRejeitarDesativarUltimoPlatformAdminAtivo`.
+      Corrigido tornando as contagens relativas a uma baseline medida no início de cada
+      teste, e desativando explicitamente qualquer admin pré-existente (o seedado incluído)
+      antes de testar a rejeição do último ativo — não desabilitei nem afrouxei nenhuma
+      asserção. Novo `SeedPlatformAdminIntegrationTest` (3 testes) cobre o cenário completo:
+      login do admin seedado retornando `mustChangePassword:true`, bloqueio de
+      `/admin/api/v1/tenants` até a troca, desbloqueio depois de trocar com sucesso, e
+      rejeição da troca com senha atual incorreta. 9 testes novos/alterados no total (domain,
+      unit de application, integração). `mvn verify` verde (suíte completa + ArchUnit + gate
+      JaCoCo, cobertura domain+application em 92,6%).
+
+Fase 10 completa.
 
 ## Fase 11 — Deploy AWS
 - [ ] `Dockerfile` multi-stage (build Maven → runtime JRE slim)

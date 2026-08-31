@@ -54,7 +54,7 @@ public class PlatformAdminAuthenticationProvider implements AuthenticationProvid
             // por token; carregar o hash de senha do agregado até lá não teria propósito e
             // exigiria um mixin Jackson mais complexo (ver OAuth2AuthorizationJsonMapperFactory).
             AuthenticatedPlatformAdmin authenticatedPlatformAdmin = new AuthenticatedPlatformAdmin(
-                    admin.getId(), admin.getUsername(), admin.getEmail(), admin.getName());
+                    admin.getId(), admin.getUsername(), admin.getEmail(), admin.getName(), admin.mustChangePassword());
             return UsernamePasswordAuthenticationToken.authenticated(authenticatedPlatformAdmin, null, AUTHORITIES);
         } catch (AuthenticationFailedException e) {
             throw new BadCredentialsException(e.getMessage());

@@ -74,6 +74,17 @@ public class PlatformAdminManagementService implements ManagePlatformAdminUseCas
         return platformAdminRepository.findAll(pageable);
     }
 
+    @Override
+    @Transactional
+    public PlatformAdmin changeOwnPassword(PlatformAdminId id, String currentPassword, String newPassword) {
+        PlatformAdmin admin = findByIdOrThrow(id);
+        if (!admin.verifyPassword(currentPassword)) {
+            throw new DomainException("Senha atual incorreta");
+        }
+        admin.changePassword(Password.fromPlainText(newPassword));
+        return platformAdminRepository.save(admin);
+    }
+
     private PlatformAdmin findByIdOrThrow(PlatformAdminId id) {
         return platformAdminRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Platform admin não encontrado: " + id));

@@ -10,7 +10,8 @@ import com.mssousa.authserver.domain.model.platform.PlatformAdmin;
  * precisão de TSID em {@code Number} do JavaScript.
  * </p>
  */
-public record PlatformAdminResponse(String id, String username, String email, String name, String status) {
+public record PlatformAdminResponse(
+        String id, String username, String email, String name, String status, boolean mustChangePassword) {
 
     public static PlatformAdminResponse from(PlatformAdmin admin) {
         return new PlatformAdminResponse(
@@ -18,6 +19,7 @@ public record PlatformAdminResponse(String id, String username, String email, St
                 admin.getUsername().value(),
                 admin.getEmail().value(),
                 admin.getName(),
-                admin.getStatus().name());
+                admin.getStatus().name(),
+                admin.mustChangePassword());
     }
 }

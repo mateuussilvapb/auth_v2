@@ -28,4 +28,7 @@ public class PlatformAdminEntity extends UpdatableJpaEntity {
 
     @Column(nullable = false, length = 20)
     private String status;
+
+    @Column(name = "must_change_password", nullable = false)
+    private boolean mustChangePassword;
 }

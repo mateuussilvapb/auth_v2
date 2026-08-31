@@ -25,6 +25,7 @@ public class PlatformAdmin {
     private Password password;
     private String name;
     private PlatformAdminStatus status;
+    private boolean mustChangePassword;
 
     private PlatformAdmin(Builder builder) {
         this.id = builder.id;
@@ -33,6 +34,7 @@ public class PlatformAdmin {
         this.password = builder.password;
         this.name = builder.name;
         this.status = builder.status;
+        this.mustChangePassword = builder.mustChangePassword;
 
         validate();
     }
@@ -80,6 +82,15 @@ public class PlatformAdmin {
     }
 
     /**
+     * {@code true} enquanto o platform admin precisa trocar a senha antes de qualquer
+     * outra operação (ex.: seed inicial via migration, seção 10 — Fase 10). Limpo
+     * automaticamente por {@link #changePassword(Password)}.
+     */
+    public boolean mustChangePassword() {
+        return mustChangePassword;
+    }
+
+    /**
      * Ativa o platform admin. Operação idempotente.
      */
     public void activate() {
@@ -106,6 +117,7 @@ public class PlatformAdmin {
             throw new DomainException(Password.DEFAULT_ERROR_PASSWORD);
         }
         this.password = newPassword;
+        this.mustChangePassword = false;
     }
 
     public boolean verifyPassword(String plainPassword) {
@@ -137,6 +149,7 @@ public class PlatformAdmin {
         private Password password;
         private String name;
         private PlatformAdminStatus status = PlatformAdminStatus.ACTIVE;
+        private boolean mustChangePassword = false;
 
         public Builder id(PlatformAdminId id) {
             this.id = id;
@@ -165,6 +178,11 @@ public class PlatformAdmin {
 
         public Builder status(PlatformAdminStatus status) {
             this.status = status != null ? status : PlatformAdminStatus.ACTIVE;
+            return this;
+        }
+
+        public Builder mustChangePassword(boolean mustChangePassword) {
+            this.mustChangePassword = mustChangePassword;
             return this;
         }
 

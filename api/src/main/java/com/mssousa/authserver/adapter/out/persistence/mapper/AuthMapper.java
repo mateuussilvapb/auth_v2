@@ -103,6 +103,7 @@ public class AuthMapper {
                 .password(Password.fromHash(entity.getPasswordHash()))
                 .name(entity.getName())
                 .status(PlatformAdminStatus.valueOf(entity.getStatus()))
+                .mustChangePassword(entity.isMustChangePassword())
                 .build();
     }
 
@@ -115,6 +116,7 @@ public class AuthMapper {
         entity.setPasswordHash(admin.getPassword().hashedValue());
         entity.setName(admin.getName());
         entity.setStatus(admin.getStatus().name());
+        entity.setMustChangePassword(admin.mustChangePassword());
         return entity;
     }
 

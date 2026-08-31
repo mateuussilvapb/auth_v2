@@ -25,4 +25,14 @@ public interface ManagePlatformAdminUseCase {
     PlatformAdmin deactivatePlatformAdmin(PlatformAdminId id);
 
     Page<PlatformAdmin> listPlatformAdmins(Pageable pageable);
+
+    /**
+     * Troca a própria senha (self-service) — único jeito de sair do estado
+     * {@code mustChangePassword=true} (seção 10, Fase 10: seed inicial com senha
+     * temporária forçando troca).
+     *
+     * @throws com.mssousa.authserver.domain.exception.DomainException se {@code currentPassword}
+     *                                                                  não bater com a senha atual
+     */
+    PlatformAdmin changeOwnPassword(PlatformAdminId id, String currentPassword, String newPassword);
 }

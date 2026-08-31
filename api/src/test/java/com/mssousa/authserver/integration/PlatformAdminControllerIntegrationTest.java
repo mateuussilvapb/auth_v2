@@ -2,12 +2,17 @@ package com.mssousa.authserver.integration;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mssousa.authserver.application.port.out.PlatformAdminRepository;
+import com.mssousa.authserver.domain.model.platform.PlatformAdmin;
+import com.mssousa.authserver.domain.model.platform.PlatformAdminStatus;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -22,12 +27,14 @@ class PlatformAdminControllerIntegrationTest extends AbstractRepositoryIntegrati
 
     @Autowired
     private MockMvc mockMvc;
+    @Autowired
+    private PlatformAdminRepository platformAdminRepository;
 
     @Test
     void deveCriarListarEDesativarPlatformAdmin() throws Exception {
-        // Precisa de um segundo admin ativo — PlatformAdminPolicy bloqueia desativar o
-        // último ativo (seção 2.1 do plano), e este teste roda numa transação isolada
-        // sem nenhum outro platform admin já existente.
+        // Precisa de um segundo admin ativo além do que a migration de seed (Fase 10, V15)
+        // já garante existir — PlatformAdminPolicy bloqueia desativar o último ativo
+        // (seção 2.1 do plano).
         mockMvc.perform(post("/admin/api/v1/platform-admins")
                         .with(platformAdmin())
                         .contentType(MediaType.APPLICATION_JSON)
@@ -66,6 +73,18 @@ class PlatformAdminControllerIntegrationTest extends AbstractRepositoryIntegrati
 
     @Test
     void deveRejeitarDesativarUltimoPlatformAdminAtivo() throws Exception {
+        // A migration de seed (Fase 10, V15) já deixa um platform admin ativo em toda base
+        // nova — desativa qualquer um pré-existente para garantir que "unico_admin" (abaixo)
+        // seja de fato o último ativo quando o teste tentar desativá-lo.
+        for (PlatformAdmin existing : platformAdminRepository
+                .findAll(PageRequest.of(0, 100)).getContent()) {
+            if (existing.isActive()) {
+                existing.deactivate();
+                platformAdminRepository.save(existing);
+            }
+        }
+        assertEquals(0, platformAdminRepository.countByStatus(PlatformAdminStatus.ACTIVE));
+
         String createResponseBody = mockMvc.perform(post("/admin/api/v1/platform-admins")
                         .with(platformAdmin())
                         .contentType(MediaType.APPLICATION_JSON)

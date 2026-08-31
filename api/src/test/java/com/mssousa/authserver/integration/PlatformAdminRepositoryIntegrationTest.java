@@ -38,18 +38,25 @@ class PlatformAdminRepositoryIntegrationTest extends AbstractRepositoryIntegrati
 
     @Test
     void deveContarAdminsAtivos() {
+        // Contagem relativa a uma baseline, não a um valor fixo: a migration de seed
+        // (Fase 10, V15) já insere um platform admin ativo em toda base nova, inclusive a
+        // do Testcontainers usada aqui.
+        long baseline = platformAdminRepository.countByStatus(PlatformAdminStatus.ACTIVE);
         createAndSave("admin_um", "um@seudominio.com");
         createAndSave("admin_dois", "dois@seudominio.com");
 
-        assertEquals(2, platformAdminRepository.countByStatus(PlatformAdminStatus.ACTIVE));
+        assertEquals(baseline + 2, platformAdminRepository.countByStatus(PlatformAdminStatus.ACTIVE));
     }
 
     @Test
     void desativarNaoDeveContarComoAtivo() {
+        long baseline = platformAdminRepository.countByStatus(PlatformAdminStatus.ACTIVE);
         PlatformAdmin admin = createAndSave("admin_tres", "tres@seudominio.com");
+        assertEquals(baseline + 1, platformAdminRepository.countByStatus(PlatformAdminStatus.ACTIVE));
+
         admin.deactivate();
         platformAdminRepository.save(admin);
 
-        assertEquals(0, platformAdminRepository.countByStatus(PlatformAdminStatus.ACTIVE));
+        assertEquals(baseline, platformAdminRepository.countByStatus(PlatformAdminStatus.ACTIVE));
     }
 }

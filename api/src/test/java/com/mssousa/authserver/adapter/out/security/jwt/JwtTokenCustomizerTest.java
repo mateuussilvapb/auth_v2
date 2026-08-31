@@ -96,7 +96,7 @@ class JwtTokenCustomizerTest {
     @Test
     void deveAdicionarClaimsSemTenantParaPlatformAdmin() {
         AuthenticatedPlatformAdmin admin = new AuthenticatedPlatformAdmin(
-                PlatformAdminId.of(1L), Username.of("root_admin"), Email.of("admin@seudominio.com"), "Administrador");
+                PlatformAdminId.of(1L), Username.of("root_admin"), Email.of("admin@seudominio.com"), "Administrador", false);
         Authentication principal = UsernamePasswordAuthenticationToken.authenticated(admin, null,
                 List.of(new SimpleGrantedAuthority("ROLE_PLATFORM_ADMIN")));
 
@@ -106,8 +106,23 @@ class JwtTokenCustomizerTest {
         JwtClaimsSet claims = context.getClaims().build();
         assertEquals(Boolean.TRUE, claims.getClaim("platform_admin"));
         assertEquals("root_admin", claims.getClaim("username"));
+        assertEquals(Boolean.FALSE, claims.getClaim("must_change_password"));
         assertNull(claims.getClaim("tenant_id"));
         assertNull(claims.getClaim("profiles"));
+    }
+
+    @Test
+    void deveMarcarMustChangePasswordQuandoPlatformAdminPrecisaTrocarSenha() {
+        AuthenticatedPlatformAdmin admin = new AuthenticatedPlatformAdmin(
+                PlatformAdminId.of(1L), Username.of("admin"), Email.of("admin@example.com"), "Administrador", true);
+        Authentication principal = UsernamePasswordAuthenticationToken.authenticated(admin, null,
+                List.of(new SimpleGrantedAuthority("ROLE_PLATFORM_ADMIN")));
+
+        JwtEncodingContext context = contextBuilder(principal, OAuth2TokenType.ACCESS_TOKEN).build();
+        customizer.customize(context);
+
+        JwtClaimsSet claims = context.getClaims().build();
+        assertEquals(Boolean.TRUE, claims.getClaim("must_change_password"));
     }
 
     @Test

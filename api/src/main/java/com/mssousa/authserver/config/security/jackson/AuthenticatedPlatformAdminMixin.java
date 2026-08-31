@@ -17,6 +17,7 @@ abstract class AuthenticatedPlatformAdminMixin {
             @JsonProperty("platformAdminId") PlatformAdminId platformAdminId,
             @JsonProperty("username") Username username,
             @JsonProperty("email") Email email,
-            @JsonProperty("displayName") String displayName) {
+            @JsonProperty("displayName") String displayName,
+            @JsonProperty("mustChangePassword") boolean mustChangePassword) {
     }
 }

@@ -116,6 +116,28 @@ class PlatformAdminTest {
     }
 
     @Test
+    void mustChangePasswordDeveSerFalsoPorPadrao() {
+        PlatformAdmin admin = validBuilder().build();
+        assertFalse(admin.mustChangePassword());
+    }
+
+    @Test
+    void builderDeveAceitarMustChangePasswordTrue() {
+        PlatformAdmin admin = validBuilder().mustChangePassword(true).build();
+        assertTrue(admin.mustChangePassword());
+    }
+
+    @Test
+    void trocarSenhaDeveLimparMustChangePassword() {
+        PlatformAdmin admin = validBuilder().mustChangePassword(true).build();
+        assertTrue(admin.mustChangePassword());
+
+        admin.changePassword(Password.fromPlainText("outraSenhaSegura"));
+
+        assertFalse(admin.mustChangePassword());
+    }
+
+    @Test
     void deveLancarExcecaoAoTrocarSenhaParaNula() {
         PlatformAdmin admin = validBuilder().build();
         DomainException exception = assertThrows(DomainException.class, () -> admin.changePassword(null));

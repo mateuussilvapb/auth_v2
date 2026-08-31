@@ -36,7 +36,8 @@ public record AuthenticatedPlatformAdmin(
         PlatformAdminId platformAdminId,
         Username username,
         Email email,
-        String displayName
+        String displayName,
+        boolean mustChangePassword
 ) implements AuthenticatedPrincipal {
 
     @Override

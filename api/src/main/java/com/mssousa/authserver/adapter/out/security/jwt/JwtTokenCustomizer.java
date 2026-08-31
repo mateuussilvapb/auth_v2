@@ -68,6 +68,7 @@ public class JwtTokenCustomizer implements OAuth2TokenCustomizer<JwtEncodingCont
                 .claim("platform_admin", true)
                 .claim("username", authenticatedPlatformAdmin.username().value())
                 .claim("email", authenticatedPlatformAdmin.email().value())
-                .claim("name", authenticatedPlatformAdmin.displayName());
+                .claim("name", authenticatedPlatformAdmin.displayName())
+                .claim("must_change_password", authenticatedPlatformAdmin.mustChangePassword());
     }
 }

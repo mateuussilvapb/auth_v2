@@ -125,6 +125,36 @@ class PlatformAdminManagementServiceTest {
     }
 
     @Test
+    void deveTrocarAPropriaSenhaQuandoSenhaAtualCorreta() {
+        PlatformAdmin admin = PlatformAdmin.builder()
+                .id(PlatformAdminId.of(1L))
+                .username(Username.of("admin"))
+                .email(Email.of("admin@example.com"))
+                .password(Password.fromPlainText("senhaTemporaria"))
+                .name("Administrador")
+                .mustChangePassword(true)
+                .build();
+        when(platformAdminRepository.findById(PlatformAdminId.of(1L))).thenReturn(Optional.of(admin));
+        when(platformAdminRepository.save(any(PlatformAdmin.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        PlatformAdmin changed = service.changeOwnPassword(PlatformAdminId.of(1L), "senhaTemporaria", "novaSenhaSegura");
+
+        assertFalse(changed.mustChangePassword());
+        assertTrue(changed.verifyPassword("novaSenhaSegura"));
+    }
+
+    @Test
+    void deveLancarExcecaoAoTrocarAPropriaSenhaComSenhaAtualIncorreta() {
+        PlatformAdmin admin = existingAdmin();
+        when(platformAdminRepository.findById(PlatformAdminId.of(1L))).thenReturn(Optional.of(admin));
+
+        DomainException exception = assertThrows(DomainException.class,
+                () -> service.changeOwnPassword(PlatformAdminId.of(1L), "senhaErrada", "novaSenhaSegura"));
+        assertEquals("Senha atual incorreta", exception.getMessage());
+        verify(platformAdminRepository, never()).save(any());
+    }
+
+    @Test
     void deveListarPlatformAdmins() {
         org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(0, 10);
         when(platformAdminRepository.findAll(pageable))
