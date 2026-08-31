@@ -107,6 +107,10 @@ Cada fase deve estar verde nos testes antes da seguinte. Atualizado a cada item 
       no backend)
 - [x] Guard de rota exigindo platform admin nas rotas do console (`consoleAuthGuard` — token só é emitido para platform admin nesse client, ver Notas)
 - [x] Build de produção servido por nginx (mesmo domínio do auth server) — `frontend/nginx.conf`, ver Notas (dois bugs reais só apareceram nesse smoke test)
+- [x] **Modernizado em 2026-08 (Angular 19→21, PrimeNG 21, Vitest)** — mesmo escopo
+      funcional desta fase, reescrito. Histórico completo, decisões de arquitetura e
+      achados de backend descobertos no processo em `web/PROGRESS.md`; ver nota datada
+      abaixo.
 
 ## Fase 10 — Qualidade
 - [ ] Testes ArchUnit das regras da seção 5.1
@@ -580,6 +584,38 @@ Cada fase deve estar verde nos testes antes da seguinte. Atualizado a cada item 
     (item já rastreado na Fase 10). Verificado manualmente nesta auditoria via grep — sem
     violação real hoje —, mas sem o teste automatizado uma violação futura só seria pega em
     code review manual.
+- **Frontend modernizado (Angular 19→21), 2026-08-29 a 2026-08-31** — mesmo escopo
+  funcional da Fase 9 (login, consentimento, console administrativo completo), stack
+  inteira reescrita: zoneless (sem `zone.js`), standalone components, Vitest no lugar de
+  Karma/Jasmine, PrimeNG 21 com preset próprio (paleta índigo, guia de estilo dedicado em
+  `web/docs/GUIA-DE-ESTILO.md`), dark mode com persistência. Histórico fase a fase,
+  decisões de arquitetura e todos os achados em `web/PROGRESS.md` — vale destacar os que
+  são deste lado do repositório (backend), encontrados a partir do trabalho no frontend:
+  - **Bug real, corrigido nesta janela**: `POST /api/auth/logout` não existia — nenhum
+    `SecurityFilterChain` tinha `.logout(...)` configurado, então limpar só os tokens OAuth
+    no `localStorage` do frontend nunca invalidava a `HttpSession` (`JSESSIONID`); o próximo
+    `GET /oauth2/authorize` reautenticava silenciosamente via
+    `HttpSessionSecurityContextRepository`, sem pedir login de novo. Endpoint novo em
+    `AuthController` chama `session.invalidate()`; teste de integração dedicado
+    (`AuthControllerIntegrationTest.deveInvalidarSessaoAoDeslogarImpedindoReautenticacaoSilenciosaNoAuthorize`).
+  - **Bug real, não corrigido (fora do escopo da skill de frontend)**: `save()` em um
+    `System` já existente falha com 500 genérico — reproduzido em `updateSystem`,
+    `addRedirectUri`, `rotateSecret` e `updateSystemStatus`, todos via chamada direta
+    (não é bug do frontend). Suspeita: `SystemEntity.redirectUris` mapeado como
+    `@OneToMany(cascade = ALL, orphanRemoval = true)`, padrão clássico de erro do Hibernate
+    quando o mapper substitui a coleção inteira em vez de mutar in-place. `Tenant`/`Profile`
+    não têm esse problema — específico de `System`. Vale investigar/corrigir como item de
+    backlog.
+  - **Bug real, não corrigido**: `authserver.frontend.login-url` não tem override no
+    profile `dev` — cai no default de `application.yml`, relativo à própria API (`:8080`),
+    não ao frontend (`:4200`); `SpaLoginAuthenticationEntryPoint` redireciona para uma rota
+    inexistente na API. Contorno usado durante o desenvolvimento:
+    `LOGIN_URL=http://localhost:4200/login` como env var — vale um default correto em
+    `application-dev.yml`.
+  - **Risco de produto identificado, não é bug**: desativar o único (ou último) platform
+    admin ativo trava o acesso a todo o console — a admin-api não expõe nenhuma checagem
+    de "não desativar o último admin" (`PlatformAdminPolicy` cobre isso? conferir — a UI só
+    nomeia a consequência na confirmação, não impede o caso extremo).
   - 🟡 Enums persistidos (`status`) são mapeados como `String` puro nas entidades JPA, com
     conversão manual via `valueOf(...)`/`.name()` em `AuthMapper`, em vez de
     `@Enumerated(EnumType.STRING)` como a seção 6.4 descreve literalmente. Funcionalmente

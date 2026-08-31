@@ -10,7 +10,7 @@ subir o frontend Angular junto, ver a seção 6.
 
 - Java 25 e Maven instalados
 - Docker (para Postgres + MailHog via `docker-compose.yml`)
-- Node.js + npm (só se for rodar o frontend Angular também — pasta `web/`)
+- Node.js ≥ 20 + npm (só se for rodar o frontend Angular também — pasta `web/`, Angular 21)
 
 ## 1. Subir a infraestrutura (Postgres + MailHog)
 
@@ -24,6 +24,11 @@ Isso sobe:
 
 - **Postgres** em `localhost:5432`, banco/usuário/senha `authserver`/`authserver`/`authserver`
   (uso local apenas — nunca use essas credenciais em produção).
+
+> **Conflito de porta com Postgres nativo do Windows?** Se o boot da aplicação falhar com
+> `FATAL: autenticação do tipo senha falhou para o usuário "authserver"` mesmo com a senha
+> certa, veja [`03a-conflito-porta-postgres-windows.md`](03a-conflito-porta-postgres-windows.md)
+> — provável Postgres instalado nativamente como serviço do Windows disputando a porta 5432.
 - **MailHog** — captura os e-mails que a aplicação envia (boas-vindas, reset de senha) sem
   enviar de verdade. UI web em **http://localhost:8025**.
 
@@ -137,12 +142,13 @@ mvn verify    # unitários + integração (Testcontainers) + ArchUnit
 
 ## 6. Subir o frontend Angular (opcional, para testar o fluxo completo)
 
-Pasta irmã dentro do mesmo repo:
+Pasta irmã dentro do mesmo repo — Angular 21 (zoneless, standalone, signals) + PrimeNG 21,
+ver `../web/README.md` para detalhes do projeto em si:
 
 ```bash
 cd ../web
 npm install
-ng serve
+npm start   # equivalente a "ng serve"
 ```
 
 Frontend sobe em **http://localhost:4200**. Como backend (`:8080`) e frontend (`:4200`)
@@ -198,7 +204,7 @@ mvn spring-boot:run
 # teste sumiram, rodar de novo (não commitado, ver seção 7):
 node scripts/dev-seed.js
 # em outro terminal, se quiser o frontend (pasta irmã web/):
-cd ../web && ng serve
+cd ../web && npm start
 ```
 
 ## Problemas comuns
