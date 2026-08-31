@@ -449,8 +449,35 @@ Espelha os checklists de `docs/PLANO-MODERNIZACAO.md`, fase por fase. Ver també
 
 ## Fase 8 — Fechamento
 
-- [ ] `ng build --configuration production` dentro dos budgets.
-- [ ] Smoke test com nginx real.
+- [x] `ng build --configuration production` dentro dos budgets. `defaultConfiguration` do
+      `angular.json` já é `production` (todo `npm run build` desta jornada inteira já foi
+      sempre um build de produção). Budget de erro (1.5MB) respeitado; o warning de budget
+      de aviso (1MB, excedido em ~28kB) é o mesmo já registrado e aceito deliberadamente na
+      Fase 4 — não é novidade desta rodada, não tentei reduzir mais.
+- [x] Smoke test com nginx real. `docker run nginx:alpine` servindo `dist/frontend/browser`
+      com o `nginx.conf` do projeto, `--add-host=auth-server:host-gateway`, backend local via
+      `mvn spring-boot:run`, porta `8090`. Reproduz o roteiro já documentado no
+      `api/PROGRESS.md` (a primeira vez que isso foi validado, quando o frontend ainda era
+      repositório próprio) — revalidado aqui porque o console inteiro mudou desde então
+      (Fases 5–7).
+      **Dois achados reais, ambos de configuração de ambiente, não de código do frontend**:
+      1. `AUTH_ISSUER` (backend) precisa bater com a origem externa (`http://localhost:8090`,
+         não o `:8080` interno) — sem isso, `angular-oauth2-oidc` rejeita o discovery
+         document por issuer mismatch (`strictDiscoveryDocumentValidation: false` não cobre
+         essa checagem específica). Esperado: é exatamente o que `AUTH_ISSUER` existe pra
+         resolver em deploy real (`docker-compose.prod.yml`, Fase 11 do backend).
+      2. `CONSOLE_REDIRECT_URIS` (backend) também precisa bater com a origem externa — senão
+         `OAuth2AuthorizationCodeRequestValidatingFilter` rejeita o `redirect_uri` do PKCE
+         com 400 antes mesmo de chegar na tela de login (`Whitelabel Error Page` genérica,
+         sem log de causa raiz no nível INFO — só apareceu com certeza ao ler o comentário em
+         `application.yml`/`application-dev.yml`). Também esperado, mesma lógica do item 1.
+      Confirmado através do nginx: PKCE completo (login → `/oauth2/authorize` →
+      `/oauth2/token` → dashboard com contagens reais via `/admin/api/v1/**` bearer token),
+      deep link direto em `/console/tenants` (nginx `try_files` + guard) sem precisar
+      relogar. Container e overrides de ambiente removidos ao final; backend restaurado ao
+      estado normal de dev (incluindo `LOGIN_URL=http://localhost:4200/login`, workaround já
+      documentado abaixo para o bug conhecido de `authserver.frontend.login-url` sem
+      override no profile `dev`).
 - [ ] Roteiro E2E manual completo.
 - [ ] Revisar acessibilidade.
 - [ ] Atualizar `README.md` do frontend.
