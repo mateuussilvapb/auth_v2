@@ -513,7 +513,53 @@ Espelha os checklists de `docs/PLANO-MODERNIZACAO.md`, fase por fase. Ver també
       `POST /api/auth/logout` diretamente via `fetch` antes de repetir o fluxo — depois
       disso o `/oauth2/authorize` exigiu login de verdade, com a marca do tenant certa.
       Sem erros de aplicação no console do navegador durante todo o roteiro.
-- [ ] Revisar acessibilidade.
+- [x] Revisar acessibilidade. Checklist do guia (seção 8) revisado item a item contra o
+      código real (não suposição) — 3 violações concretas corrigidas, resto já conforme:
+      1. **Contraste AA reprovado**: `.error-color` usava `--p-red-500` (`#ef4444`), ~3.76:1
+         sobre fundo claro — abaixo do mínimo 4.5:1 para texto normal. Corrigido em
+         `src/assets/scss/base.scss` para o mesmo padrão de par por tema já usado pela cor
+         primária (`primary.600`/`primary.400`, `primeng.provider.ts`): `--p-red-600`
+         (`#dc2626`, ~4.83:1 no claro) por padrão, `--p-red-400` (`#f87171`, ~6.85:1 no
+         escuro) sob `.app-dark` e `prefers-color-scheme: dark`. **Achado à parte**:
+         `form-label.scss` tinha sua **própria** regra `.error-color { color:
+         var(--p-red-500); }`, silenciosamente sobrescrevendo a global por vir depois na
+         cascata (mesma especificidade, `ViewEncapsulation.Emulated`) — só percebido ao
+         inspecionar a cor computada no navegador depois do primeiro fix não ter efeito
+         visível nenhum. Removida (comentário no lugar explicando por quê).
+      2. **`aria-describedby`/`aria-invalid` nunca implementados**: nenhuma ocorrência real
+         no código (só no próprio guia). Corrigido de forma centralizada: `FormLabel`
+         ganhou `exportAs: 'appFormLabel'` e o `<span>` de erro ganhou `[id]="for() +
+         '-error'"`; cada campo nativo (`pInputText`) nos 7 formulários que usam
+         `app-form-label` (`tenant-form`, `system-form`, `profile-form`, `user-form`,
+         `platform-admin-form`, `login`, `forgot-password`) agora referencia o label via
+         template variable (`#xLabel="appFormLabel"`) e liga `[attr.aria-describedby]`/
+         `[attr.aria-invalid]` ao `errorMessage()` já centralizado no componente — sem
+         duplicar a lógica de touched/dirty em cada template.
+         **Limitação documentada, não corrigida**: campos `p-password` (senha em
+         `user-form`/`platform-admin-form`/`login`/`reset-password`) ficam de fora — o
+         componente do PrimeNG só expõe `ariaLabel`/`ariaLabelledBy` como inputs, não
+         `ariaDescribedby`/`ariaInvalid`; um atributo estático no `<p-password>` cairia no
+         wrapper (host), não no `<input>` interno, então não ajudaria leitor de tela nenhum.
+         Fora do escopo corrigir sem alterar o pacote de terceiros.
+      3. **3 ícones-sozinho sem `aria-label`**: os dois botões de lixeira de redirect URI em
+         `system-form.html` (modo cadastro e edição) e o chevron de expandir/recolher perfis
+         em `user-bindings.html` (`[pRowToggler]`). **Achado ao corrigir**: `aria-label="..."`
+         estático em `<p-button>` não funciona — o componente expõe `@Input() ariaLabel`
+         que ele mesmo liga a `[attr.aria-label]` no `<button>` **interno**; um atributo HTML
+         puro fica só no elemento host (`<p-button>`), nunca chega no botão real. Confirmado
+         via inspeção do DOM renderizado no navegador antes/depois de trocar para
+         `[ariaLabel]="..."` (binding de input, não `[attr.aria-label]`/atributo estático).
+      Sem violações nos demais itens do checklist: foco (mixin `focused()`, sem `outline:
+      none` solto em lugar nenhum), toast (`p-toast` já injeta `role="alert"` internamente),
+      teclado (nenhum `<div (click)>` sem `role`/`tabindex`, nenhum `p-dialog` customizado —
+      só `DynamicDialog` do PrimeNG), status por cor (`StatusTag` sempre renderiza texto
+      junto da cor).
+      1 teste novo (`FormLabel` — id do span de erro). `npm run build` e `npm test` verdes
+      (205/205). Verificado manualmente no navegador: cor do erro (`rgb(220, 38, 38)` =
+      `#dc2626`, confirmado via `getComputedStyle`), `aria-describedby`/`aria-invalid`
+      aparecendo no `<input>` real após blur com erro, `aria-label="Remover redirect URI"`
+      aparecendo no `<button>` real (não no host `<p-button>`), navegação por Tab
+      funcionando (foco visível migrando de campo em campo).
 - [ ] Atualizar `README.md` do frontend.
 - [ ] Atualizar backend: `03-subir-ambiente-local.md` e `PROGRESS.md`.
 

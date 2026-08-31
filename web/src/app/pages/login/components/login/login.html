@@ -11,13 +11,20 @@
 
 @if (clientId) {
   <form [formGroup]="form" (ngSubmit)="submit()">
-    <app-form-label for="usernameOrEmail" label="Usuário ou e-mail" [control]="form.controls.usernameOrEmail">
+    <app-form-label
+      #usernameLabel="appFormLabel"
+      for="usernameOrEmail"
+      label="Usuário ou e-mail"
+      [control]="form.controls.usernameOrEmail"
+    >
       <input
         pInputText
         id="usernameOrEmail"
         formControlName="usernameOrEmail"
         autocomplete="username"
         class="w-full"
+        [attr.aria-describedby]="usernameLabel.errorMessage() ? 'usernameOrEmail-error' : null"
+        [attr.aria-invalid]="usernameLabel.errorMessage() ? true : null"
       />
     </app-form-label>
 

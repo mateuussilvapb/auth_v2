@@ -2,16 +2,40 @@
   <h1 class="text-h1 m-0">{{ isEditMode() ? 'Editar usuário' : 'Novo usuário' }}</h1>
 
   <form [formGroup]="form" (ngSubmit)="submit()" class="flex flex-column gap-3">
-    <app-form-label for="username" label="Usuário" [control]="form.controls['username']">
-      <input id="username" type="text" pInputText formControlName="username" class="w-full" />
+    <app-form-label #usernameLabel="appFormLabel" for="username" label="Usuário" [control]="form.controls['username']">
+      <input
+        id="username"
+        type="text"
+        pInputText
+        formControlName="username"
+        class="w-full"
+        [attr.aria-describedby]="usernameLabel.errorMessage() ? 'username-error' : null"
+        [attr.aria-invalid]="usernameLabel.errorMessage() ? true : null"
+      />
     </app-form-label>
 
-    <app-form-label for="name" label="Nome" [control]="form.controls['name']">
-      <input id="name" type="text" pInputText formControlName="name" class="w-full" />
+    <app-form-label #nameLabel="appFormLabel" for="name" label="Nome" [control]="form.controls['name']">
+      <input
+        id="name"
+        type="text"
+        pInputText
+        formControlName="name"
+        class="w-full"
+        [attr.aria-describedby]="nameLabel.errorMessage() ? 'name-error' : null"
+        [attr.aria-invalid]="nameLabel.errorMessage() ? true : null"
+      />
     </app-form-label>
 
-    <app-form-label for="email" label="E-mail" [control]="form.controls['email']">
-      <input id="email" type="email" pInputText formControlName="email" class="w-full" />
+    <app-form-label #emailLabel="appFormLabel" for="email" label="E-mail" [control]="form.controls['email']">
+      <input
+        id="email"
+        type="email"
+        pInputText
+        formControlName="email"
+        class="w-full"
+        [attr.aria-describedby]="emailLabel.errorMessage() ? 'email-error' : null"
+        [attr.aria-invalid]="emailLabel.errorMessage() ? true : null"
+      />
     </app-form-label>
 
     @if (!isEditMode()) {

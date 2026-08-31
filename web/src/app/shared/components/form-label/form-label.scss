@@ -1,3 +1,3 @@
-.error-color {
-  color: var(--p-red-500);
-}
+// Cor de erro fica só em src/assets/scss/base.scss (guia, seção 8) — red.600/red.400 por
+// tema, não red.500 (reprova contraste AA). Esta regra local sobrescrevia silenciosamente
+// a global por vir depois na cascata (mesma especificidade, ViewEncapsulation.Emulated).

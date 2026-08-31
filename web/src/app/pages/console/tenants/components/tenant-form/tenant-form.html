@@ -2,12 +2,28 @@
   <h1 class="text-h1 m-0">{{ isEditMode() ? 'Editar tenant' : 'Novo tenant' }}</h1>
 
   <form [formGroup]="form" (ngSubmit)="submit()" class="flex flex-column gap-3">
-    <app-form-label for="code" label="Código" [control]="form.controls['code']">
-      <input id="code" type="text" pInputText formControlName="code" class="w-full" />
+    <app-form-label #codeLabel="appFormLabel" for="code" label="Código" [control]="form.controls['code']">
+      <input
+        id="code"
+        type="text"
+        pInputText
+        formControlName="code"
+        class="w-full"
+        [attr.aria-describedby]="codeLabel.errorMessage() ? 'code-error' : null"
+        [attr.aria-invalid]="codeLabel.errorMessage() ? true : null"
+      />
     </app-form-label>
 
-    <app-form-label for="name" label="Nome" [control]="form.controls['name']">
-      <input id="name" type="text" pInputText formControlName="name" class="w-full" />
+    <app-form-label #nameLabel="appFormLabel" for="name" label="Nome" [control]="form.controls['name']">
+      <input
+        id="name"
+        type="text"
+        pInputText
+        formControlName="name"
+        class="w-full"
+        [attr.aria-describedby]="nameLabel.errorMessage() ? 'name-error' : null"
+        [attr.aria-invalid]="nameLabel.errorMessage() ? true : null"
+      />
     </app-form-label>
 
     <div class="flex gap-2 mt-2">

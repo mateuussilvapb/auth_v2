@@ -34,8 +34,20 @@ html.app-light body {
   }
 }
 
+// red.500 (#ef4444) reprova contraste AA (guia, seção 8) sobre fundo claro — red.600/red.400
+// seguem o mesmo par por tema de `primary.600`/`primary.400` (primeng.provider.ts).
 .error-color {
-  color: var(--p-red-500);
+  color: var(--p-red-600);
+}
+
+html.app-dark .error-color {
+  color: var(--p-red-400);
+}
+
+@media (prefers-color-scheme: dark) {
+  html:not(.app-dark):not(.app-light) .error-color {
+    color: var(--p-red-400);
+  }
 }
 
 // Branding de tenant (guia de estilo, seção 6.4) — conteúdo de terceiro, confinado ao

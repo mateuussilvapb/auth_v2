@@ -52,4 +52,14 @@ describe('FormLabel', () => {
     expect(control.touched).toBe(true);
     expect(control.dirty).toBe(true);
   });
+
+  it('erro tem id "<for>-error" para servir de alvo de aria-describedby (guia, seção 8)', () => {
+    control.setErrors({ required: true });
+    control.markAsTouched();
+    control.markAsDirty();
+    fixture.detectChanges();
+
+    const span: HTMLElement = fixture.nativeElement.querySelector('span[role="alert"]');
+    expect(span.id).toBe('nome-error');
+  });
 });

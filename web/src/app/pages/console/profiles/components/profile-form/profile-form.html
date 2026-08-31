@@ -2,12 +2,33 @@
   <h1 class="text-h1 m-0">{{ isEditMode() ? 'Editar perfil' : 'Novo perfil' }}</h1>
 
   <form [formGroup]="form" (ngSubmit)="submit()" class="flex flex-column gap-3">
-    <app-form-label for="code" label="Código" [control]="form.controls['code']">
-      <input id="code" type="text" pInputText formControlName="code" class="w-full font-mono" />
+    <app-form-label #codeLabel="appFormLabel" for="code" label="Código" [control]="form.controls['code']">
+      <input
+        id="code"
+        type="text"
+        pInputText
+        formControlName="code"
+        class="w-full font-mono"
+        [attr.aria-describedby]="codeLabel.errorMessage() ? 'code-error' : null"
+        [attr.aria-invalid]="codeLabel.errorMessage() ? true : null"
+      />
     </app-form-label>
 
-    <app-form-label for="description" label="Descrição" [control]="form.controls['description']">
-      <input id="description" type="text" pInputText formControlName="description" class="w-full" />
+    <app-form-label
+      #descriptionLabel="appFormLabel"
+      for="description"
+      label="Descrição"
+      [control]="form.controls['description']"
+    >
+      <input
+        id="description"
+        type="text"
+        pInputText
+        formControlName="description"
+        class="w-full"
+        [attr.aria-describedby]="descriptionLabel.errorMessage() ? 'description-error' : null"
+        [attr.aria-invalid]="descriptionLabel.errorMessage() ? true : null"
+      />
     </app-form-label>
 
     <div class="flex gap-2 mt-2">

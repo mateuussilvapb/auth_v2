@@ -15,6 +15,7 @@ import { merge } from 'rxjs';
   imports: [TooltipModule],
   templateUrl: './form-label.html',
   styleUrl: './form-label.scss',
+  exportAs: 'appFormLabel',
   host: {
     '(focusout)': 'onBlur()',
   },

@@ -14,7 +14,7 @@
   <ng-content></ng-content>
 
   @if (errorMessage()) {
-    <span class="error-color text-small font-medium mt-1 block" role="alert">
+    <span [id]="for() + '-error'" class="error-color text-small font-medium mt-1 block" role="alert">
       {{ errorMessage() }}
     </span>
   }

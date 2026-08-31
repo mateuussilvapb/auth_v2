@@ -4,12 +4,28 @@
   }
 
   <form [formGroup]="form" (ngSubmit)="submit()" class="flex flex-column gap-3">
-    <app-form-label for="clientId" label="Client ID" [control]="form.controls['clientId']">
-      <input id="clientId" type="text" pInputText formControlName="clientId" class="w-full font-mono" />
+    <app-form-label #clientIdLabel="appFormLabel" for="clientId" label="Client ID" [control]="form.controls['clientId']">
+      <input
+        id="clientId"
+        type="text"
+        pInputText
+        formControlName="clientId"
+        class="w-full font-mono"
+        [attr.aria-describedby]="clientIdLabel.errorMessage() ? 'clientId-error' : null"
+        [attr.aria-invalid]="clientIdLabel.errorMessage() ? true : null"
+      />
     </app-form-label>
 
-    <app-form-label for="name" label="Nome" [control]="form.controls['name']">
-      <input id="name" type="text" pInputText formControlName="name" class="w-full" />
+    <app-form-label #nameLabel="appFormLabel" for="name" label="Nome" [control]="form.controls['name']">
+      <input
+        id="name"
+        type="text"
+        pInputText
+        formControlName="name"
+        class="w-full"
+        [attr.aria-describedby]="nameLabel.errorMessage() ? 'name-error' : null"
+        [attr.aria-invalid]="nameLabel.errorMessage() ? true : null"
+      />
     </app-form-label>
 
     <div class="flex align-items-center gap-2">
@@ -56,6 +72,7 @@
               [text]="true"
               [disabled]="redirectUris().length === 1"
               (onClick)="removeRedirectUriField($index)"
+              ariaLabel="Remover redirect URI"
             />
           </div>
         }
@@ -87,7 +104,14 @@
       @for (uri of redirectUris(); track uri) {
         <div class="flex align-items-center justify-content-between gap-2">
           <span class="font-mono text-small">{{ uri }}</span>
-          <p-button icon="pi pi-trash" severity="danger" [text]="true" size="small" (onClick)="removeRedirectUri(uri)" />
+          <p-button
+            icon="pi pi-trash"
+            severity="danger"
+            [text]="true"
+            size="small"
+            (onClick)="removeRedirectUri(uri)"
+            [ariaLabel]="'Remover redirect URI ' + uri"
+          />
         </div>
       }
       <div class="flex gap-2">

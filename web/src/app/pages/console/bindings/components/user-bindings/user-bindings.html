@@ -50,6 +50,7 @@
               [pRowToggler]="binding"
               [text]="true"
               [icon]="expandedRowKeys()[binding.id] ? 'pi pi-chevron-down' : 'pi pi-chevron-right'"
+              [ariaLabel]="(expandedRowKeys()[binding.id] ? 'Recolher' : 'Expandir') + ' perfis de ' + systemName(binding.systemId)"
             />
           </td>
           <td>{{ systemName(binding.systemId) }}</td>
